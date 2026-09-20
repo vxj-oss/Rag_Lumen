@@ -3,29 +3,22 @@
 namespace App\Services;
 
 use App\Models\Employee;
-use App\Support\Enums\TaskStatus;
 
 class EmployeeMetricsService
 {
-    private const ACTIVE_STATUSES = [
-        TaskStatus::Pending,
-        TaskStatus::InProgress,
-        TaskStatus::Review,
-        TaskStatus::Blocked,
-    ];
-
     public function forEmployee(Employee $employee): array
     {
         $tasks = $employee->relationLoaded('tasks') ? $employee->tasks : $employee->tasks()->get();
+        $tasks->loadMissing('state');
 
-        $completedTasks = $tasks->filter(fn ($task) => $task->status === TaskStatus::Completed);
-        $activeTasks = $tasks->filter(fn ($task) => in_array($task->status, self::ACTIVE_STATUSES, true));
+        $completedTasks = $tasks->filter(fn ($task) => $task->isCompletedState());
+        $activeTasks = $tasks->filter(fn ($task) => $task->isActiveState());
 
         return [
             'assigned_tasks' => $tasks->count(),
             'active_tasks' => $activeTasks->count(),
             'completed_tasks' => $completedTasks->count(),
-            'blocked_tasks' => $tasks->filter(fn ($task) => $task->status === TaskStatus::Blocked)->count(),
+            'blocked_tasks' => $tasks->filter(fn ($task) => $task->isBlockingState())->count(),
             'overdue_tasks' => $tasks->filter(fn ($task) => $task->isOverdue())->count(),
             'estimated_hours' => round((float) $tasks->sum('estimated_hours'), 2),
             'actual_hours' => round((float) $tasks->sum('actual_hours'), 2),

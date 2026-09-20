@@ -34,6 +34,7 @@ class StoreEmployeeRequest extends FormRequest
             'phone' => ['nullable', 'string', 'max:30'],
             'position' => ['nullable', 'string', 'max:100'],
             'specialty' => ['required', Rule::enum(EmployeeSpecialty::class)],
+            'area_id' => ['nullable', 'integer', 'exists:areas,id'],
             'status' => ['required', Rule::enum(EmployeeStatus::class)],
             'hire_date' => ['nullable', 'date'],
             'create_access' => ['sometimes', 'boolean'],

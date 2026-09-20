@@ -56,6 +56,13 @@
             <x-forms.input-error :messages="$errors->get('specialty')" class="mt-2" />
         </div>
         <div>
+            <x-forms.input-label for="area_id" :value="__('Área')" />
+            <x-forms.select id="area_id" name="area_id" class="mt-1 block w-full"
+                :options="['' => __('— Sin área —')] + $areas->mapWithKeys(fn ($a) => [$a->id => $a->name])->toArray()"
+                :selected="old('area_id', $employee?->area_id)" />
+            <x-forms.input-error :messages="$errors->get('area_id')" class="mt-2" />
+        </div>
+        <div>
             <x-forms.input-label for="status" :value="__('Estado')" />
             <x-forms.select id="status" name="status" class="mt-1 block w-full"
                 :options="collect($statuses)->mapWithKeys(fn ($case) => [$case->value => $case->label()])"

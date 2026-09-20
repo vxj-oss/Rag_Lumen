@@ -3,19 +3,16 @@
 namespace App\Http\Requests\TaskDependency;
 
 use App\Models\Task;
-use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
 
 class StoreTaskDependencyRequest extends FormRequest
 {
-
     public function authorize(): bool
     {
         return $this->user()->can('update', $this->route('task'));
     }
 
-    
     public function rules(): array
     {
         return [
@@ -26,7 +23,7 @@ class StoreTaskDependencyRequest extends FormRequest
     public function withValidator(Validator $validator): void
     {
         $validator->after(function (Validator $validator) {
-            
+
             $task = $this->route('task');
             $dependsOnTaskId = (int) $this->input('depends_on_task_id');
 
@@ -44,7 +41,13 @@ class StoreTaskDependencyRequest extends FormRequest
 
             $dependsOnTask = Task::find($dependsOnTaskId);
 
-            if ($dependsOnTask !== null && $dependsOnTask->dependsOnTransitively($task)) {
+            if ($dependsOnTask === null || (int) $dependsOnTask->project_id !== (int) $task->project_id) {
+                $validator->errors()->add('depends_on_task_id', 'Las dependencias deben ser tareas del mismo proyecto.');
+
+                return;
+            }
+
+            if ($dependsOnTask->dependsOnTransitively($task)) {
                 $validator->errors()->add('depends_on_task_id', 'Esto crearía una dependencia circular entre tareas.');
             }
         });

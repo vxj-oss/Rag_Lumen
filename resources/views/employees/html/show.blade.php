@@ -1,19 +1,23 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex items-center justify-between">
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                {{ $employee->fullName() }}
-            </h2>
+        <x-ui.page-header :title="$employee->fullName()" :subtitle="$employee->position ?? $employee->specialty->label()">
             @can('update', $employee)
-                <x-ui.secondary-button x-data @click="$dispatch('open-modal', 'edit-employee')">
-                    {{ __('Editar') }}
-                </x-ui.secondary-button>
+                <x-slot name="actions">
+                    <x-ui.secondary-button x-data @click="$dispatch('open-modal', 'edit-employee')" class="min-h-[44px]">
+                        {{ __('Editar') }}
+                    </x-ui.secondary-button>
+                </x-slot>
             @endcan
-        </div>
+        </x-ui.page-header>
     </x-slot>
 
     <div class="py-8">
         <div class="max-w-3xl mx-auto sm:px-6 lg:px-8 space-y-6">
+            <div>
+                <a href="{{ route('employees.index') }}" class="inline-flex items-center min-h-[44px] text-sm text-emerald-600 hover:text-emerald-800 font-medium">
+                    {{ __('← Volver a empleados') }}
+                </a>
+            </div>
             <x-ui.card>
                 <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
@@ -31,6 +35,10 @@
                     <div>
                         <dt class="text-sm font-medium text-gray-500">{{ __('Especialidad') }}</dt>
                         <dd class="text-sm text-gray-900">{{ $employee->specialty->label() }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">{{ __('Área') }}</dt>
+                        <dd class="text-sm text-gray-900">{{ $employee->area?->name ?? '—' }}</dd>
                     </div>
                     <div>
                         <dt class="text-sm font-medium text-gray-500">{{ __('Estado') }}</dt>

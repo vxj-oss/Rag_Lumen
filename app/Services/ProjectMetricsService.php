@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Models\Project;
 use App\Models\TaskProgressUpdate;
-use App\Support\Enums\TaskStatus;
 use Illuminate\Support\Carbon;
 
 class ProjectMetricsService
@@ -16,19 +15,20 @@ class ProjectMetricsService
     public function forProject(Project $project): array
     {
         $tasks = $project->relationLoaded('tasks') ? $project->tasks : $project->tasks()->get();
+        $tasks->loadMissing('state');
 
         $totalTasks = $tasks->count();
-        $completedTasks = $tasks->filter(fn ($task) => $task->status === TaskStatus::Completed);
-        $blockedTasks = $tasks->filter(fn ($task) => $task->status === TaskStatus::Blocked);
+        $completedTasks = $tasks->filter(fn ($task) => $task->isCompletedState());
+        $blockedTasks = $tasks->filter(fn ($task) => $task->isBlockingState());
         $overdueTasks = $tasks->filter(fn ($task) => $task->isOverdue());
         $dueSoonTasks = $tasks->filter(function ($task) {
-            if ($task->due_date === null || in_array($task->status, [TaskStatus::Completed, TaskStatus::Cancelled], true)) {
+            if ($task->due_date === null || $task->isFinalState()) {
                 return false;
             }
 
             return $task->due_date->between(now()->startOfDay(), now()->addDays(self::DUE_SOON_DAYS)->endOfDay());
         });
-        $pendingTasks = $tasks->filter(fn ($task) => ! in_array($task->status, [TaskStatus::Completed, TaskStatus::Cancelled], true));
+        $pendingTasks = $tasks->filter(fn ($task) => $task->isActiveState());
 
         return [
             'real_progress' => $this->realProgress($tasks),

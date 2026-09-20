@@ -4,7 +4,6 @@ namespace App\Models;
 
 use App\Support\Enums\EmployeeSpecialty;
 use App\Support\Enums\EmployeeStatus;
-use Database\Factories\EmployeeFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -15,7 +14,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable([
     'user_id', 'first_name', 'last_name', 'email', 'phone',
-    'position', 'specialty', 'status', 'hire_date',
+    'position', 'specialty', 'area_id', 'status', 'hire_date',
 ])]
 class Employee extends Model
 {
@@ -33,6 +32,11 @@ class Employee extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function area(): BelongsTo
+    {
+        return $this->belongsTo(Area::class);
     }
 
     public function fullName(): string

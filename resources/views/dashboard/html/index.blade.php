@@ -1,15 +1,13 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex items-center justify-between">
-            <div>
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">{{ __('Dashboard ejecutivo') }}</h2>
-                <p class="text-sm text-gray-500 mt-0.5">{{ __('Panorama general de proyectos, tareas y equipo') }}</p>
-            </div>
-            <a href="{{ route('dashboard.export') }}" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 bg-white ring-1 ring-gray-300 hover:bg-gray-50 transition">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" /></svg>
-                {{ __('Exportar PDF') }}
-            </a>
-        </div>
+        <x-ui.page-header :title="__('Dashboard ejecutivo')" :subtitle="__('Panorama general de proyectos, tareas y equipo')">
+            <x-slot name="actions">
+                <a href="{{ route('dashboard.export') }}" class="inline-flex items-center gap-2 px-3 py-2 min-h-[44px] rounded-lg text-sm font-medium text-gray-600 bg-white ring-1 ring-gray-300 hover:bg-gray-50 transition">
+                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" /></svg>
+                    <span class="hidden sm:inline">{{ __('Exportar PDF') }}</span>
+                </a>
+            </x-slot>
+        </x-ui.page-header>
     </x-slot>
 
     <div class="py-8">

@@ -5,7 +5,6 @@ namespace App\Models;
 use App\Support\Enums\Priority;
 use App\Support\Enums\ProjectStatus;
 use App\Support\Enums\ProjectType;
-use Database\Factories\ProjectFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -15,8 +14,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable([
-    'code', 'name', 'description', 'type', 'client', 'start_date', 'estimated_end_date',
-    'actual_end_date', 'status', 'priority', 'responsible_employee_id', 'budget', 'observations',
+    'code', 'name', 'description', 'type', 'client_id', 'start_date', 'estimated_end_date',
+    'actual_end_date', 'status', 'priority', 'responsible_employee_id', 'manager_employee_id', 'budget', 'observations',
 ])]
 class Project extends Model
 {
@@ -39,6 +38,23 @@ class Project extends Model
     public function responsibleEmployee(): BelongsTo
     {
         return $this->belongsTo(Employee::class, 'responsible_employee_id');
+    }
+
+    public function manager(): BelongsTo
+    {
+        return $this->belongsTo(Employee::class, 'manager_employee_id');
+    }
+
+    public function client(): BelongsTo
+    {
+        return $this->belongsTo(Client::class);
+    }
+
+    public function areas(): BelongsToMany
+    {
+        return $this->belongsToMany(Area::class, 'project_areas')
+            ->withPivot(['id', 'area_lead_id', 'budget_share'])
+            ->withTimestamps();
     }
 
     public function members(): BelongsToMany

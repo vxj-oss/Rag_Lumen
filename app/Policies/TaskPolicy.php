@@ -3,6 +3,7 @@
 namespace App\Policies;
 
 use App\Models\Task;
+use App\Models\TaskState;
 use App\Models\User;
 use App\Support\Enums\RoleName;
 
@@ -34,13 +35,33 @@ class TaskPolicy
 
     public function update(User $user, Task $task): bool
     {
-        if ($user->hasRole(RoleName::Administrator->value)) {
+        if ($user->isAdmin()) {
             return true;
+        }
+
+        if ($user->isManager()) {
+            return $task->project !== null && $user->can('view', $task->project);
         }
 
         return $this->leadsProject($user, $task) || $this->isAssignee($user, $task);
     }
 
+    /**
+     * Transiciones de estado permitidas por rol: solo líder/gerente/admin
+     * pueden mover una tarea a un estado final (p. ej. Completada).
+     */
+    public function transitionTo(User $user, Task $task, TaskState $state): bool
+    {
+        if (! $this->update($user, $task)) {
+            return false;
+        }
+
+        if ($state->is_final) {
+            return $user->isAdmin() || $user->isManager() || $this->leadsProject($user, $task);
+        }
+
+        return true;
+    }
 
     public function delete(User $user, Task $task): bool
     {
@@ -60,8 +81,8 @@ class TaskPolicy
     private function leadsProject(User $user, Task $task): bool
     {
         return $user->hasRole(RoleName::ProjectLead->value)
-            && $task->project->responsible_employee_id !== null
-            && $user->employee?->id === $task->project->responsible_employee_id;
+            && $task->project?->responsible_employee_id !== null
+            && $user->employee?->id === $task->project?->responsible_employee_id;
     }
 
     private function isAssignee(User $user, Task $task): bool

@@ -14,7 +14,6 @@ use App\Services\ProjectDecisionService;
 use App\Support\Enums\DecisionSignal;
 use App\Support\Enums\RiskLevel;
 use App\Support\Enums\RoleName;
-use App\Support\Enums\TaskStatus;
 use Illuminate\Console\Command;
 
 class GenerateAlertsCommand extends Command
@@ -82,11 +81,15 @@ class GenerateAlertsCommand extends Command
     {
         $created = 0;
         $maxRecommended = config('risk.employee_max_recommended_tasks');
-        $activeStatuses = ['pending', 'in_progress', 'review', 'blocked'];
 
-        $employees = Employee::withCount([
-            'tasks as active_tasks_count' => fn ($q) => $q->whereIn('status', $activeStatuses),
-        ])->get()->filter(fn ($e) => $e->active_tasks_count > $maxRecommended);
+        $employees = Employee::with('tasks.state')->get()->filter(function ($e) use ($maxRecommended) {
+            $e->setAttribute(
+                'active_tasks_count',
+                $e->tasks->filter(fn ($task) => $task->isActiveState())->count()
+            );
+
+            return $e->active_tasks_count > $maxRecommended;
+        });
 
         foreach ($employees as $employee) {
             $created += $this->notifyUnlessDuplicate(
@@ -104,12 +107,12 @@ class GenerateAlertsCommand extends Command
     {
         $created = 0;
 
-        $tasks = Task::with('assignee.user')
-            ->whereNotIn('status', [TaskStatus::Completed->value, TaskStatus::Cancelled->value])
+        $tasks = Task::with(['assignee.user', 'state'])
             ->where('progress_percentage', '<', self::DUE_SOON_PROGRESS_CEILING)
             ->whereNotNull('due_date')
             ->whereBetween('due_date', [now()->startOfDay(), now()->addDays(self::DUE_SOON_DAYS)->endOfDay()])
-            ->get();
+            ->get()
+            ->filter(fn (Task $task) => $task->isActiveState());
 
         foreach ($tasks as $task) {
             $user = $task->assignee?->user;

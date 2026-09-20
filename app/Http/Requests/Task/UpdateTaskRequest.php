@@ -2,25 +2,36 @@
 
 namespace App\Http\Requests\Task;
 
+use App\Models\ProjectMember;
+use App\Models\TaskState;
 use App\Support\Enums\Priority;
-use App\Support\Enums\TaskStatus;
-use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class UpdateTaskRequest extends FormRequest
 {
-
     public function authorize(): bool
     {
         return $this->user()->can('update', $this->route('task'));
     }
 
-    
     public function rules(): array
     {
+        $task = $this->route('task');
+
         $rules = [
-            'assigned_to' => ['nullable', 'integer', 'exists:employees,id'],
+            'assigned_to' => [
+                'nullable', 'integer', 'exists:employees,id',
+                function (string $attribute, mixed $value, \Closure $fail) use ($task) {
+                    if (! ProjectMember::where('project_id', $task->project_id)
+                        ->where('employee_id', (int) $value)
+                        ->where('status', 'active')
+                        ->exists()) {
+                        $fail('El responsable debe ser miembro activo del proyecto.');
+                    }
+                },
+            ],
             'title' => ['required', 'string', 'max:200'],
             'description' => ['nullable', 'string'],
             'priority' => ['required', Rule::enum(Priority::class)],
@@ -31,10 +42,33 @@ class UpdateTaskRequest extends FormRequest
         ];
 
         if (! $this->user()->isPlainEmployee()) {
-            $rules['status'] = ['required', Rule::enum(TaskStatus::class)];
+            $rules['status_id'] = [
+                'sometimes', 'integer',
+                Rule::exists('task_statuses', 'id')->where(function ($query) use ($task) {
+                    $query->where('active', true)
+                        ->where(function ($query) use ($task) {
+                            $query->whereNull('project_id')->orWhere('project_id', $task->project_id);
+                        });
+                }),
+            ];
             $rules['blocked_reason'] = ['nullable', 'string'];
         }
 
         return $rules;
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator) {
+            if (! $this->filled('status_id')) {
+                return;
+            }
+
+            $state = TaskState::find($this->input('status_id'));
+
+            if ($state !== null && ! $this->user()->can('transitionTo', [$this->route('task'), $state])) {
+                $validator->errors()->add('status_id', 'No tienes permiso para mover la tarea a ese estado.');
+            }
+        });
     }
 }

@@ -16,7 +16,7 @@
 @else
     <div>
         <x-forms.input-label :value="__('Proyecto')" />
-        <p class="mt-1 text-sm text-gray-700">{{ $task->project->name }}</p>
+        <p class="mt-1 text-sm text-gray-700">{{ $task->project?->name ?? __('Proyecto archivado') }}</p>
     </div>
 @endunless
 
@@ -46,13 +46,13 @@
     <div>
         <x-forms.input-label :value="__('Estado')" />
         @if ($canManageStatus)
-            <x-forms.select id="status" name="status" class="mt-1 block w-full"
-                :options="collect($statuses)->mapWithKeys(fn ($case) => [$case->value => $case->label()])"
-                :selected="old('status', $task?->status?->value)" />
-            <x-forms.input-error :messages="$errors->get('status')" class="mt-2" />
+            <x-forms.select id="status_id" name="status_id" class="mt-1 block w-full"
+                :options="$projectStates->mapWithKeys(fn ($s) => [$s->id => $s->name])"
+                :selected="old('status_id', $task?->status_id)" />
+            <x-forms.input-error :messages="$errors->get('status_id')" class="mt-2" />
         @else
             <div class="mt-1">
-                <x-ui.badge :color="$task?->status?->color() ?? 'gray'">{{ $task?->status?->label() ?? '—' }}</x-ui.badge>
+                <x-ui.badge :color="$task?->state?->color ?? 'gray'">{{ $task?->state?->name ?? '—' }}</x-ui.badge>
             </div>
             <p class="text-xs text-gray-400 mt-1">{{ __('El estado avanza automáticamente según el avance registrado.') }}</p>
         @endif

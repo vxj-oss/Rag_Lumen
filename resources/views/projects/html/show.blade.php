@@ -1,25 +1,30 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex items-center justify-between">
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                {{ $project->name }} <span class="text-gray-400 font-normal">({{ $project->code }})</span>
-            </h2>
-            <div class="flex items-center gap-2">
-                <a href="{{ route('projects.export.one', $project) }}" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 bg-white ring-1 ring-gray-300 hover:bg-gray-50 transition">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" /></svg>
-                    {{ __('Exportar PDF') }}
+        <x-ui.page-header :title="$project->name" :subtitle="$project->code . ' · ' . ($project->client?->name ?? __('Sin cliente'))">
+            <x-slot name="actions">
+                <a href="{{ route('projects.export.one', $project) }}" class="inline-flex items-center gap-2 px-3 py-2 min-h-[44px] rounded-lg text-sm font-medium text-gray-600 bg-white ring-1 ring-gray-300 hover:bg-gray-50 transition">
+                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" /></svg>
+                    <span class="hidden sm:inline">{{ __('Exportar PDF') }}</span>
                 </a>
                 @can('update', $project)
-                <x-ui.secondary-button x-data @click="$dispatch('open-modal', 'edit-project')">
+                <x-ui.secondary-button x-data @click="$dispatch('open-modal', 'edit-project')" class="min-h-[44px]">
                     {{ __('Editar') }}
                 </x-ui.secondary-button>
+                <a href="{{ route('projects.statuses.index', $project) }}" class="inline-flex items-center px-3 py-2 min-h-[44px] rounded-lg text-sm font-medium text-gray-600 bg-white ring-1 ring-gray-300 hover:bg-gray-50 transition">
+                    {{ __('Estados') }}
+                </a>
                 @endcan
-            </div>
-        </div>
+            </x-slot>
+        </x-ui.page-header>
     </x-slot>
 
     <div class="py-8">
         <div class="max-w-3xl mx-auto sm:px-6 lg:px-8 space-y-6">
+            <div>
+                <a href="{{ route('projects.index') }}" class="inline-flex items-center min-h-[44px] text-sm text-emerald-600 hover:text-emerald-800 font-medium">
+                    {{ __('← Volver a proyectos') }}
+                </a>
+            </div>
             <x-ui.card padding="p-6 space-y-6">
                 <div class="flex gap-2">
                     <x-ui.badge :color="$project->status->color()">{{ $project->status->label() }}</x-ui.badge>
@@ -38,10 +43,14 @@
                     </div>
                     <div>
                         <dt class="text-sm font-medium text-gray-500">{{ __('Cliente') }}</dt>
-                        <dd class="text-sm text-gray-900">{{ $project->client ?? '—' }}</dd>
+                        <dd class="text-sm text-gray-900">{{ $project->client?->name ?? '—' }}</dd>
                     </div>
                     <div>
-                        <dt class="text-sm font-medium text-gray-500">{{ __('Responsable') }}</dt>
+                        <dt class="text-sm font-medium text-gray-500">{{ __('Gerente') }}</dt>
+                        <dd class="text-sm text-gray-900">{{ $project->manager?->fullName() ?? '—' }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">{{ __('Líder') }}</dt>
                         <dd class="text-sm text-gray-900">{{ $project->responsibleEmployee?->fullName() ?? '—' }}</dd>
                     </div>
                     <div>
@@ -68,12 +77,6 @@
                     <dd class="text-sm text-gray-900">{{ $project->observations }}</dd>
                 </div>
                 @endif
-
-                <div>
-                    <a href="{{ route('projects.index') }}" class="text-emerald-600 hover:underline text-sm">
-                        {{ __('← Volver al listado') }}
-                    </a>
-                </div>
             </x-ui.card>
 
             <x-ui.card padding="p-6 space-y-4">
@@ -206,6 +209,7 @@
             <x-ui.card padding="p-6 space-y-4">
                 <h3 class="font-semibold text-gray-800">{{ __('Miembros del equipo') }}</h3>
 
+                <div class="overflow-x-auto -mx-1 px-1">
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead>
                         <tr>
@@ -246,6 +250,7 @@
                         @endforelse
                     </tbody>
                 </table>
+                </div>
 
                 @can('update', $project)
                 @if ($availableEmployees->isNotEmpty())
@@ -273,6 +278,24 @@
                 @error('assigned_at') <p class="text-sm text-red-600">{{ $message }}</p> @enderror
                 @endif
                 @endcan
+            </x-ui.card>
+
+            <x-ui.card padding="p-6 space-y-4">
+                <h3 class="font-semibold text-gray-800">{{ __('Áreas participantes') }}</h3>
+
+                @forelse ($areaProgress as $row)
+                <div>
+                    <div class="flex items-center justify-between text-sm mb-1">
+                        <span class="font-medium text-gray-800">{{ $row['area']->name }}</span>
+                        <span class="text-gray-500">{{ $row['completed'] }}/{{ $row['total'] }} · {{ $row['percent'] }}% ({{ __('ponderado') }} {{ $row['weighted'] }}%)</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div class="bg-emerald-500 h-2 rounded-full" @style(["width: {$row['percent']}%"])></div>
+                    </div>
+                </div>
+                @empty
+                <p class="text-sm text-gray-500">{{ __('Este proyecto aún no tiene áreas asignadas.') }}</p>
+                @endforelse
             </x-ui.card>
         </div>
     </div>

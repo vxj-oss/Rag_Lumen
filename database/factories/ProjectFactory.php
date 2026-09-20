@@ -3,16 +3,13 @@
 namespace Database\Factories;
 
 use App\Models\Employee;
-use App\Models\Project;
 use App\Support\Enums\Priority;
 use App\Support\Enums\ProjectStatus;
 use App\Support\Enums\ProjectType;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-
 class ProjectFactory extends Factory
 {
-    
     public function definition(): array
     {
         $startDate = fake()->dateTimeBetween('-6 months', 'now');
@@ -22,7 +19,7 @@ class ProjectFactory extends Factory
             'name' => fake()->catchPhrase(),
             'description' => fake()->paragraph(),
             'type' => fake()->randomElement(ProjectType::cases())->value,
-            'client' => fake()->company(),
+            'client_id' => null,
             'start_date' => $startDate->format('Y-m-d'),
             'estimated_end_date' => fake()->dateTimeBetween($startDate, '+6 months')->format('Y-m-d'),
             'actual_end_date' => null,

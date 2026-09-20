@@ -39,11 +39,35 @@
         <x-forms.input-error :messages="$errors->get('type')" class="mt-2" />
     </div>
 
-    <div>
-        <x-forms.input-label for="client" :value="__('Cliente')" />
-        <x-forms.text-input id="client" name="client" type="text" class="mt-1 block w-full"
-            :value="$old('client', $project?->client)" />
-        <x-forms.input-error :messages="$errors->get('client')" class="mt-2" />
+    <div x-data="{ quickOpen: false, quickName: '', quickError: '', quickOk: '' }">
+        <x-forms.input-label for="client_id" :value="__('Cliente')" />
+        <div class="flex items-start gap-2">
+            <x-forms.select id="client_id" name="client_id" class="mt-1 block w-full"
+                :options="$clients->mapWithKeys(fn ($c) => [$c->id => $c->name])"
+                :selected="$old('client_id', $project?->client_id)" />
+            <button type="button" @click="quickOpen = !quickOpen" class="mt-1 px-2.5 py-2 rounded-lg text-sm font-medium text-emerald-700 bg-emerald-50 ring-1 ring-emerald-200 hover:bg-emerald-100 transition shrink-0" title="{{ __('Crear cliente rápido') }}">+</button>
+        </div>
+        <x-forms.input-error :messages="$errors->get('client_id')" class="mt-2" />
+        <div x-show="quickOpen" x-cloak class="mt-2 p-3 rounded-lg bg-gray-50 ring-1 ring-gray-200 space-y-2">
+            <x-forms.text-input type="text" x-model="quickName" placeholder="{{ __('Nombre del nuevo cliente') }}" class="block w-full" />
+            <p x-show="quickError" x-text="quickError" class="text-xs text-red-600"></p>
+            <p x-show="quickOk" x-text="quickOk" class="text-xs text-emerald-600"></p>
+            <button type="button" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-600 text-white hover:bg-emerald-700 transition"
+                @click="quickError = ''; quickOk = '';
+                    if (!quickName.trim()) { quickError = @js(__('Escribe el nombre del cliente.')); return; }
+                    fetch(@js(route('clients.quick')), {
+                        method: 'POST',
+                        headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content },
+                        body: JSON.stringify({ name: quickName.trim(), status: 'active' }),
+                    }).then(async (res) => {
+                        const data = await res.json();
+                        if (!res.ok) { quickError = data.message || @js(__('No se pudo crear el cliente.')); return; }
+                        const sel = document.getElementById('client_id');
+                        const opt = document.createElement('option');
+                        opt.value = data.id; opt.textContent = data.name; sel.appendChild(opt); sel.value = data.id;
+                        quickOk = @js(__('Cliente creado y seleccionado.')); quickName = '';
+                    }).catch(() => { quickError = @js(__('No se pudo crear el cliente.')); })">{{ __('Guardar cliente') }}</button>
+        </div>
     </div>
 </div>
 
@@ -73,7 +97,7 @@
     @endisset
 </div>
 
-<h4 class="text-xs font-semibold text-emerald-700 uppercase tracking-wider -mb-2 pt-1">{{ __('Seguimiento y asignación') }}</h4>
+<h4 class="text-xs font-semibold text-emerald-700 uppercase tracking-wider -mb-2 pt-1">{{ __('Estado y prioridad') }}</h4>
 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
     <div>
         <x-forms.input-label for="status" :value="__('Estado')" />
@@ -90,15 +114,45 @@
             :selected="$old('priority', $project?->priority?->value)" />
         <x-forms.input-error :messages="$errors->get('priority')" class="mt-2" />
     </div>
+</div>
+
+<h4 class="text-xs font-semibold text-emerald-700 uppercase tracking-wider -mb-2 pt-1">{{ __('Responsables') }}</h4>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <div>
+        <x-forms.input-label for="manager_employee_id" :value="__('Gerente responsable')" />
+        <x-forms.select id="manager_employee_id" name="manager_employee_id" class="mt-1 block w-full"
+            :options="['' => __('— Sin asignar —')] + $managers->mapWithKeys(fn ($e) => [$e->id => $e->fullName()])->toArray()"
+            :selected="$old('manager_employee_id', $project?->manager_employee_id)" />
+        <x-forms.input-error :messages="$errors->get('manager_employee_id')" class="mt-2" />
+    </div>
 
     <div>
-        <x-forms.input-label for="responsible_employee_id" :value="__('Responsable')" />
+        <x-forms.input-label for="responsible_employee_id" :value="__('Líder del proyecto')" />
         <x-forms.select id="responsible_employee_id" name="responsible_employee_id" class="mt-1 block w-full"
-            :options="['' => __('— Sin asignar —')] + $employees->mapWithKeys(fn ($e) => [$e->id => $e->fullName()])->toArray()"
+            :options="['' => __('— Sin asignar —')] + $leaders->mapWithKeys(fn ($e) => [$e->id => $e->fullName()])->toArray()"
             :selected="$old('responsible_employee_id', $project?->responsible_employee_id)" />
         <x-forms.input-error :messages="$errors->get('responsible_employee_id')" class="mt-2" />
     </div>
 </div>
+
+<h4 class="text-xs font-semibold text-emerald-700 uppercase tracking-wider -mb-2 pt-1">{{ __('Áreas participantes') }}</h4>
+@php
+    $selectedAreas = $isOldForThisForm
+        ? (array) old('area_ids', $project?->areas->pluck('id')->all() ?? [])
+        : ($project?->areas->pluck('id')->all() ?? []);
+    $selectedAreas = array_map('strval', $selectedAreas);
+@endphp
+<div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+    @foreach ($areas as $area)
+    <label class="flex items-center gap-2 px-3 py-2 rounded-lg ring-1 ring-gray-200 bg-white hover:ring-emerald-300 cursor-pointer transition text-sm">
+        <input type="checkbox" name="area_ids[]" value="{{ $area->id }}"
+            {{ in_array((string) $area->id, $selectedAreas, true) ? 'checked' : '' }}
+            class="rounded border-gray-300 text-emerald-600 shadow-sm focus:ring-emerald-500">
+        <span class="text-gray-700">{{ $area->name }}</span>
+    </label>
+    @endforeach
+</div>
+<x-forms.input-error :messages="$errors->get('area_ids')" class="mt-2" />
 
 <h4 class="text-xs font-semibold text-emerald-700 uppercase tracking-wider -mb-2 pt-1">{{ __('Detalles adicionales') }}</h4>
 <div>

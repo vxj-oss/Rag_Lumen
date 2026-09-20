@@ -1,31 +1,25 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex items-center justify-between">
-            <div>
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">{{ __('Empleados') }}</h2>
-                <p class="text-sm text-gray-500 mt-0.5">{{ __('Gestiona el equipo de la empresa') }}</p>
-            </div>
-            <div class="flex items-center gap-2">
-                <a href="{{ route('employees.export') }}" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 bg-white ring-1 ring-gray-300 hover:bg-gray-50 transition">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" /></svg>
-                    {{ __('Exportar CSV') }}
+        <x-ui.page-header :title="__('Empleados')" :subtitle="__('Gestiona el equipo de la empresa')">
+            <x-slot name="actions">
+                <a href="{{ route('employees.export') }}" class="inline-flex items-center gap-2 px-3 py-2 min-h-[44px] rounded-lg text-sm font-medium text-gray-600 bg-white ring-1 ring-gray-300 hover:bg-gray-50 transition">
+                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" /></svg>
+                    <span class="hidden sm:inline">{{ __('Exportar CSV') }}</span>
                 </a>
                 @can('create', \App\Models\Employee::class)
-                <x-ui.primary-button x-data @click="$dispatch('open-modal', 'create-employee')">
+                <x-ui.primary-button x-data @click="$dispatch('open-modal', 'create-employee')" class="min-h-[44px]">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                     </svg>
                     {{ __('Nuevo empleado') }}
                 </x-ui.primary-button>
                 @endcan
-            </div>
-        </div>
+            </x-slot>
+        </x-ui.page-header>
     </x-slot>
 
     <div class="py-8">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
-            <x-ui.auth-session-status :status="session('status')" class="px-1" />
-
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <x-ui.stat-card :label="__('Total de empleados')" :value="$totalCount" color="emerald"
                     icon='<path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />' />
@@ -60,6 +54,15 @@
                             @endforeach
                         </select>
                     </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 mb-1">{{ __('Área') }}</label>
+                        <select name="area_id" class="w-full border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-md shadow-sm text-sm">
+                            <option value="">{{ __('Todas') }}</option>
+                            @foreach ($areas as $area)
+                                <option value="{{ $area->id }}" {{ (string) ($filters['area_id'] ?? '') === (string) $area->id ? 'selected' : '' }}>{{ $area->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
                     <div class="sm:col-span-4 flex items-center gap-3">
                         <button type="submit" class="px-3 py-2 rounded-lg text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-700 transition">{{ __('Filtrar') }}</button>
                         @if (array_filter($filters ?? []))
@@ -74,11 +77,12 @@
                     <table class="w-full divide-y divide-gray-200 table-fixed">
                         <thead class="bg-gray-50">
                             <tr>
-                                <th class="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider border-b-2 border-emerald-500/30 w-[28%]">{{ __('Nombre') }}</th>
-                                <th class="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider border-b-2 border-emerald-500/30 w-[28%]">{{ __('Email') }}</th>
-                                <th class="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider border-b-2 border-emerald-500/30 w-[18%]">{{ __('Especialidad') }}</th>
-                                <th class="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider border-b-2 border-emerald-500/30 w-[14%]">{{ __('Estado') }}</th>
-                                <th class="px-3 py-3 border-b-2 border-emerald-500/30 w-[12%]"></th>
+                                <th class="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider border-b-2 border-emerald-500/30 w-[22%]">{{ __('Nombre') }}</th>
+                                <th class="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider border-b-2 border-emerald-500/30 w-[22%]">{{ __('Email') }}</th>
+                                <th class="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider border-b-2 border-emerald-500/30 w-[14%]">{{ __('Especialidad') }}</th>
+                                <th class="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider border-b-2 border-emerald-500/30 w-[14%]">{{ __('Área') }}</th>
+                                <th class="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider border-b-2 border-emerald-500/30 w-[12%]">{{ __('Estado') }}</th>
+                                <th class="px-3 py-3 border-b-2 border-emerald-500/30 w-[16%]"></th>
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-100">
@@ -94,6 +98,7 @@
                                 </td>
                                 <td class="px-3 py-3 text-sm text-gray-500 truncate" title="{{ $employee->email }}">{{ $employee->email }}</td>
                                 <td class="px-3 py-3 text-sm text-gray-500 truncate">{{ $employee->specialty->label() }}</td>
+                                <td class="px-3 py-3 text-sm text-gray-500 truncate">{{ $employee->area?->name ?? '—' }}</td>
                                 <td class="px-3 py-3">
                                     <x-ui.badge :color="$employee->status->value === 'active' ? 'green' : ($employee->status->value === 'on_leave' ? 'yellow' : 'gray')">
                                         {{ $employee->status->label() }}

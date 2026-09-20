@@ -32,5 +32,6 @@
                 </main>
             </div>
         </div>
+        <x-ui.toasts />
     </body>
 </html>
