@@ -2,9 +2,7 @@
 
 namespace App\Models;
 
-
 use App\Support\Enums\RoleName;
-use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -17,9 +15,8 @@ use Spatie\Permission\Traits\HasRoles;
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable, HasRoles;
+    use HasFactory, HasRoles, Notifiable;
 
-    
     protected function casts(): array
     {
         return [
@@ -34,7 +31,26 @@ class User extends Authenticatable
         return $this->hasOne(Employee::class);
     }
 
-    
+    public function isAdmin(): bool
+    {
+        return $this->hasRole(RoleName::Administrator->value);
+    }
+
+    public function isManager(): bool
+    {
+        return $this->hasRole(RoleName::Manager->value);
+    }
+
+    public function isLeader(): bool
+    {
+        return $this->hasRole(RoleName::ProjectLead->value);
+    }
+
+    public function isEmployee(): bool
+    {
+        return $this->hasRole(RoleName::Employee->value);
+    }
+
     public function isPlainEmployee(): bool
     {
         return $this->hasRole(RoleName::Employee->value)

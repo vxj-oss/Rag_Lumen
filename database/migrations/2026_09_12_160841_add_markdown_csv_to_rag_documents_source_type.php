@@ -7,11 +7,19 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (DB::getDriverName() !== 'mysql') {
+            return;
+        }
+
         DB::statement("ALTER TABLE rag_documents MODIFY source_type ENUM('pdf', 'docx', 'txt', 'markdown', 'csv', 'manual', 'other') NOT NULL");
     }
 
     public function down(): void
     {
+        if (DB::getDriverName() !== 'mysql') {
+            return;
+        }
+
         DB::statement("ALTER TABLE rag_documents MODIFY source_type ENUM('pdf', 'docx', 'txt', 'manual', 'other') NOT NULL");
     }
 };
