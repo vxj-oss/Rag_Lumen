@@ -7,7 +7,10 @@ function toChartData(labelValueMap) {
         return { labels: [], values: [] };
     }
 
-    const labels = Object.keys(labelValueMap);
+    const compact = window.innerWidth < 640;
+    const labels = Object.keys(labelValueMap).map((label) => (
+        compact && label.length > 18 ? `${label.slice(0, 17)}…` : label
+    ));
     const values = Object.values(labelValueMap);
 
     return { labels, values };

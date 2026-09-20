@@ -1,29 +1,23 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex items-center justify-between">
-            <div>
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">{{ __('Proyectos') }}</h2>
-                <p class="text-sm text-gray-500 mt-0.5">{{ __('Todos los proyectos de la empresa') }}</p>
-            </div>
-            <div class="flex items-center gap-2">
-                <a href="{{ route('projects.export') }}" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 bg-white ring-1 ring-gray-300 hover:bg-gray-50 transition">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" /></svg>
-                    {{ __('Exportar CSV') }}
+        <x-ui.page-header :title="__('Proyectos')" :subtitle="__('Todos los proyectos de la empresa')">
+            <x-slot name="actions">
+                <a href="{{ route('projects.export') }}" class="inline-flex items-center gap-2 px-3 py-2 min-h-[44px] rounded-lg text-sm font-medium text-gray-600 bg-white ring-1 ring-gray-300 hover:bg-gray-50 transition">
+                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" /></svg>
+                    <span class="hidden sm:inline">{{ __('Exportar CSV') }}</span>
                 </a>
                 @can('create', \App\Models\Project::class)
-                    <x-ui.primary-button x-data @click="$dispatch('open-modal', 'create-project')">
+                    <x-ui.primary-button x-data @click="$dispatch('open-modal', 'create-project')" class="min-h-[44px]">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15" /></svg>
                         {{ __('Nuevo proyecto') }}
                     </x-ui.primary-button>
                 @endcan
-            </div>
-        </div>
+            </x-slot>
+        </x-ui.page-header>
     </x-slot>
 
     <div class="py-8">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
-            <x-ui.auth-session-status :status="session('status')" class="px-1" />
-
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <x-ui.stat-card :label="__('Proyectos totales')" :value="$totalCount" color="emerald"
                     icon='<path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-19.5 0v6a2.25 2.25 0 002.25 2.25h15a2.25 2.25 0 002.25-2.25v-6m-19.5 0h19.5" />' />
@@ -60,6 +54,24 @@
                             @endforeach
                         </select>
                     </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 mb-1">{{ __('Cliente') }}</label>
+                        <select name="client_id" class="w-full border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-md shadow-sm text-sm">
+                            <option value="">{{ __('Todos') }}</option>
+                            @foreach ($clients as $client)
+                                <option value="{{ $client->id }}" {{ (string) ($filters['client_id'] ?? '') === (string) $client->id ? 'selected' : '' }}>{{ $client->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 mb-1">{{ __('Área') }}</label>
+                        <select name="area_id" class="w-full border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-md shadow-sm text-sm">
+                            <option value="">{{ __('Todas') }}</option>
+                            @foreach ($areas as $area)
+                                <option value="{{ $area->id }}" {{ (string) ($filters['area_id'] ?? '') === (string) $area->id ? 'selected' : '' }}>{{ $area->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
                     <div class="sm:col-span-4 flex items-center gap-3">
                         <button type="submit" class="px-3 py-2 rounded-lg text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-700 transition">{{ __('Filtrar') }}</button>
                         @if (array_filter($filters ?? []))
@@ -90,7 +102,7 @@
                                         <div class="text-sm font-medium text-gray-900 truncate" title="{{ $project->name }}">{{ $project->name }}</div>
                                         <div class="text-xs text-gray-400">{{ $project->code }}</div>
                                     </td>
-                                    <td class="px-3 py-3 text-sm text-gray-500 truncate" title="{{ $project->client }}">{{ $project->client ?? '—' }}</td>
+                                    <td class="px-3 py-3 text-sm text-gray-500 truncate" title="{{ $project->client?->name }}">{{ $project->client?->name ?? '—' }}</td>
                                     <td class="px-3 py-3 text-sm text-gray-500 truncate">{{ $project->responsibleEmployee?->fullName() ?? '—' }}</td>
                                     <td class="px-3 py-3">
                                         <x-ui.badge :color="$project->status->color()">{{ $project->status->label() }}</x-ui.badge>
@@ -166,7 +178,7 @@
                             <dl class="grid grid-cols-2 gap-2 text-xs">
                                 <div>
                                     <dt class="font-medium text-gray-400">{{ __('Cliente') }}</dt>
-                                    <dd class="text-gray-700 truncate">{{ $project->client ?? '—' }}</dd>
+                                    <dd class="text-gray-700 truncate">{{ $project->client?->name ?? '—' }}</dd>
                                 </div>
                                 <div>
                                     <dt class="font-medium text-gray-400">{{ __('Responsable') }}</dt>

@@ -1,29 +1,25 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex items-center justify-between">
-            <div>
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">{{ __('Documentos') }}</h2>
-                <p class="text-sm text-gray-500 mt-0.5">{{ __('Base de conocimiento para el agente inteligente (RAG)') }}</p>
-            </div>
+        <x-ui.page-header :title="__('Documentos')" :subtitle="__('Base de conocimiento para el agente inteligente (RAG)')">
             @can('create', \App\Models\RagDocument::class)
-                <x-ui.primary-button x-data @click="$dispatch('open-modal', 'upload-document')">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>
-                    {{ __('Subir documento') }}
-                </x-ui.primary-button>
+                <x-slot name="actions">
+                    <x-ui.primary-button x-data @click="$dispatch('open-modal', 'upload-document')" class="min-h-[44px]">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>
+                        {{ __('Subir documento') }}
+                    </x-ui.primary-button>
+                </x-slot>
             @endcan
-        </div>
+        </x-ui.page-header>
     </x-slot>
 
     <div class="py-8">
         <div class="max-w-6xl mx-auto sm:px-6 lg:px-8 space-y-4">
-            <x-ui.auth-session-status :status="session('status')" class="px-1" />
-
             <div class="rounded-lg bg-blue-50 border border-blue-100 px-4 py-3 text-sm text-blue-800">
                 {{ __('Los documentos subidos quedan "Pendientes" hasta que el motor de procesamiento (próxima fase) extraiga su texto y genere los embeddings.') }}
             </div>
 
             <x-ui.card padding="p-0">
-                <div class="overflow-x-auto">
+                <div class="hidden lg:block overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
@@ -40,7 +36,7 @@
                                 <tr class="hover:bg-emerald-50/40 transition">
                                     <td class="px-6 py-4">
                                         <div class="text-sm font-medium text-gray-900">{{ $document->title }}</div>
-                                        <div class="text-xs text-gray-400">{{ $document->file_name }}</div>
+                                        <div class="text-xs text-gray-500">{{ $document->file_name }}</div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $document->project?->name ?? __('General') }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $document->source_type->label() }}</td>
@@ -78,6 +74,52 @@
                             @endforelse
                         </tbody>
                     </table>
+                </div>
+
+                <div class="lg:hidden divide-y divide-gray-100">
+                    @forelse ($documents as $document)
+                        <div class="p-4 space-y-2">
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="min-w-0">
+                                    <p class="text-sm font-medium text-gray-900 truncate">{{ $document->title }}</p>
+                                    <p class="text-xs text-gray-400 truncate">{{ $document->file_name }}</p>
+                                </div>
+                                <x-ui.badge :color="$document->status->color()" :title="$document->failure_reason">{{ $document->status->label() }}</x-ui.badge>
+                            </div>
+                            <dl class="grid grid-cols-2 gap-2 text-xs">
+                                <div>
+                                    <dt class="font-medium text-gray-400">{{ __('Proyecto') }}</dt>
+                                    <dd class="text-gray-700 truncate">{{ $document->project?->name ?? __('General') }}</dd>
+                                </div>
+                                <div>
+                                    <dt class="font-medium text-gray-400">{{ __('Tipo') }}</dt>
+                                    <dd class="text-gray-700">{{ $document->source_type->label() }}</dd>
+                                </div>
+                            </dl>
+                            <div class="flex items-center gap-4 pt-1 text-sm border-t border-gray-100 mt-1 pt-3">
+                                @if ($document->status->value === 'failed')
+                                    @can('update', $document)
+                                        <form action="{{ route('rag-documents.retry', $document) }}" method="POST">
+                                            @csrf
+                                            <button type="submit" class="text-emerald-600 hover:text-emerald-800 font-medium min-h-[44px]">{{ __('Reintentar') }}</button>
+                                        </form>
+                                    @endcan
+                                @endif
+                                @can('delete', $document)
+                                    <form action="{{ route('rag-documents.destroy', $document) }}" method="POST" @submit.prevent="if (confirm(@js(__('¿Eliminar este documento?')))) $el.submit()">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="text-red-600 hover:text-red-800 font-medium min-h-[44px]">{{ __('Eliminar') }}</button>
+                                    </form>
+                                @endcan
+                            </div>
+                        </div>
+                    @empty
+                        <div class="px-6 py-16 text-center">
+                            <p class="text-4xl">📄</p>
+                            <p class="mt-2 text-sm text-gray-500">{{ __('Todavía no se han subido documentos.') }}</p>
+                        </div>
+                    @endforelse
                 </div>
             </x-ui.card>
 

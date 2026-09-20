@@ -6,7 +6,7 @@
         </div>
     </x-slot>
 
-    <div class="flex h-[calc(100vh-5.75rem)] py-4 gap-4 px-4 sm:px-6 lg:px-8"
+    <div class="flex h-[calc(100dvh-5.75rem)] py-4 gap-4 px-4 sm:px-6 lg:px-8"
          x-data="{
             projects: @js($projects->map(fn ($p) => [
                 'id' => $p->id,
@@ -149,7 +149,8 @@
                              @click="loadConversation(conversation.id)">
                             <span class="flex-1 text-sm truncate" :class="conversation.id === conversationId ? 'text-emerald-800 font-medium' : 'text-gray-700'" x-text="conversation.title"></span>
                             <button @click.stop="deleteConversation(conversation.id)" title="{{ __('Eliminar') }}"
-                                    class="opacity-0 group-hover:opacity-100 p-1 rounded text-gray-300 hover:text-red-600 transition">
+                                    aria-label="{{ __('Eliminar conversación') }}"
+                                    class="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 p-2 -m-1 min-w-[44px] min-h-[44px] inline-flex items-center justify-center rounded text-gray-300 hover:text-red-600 transition">
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
                             </button>
                         </div>
@@ -161,7 +162,7 @@
         <div class="flex-1 min-w-0 flex flex-col h-full min-h-0 space-y-4">
             <x-ui.card padding="p-4" class="shrink-0">
                 <div class="flex items-center gap-3">
-                    <button @click="sidebarOpen = true" class="lg:hidden p-1.5 -ml-1 text-gray-500 hover:text-gray-700">
+                    <button @click="sidebarOpen = true" aria-label="{{ __('Abrir conversaciones') }}" class="lg:hidden p-2 -ml-2 min-w-[44px] min-h-[44px] inline-flex items-center justify-center text-gray-500 hover:text-gray-700">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
                     </button>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 flex-1">
@@ -201,7 +202,7 @@
                         <div :class="message.role === 'user' ? 'flex justify-end' : 'flex justify-start'"
                              class="animate-fade-in-up">
                             <div :class="message.role === 'user' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-800'"
-                                 class="max-w-lg rounded-xl px-4 py-3 text-sm whitespace-pre-line shadow-sm">
+                                 class="max-w-lg rounded-xl px-4 py-3 text-sm whitespace-pre-line break-words shadow-sm">
                                 <p x-text="message.text"></p>
                                 <template x-if="message.role === 'assistant' && message.sources && message.sources.length > 0">
                                     <div class="mt-2 pt-2 border-t border-gray-200 flex flex-wrap gap-1">

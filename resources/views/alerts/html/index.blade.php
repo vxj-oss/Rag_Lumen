@@ -1,23 +1,19 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex items-center justify-between">
-            <div>
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">{{ __('Alertas') }}</h2>
-                <p class="text-sm text-gray-500 mt-0.5">{{ __('Avisos generados automáticamente sobre proyectos, tareas y equipo') }}</p>
-            </div>
+        <x-ui.page-header :title="__('Alertas')" :subtitle="__('Avisos generados automáticamente sobre proyectos, tareas y equipo')">
             @if ($unreadCount > 0)
-                <form action="{{ route('alerts.read-all') }}" method="POST">
-                    @csrf
-                    <x-ui.secondary-button type="submit">{{ __('Marcar todas como leídas') }}</x-ui.secondary-button>
-                </form>
+                <x-slot name="actions">
+                    <form action="{{ route('alerts.read-all') }}" method="POST">
+                        @csrf
+                        <x-ui.secondary-button type="submit" class="min-h-[44px]">{{ __('Marcar todas como leídas') }}</x-ui.secondary-button>
+                    </form>
+                </x-slot>
             @endif
-        </div>
+        </x-ui.page-header>
     </x-slot>
 
     <div class="py-8">
         <div class="max-w-4xl mx-auto sm:px-6 lg:px-8 space-y-4">
-            <x-ui.auth-session-status :status="session('status')" class="px-1" />
-
             <x-ui.card padding="p-0">
                 <ul class="divide-y divide-gray-100">
                     @forelse ($notifications as $notification)
