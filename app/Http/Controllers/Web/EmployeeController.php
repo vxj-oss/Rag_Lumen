@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Employee\StoreEmployeeRequest;
 use App\Http\Requests\Employee\UpdateEmployeeRequest;
+use App\Models\Area;
 use App\Models\Employee;
 use App\Models\User;
 use App\Services\EmployeeMetricsService;
@@ -16,6 +17,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class EmployeeController extends Controller
 {
@@ -24,6 +26,7 @@ class EmployeeController extends Controller
         $this->authorize('viewAny', Employee::class);
 
         $employees = Employee::query()
+            ->with('area')
             ->when($request->filled('search'), function ($query) use ($request) {
                 $search = $request->string('search');
                 $query->where(function ($query) use ($search) {
@@ -34,6 +37,7 @@ class EmployeeController extends Controller
             })
             ->when($request->filled('status'), fn ($query) => $query->where('status', $request->string('status')))
             ->when($request->filled('specialty'), fn ($query) => $query->where('specialty', $request->string('specialty')))
+            ->when($request->filled('area_id'), fn ($query) => $query->where('area_id', $request->integer('area_id')))
             ->orderBy('first_name')
             ->paginate(5)
             ->withQueryString();
@@ -42,14 +46,15 @@ class EmployeeController extends Controller
             'employees' => $employees,
             'specialties' => EmployeeSpecialty::cases(),
             'statuses' => EmployeeStatus::cases(),
+            'areas' => Area::where('active', true)->orderBy('name')->get(),
             'totalCount' => Employee::count(),
             'activeCount' => Employee::where('status', EmployeeStatus::Active->value)->count(),
             'onLeaveCount' => Employee::where('status', EmployeeStatus::OnLeave->value)->count(),
-            'filters' => $request->only(['search', 'status', 'specialty']),
+            'filters' => $request->only(['search', 'status', 'specialty', 'area_id']),
         ]);
     }
 
-    public function exportCsv(): \Symfony\Component\HttpFoundation\StreamedResponse
+    public function exportCsv(): StreamedResponse
     {
         $this->authorize('viewAny', Employee::class);
 
@@ -125,6 +130,7 @@ class EmployeeController extends Controller
             'employee' => $employee,
             'specialties' => EmployeeSpecialty::cases(),
             'statuses' => EmployeeStatus::cases(),
+            'areas' => Area::where('active', true)->orderBy('name')->get(),
             'metrics' => $metricsService->forEmployee($employee),
         ]);
     }

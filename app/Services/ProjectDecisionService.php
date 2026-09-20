@@ -12,8 +12,7 @@ class ProjectDecisionService
     public function __construct(
         private ProjectMetricsService $metricsService,
         private ProjectRiskService $riskService,
-    ) {
-    }
+    ) {}
 
     public function evaluate(Project $project): array
     {
@@ -95,11 +94,10 @@ class ProjectDecisionService
 
         $maxRecommended = config('risk.employee_max_recommended_tasks');
         $overloadRatio = config('decisions.employee_overload_ratio');
-        $activeStatuses = ['pending', 'in_progress', 'review', 'blocked'];
 
-        return $members->map(function ($employee) use ($activeStatuses, $maxRecommended) {
-            $activeTaskCount = Task::where('assigned_to', $employee->id)
-                ->whereIn('status', $activeStatuses)
+        return $members->map(function ($employee) use ($maxRecommended) {
+            $activeTaskCount = Task::where('assigned_to', $employee->id)->with('state')->get()
+                ->filter(fn (Task $task) => $task->isActiveState())
                 ->count();
 
             return [

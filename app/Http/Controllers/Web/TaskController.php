@@ -6,19 +6,24 @@ use App\Actions\RecordTaskProgressAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Task\StoreTaskRequest;
 use App\Http\Requests\Task\UpdateTaskRequest;
+use App\Models\Area;
 use App\Models\Employee;
 use App\Models\Project;
 use App\Models\Task;
-use App\Models\User;
+use App\Models\TaskState;
+use App\Models\TaskStatusHistory;
 use App\Support\ActivityLogger;
 use App\Support\Enums\Priority;
 use App\Support\Enums\RoleName;
-use App\Support\Enums\TaskStatus;
+use App\Support\ProjectScope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class TaskController extends Controller
 {
@@ -26,49 +31,192 @@ class TaskController extends Controller
     {
         $this->authorize('viewAny', Task::class);
 
-        $visible = $this->visibleTasksQuery();
-
-        $tasks = (clone $visible)
-            ->with(['project', 'assignee'])
-            ->when($request->filled('search'), fn ($query) => $query->where('title', 'like', '%'.$request->string('search').'%'))
-            ->when($request->filled('status'), fn ($query) => $query->where('status', $request->string('status')))
-            ->when($request->filled('priority'), fn ($query) => $query->where('priority', $request->string('priority')))
-            ->when($request->filled('project_id'), fn ($query) => $query->where('project_id', $request->integer('project_id')))
-            ->orderBy('due_date')
-            ->paginate(5)
-            ->withQueryString();
-
-        $overdueCount = (clone $visible)
-            ->whereNotIn('status', [TaskStatus::Completed->value, TaskStatus::Cancelled->value])
-            ->whereDate('due_date', '<', now()->toDateString())
-            ->count();
-
         return view('tasks.html.index', [
-            'tasks' => $tasks,
-            'totalCount' => (clone $visible)->count(),
-            'pendingCount' => (clone $visible)->where('status', TaskStatus::Pending->value)->count(),
-            'blockedCount' => (clone $visible)->where('status', TaskStatus::Blocked->value)->count(),
-            'overdueCount' => $overdueCount,
-            'filters' => $request->only(['search', 'status', 'priority', 'project_id']),
-        ] + $this->formOptions());
+            'projects' => $this->scopedProjects($request->user()),
+            'filterEmployees' => $this->filterEmployees($request->user()),
+            'areas' => Area::where('active', true)->orderBy('name')->get(),
+            'priorities' => Priority::cases(),
+            'filters' => $request->only(['search', 'project_id', 'assigned_to', 'area_id', 'priority', 'mine']),
+        ]);
     }
 
-    public function exportCsv(): \Symfony\Component\HttpFoundation\StreamedResponse
+    public function board(Request $request): JsonResponse
     {
         $this->authorize('viewAny', Task::class);
 
-        $tasks = $this->visibleTasksQuery()->with(['project', 'assignee'])->orderBy('due_date')->get();
+        $tasks = $this->filteredTasks($request)
+            ->with(['state', 'assignee.area', 'project', 'statusHistory.user', 'progressUpdates.user'])
+            ->orderBy('due_date')
+            ->get();
+
+        if ($request->filled('project_id')) {
+            // Columnas únicas por slug, prefiriendo el estado propio del proyecto:
+            // sin esto aparecen dos columnas idénticas y el arrastre entre ellas no hace nada.
+            $statuses = TaskState::where(function ($query) use ($request) {
+                $query->whereNull('project_id')->orWhere('project_id', $request->integer('project_id'));
+            })->where('active', true)->orderBy('position')->get()
+                ->groupBy('slug')
+                ->map(fn ($group) => $group->firstWhere('project_id', $request->integer('project_id')) ?? $group->first())
+                ->values();
+        } else {
+            $statuses = TaskState::whereNull('project_id')->where('active', true)->orderBy('position')->get()
+                ->keyBy('slug');
+
+            $extraIds = $tasks->pluck('status_id')->filter()->unique()
+                ->diff(TaskState::whereNull('project_id')->pluck('id'))
+                ->values();
+
+            foreach (TaskState::whereIn('id', $extraIds)->orderBy('position')->get() as $extra) {
+                if (! $statuses->has($extra->slug)) {
+                    $statuses->put($extra->slug, $extra);
+                }
+            }
+
+            $statuses = $statuses->values();
+        }
+
+        $user = $request->user();
+        $cards = $tasks->map(fn (Task $task) => $this->cardData($task, $user))->values();
+
+        return response()->json([
+            'columns' => $statuses->map(fn (TaskState $state) => [
+                'id' => $state->id,
+                'slug' => $state->slug,
+                'name' => $state->name,
+                'color' => $state->color,
+                'is_blocking' => $state->is_blocking,
+                'count' => $cards->where('status_slug', $state->slug)->count(),
+            ])->values(),
+            'cards' => $cards,
+            'kpis' => [
+                'open' => $tasks->filter(fn (Task $task) => $task->isActiveState())->count(),
+                'overdue' => $tasks->filter(fn (Task $task) => $task->isOverdue())->count(),
+                'completed_week' => $tasks->filter(fn (Task $task) => $task->state?->slug === 'completada'
+                    && $task->completed_at !== null
+                    && $task->completed_at->gte(now()->startOfWeek()))->count(),
+            ],
+        ]);
+    }
+
+    private function filteredTasks(Request $request): Builder
+    {
+        $visible = $this->visibleTasksQuery();
+
+        return (clone $visible)
+            ->when($request->filled('search'), fn ($query) => $query->where('title', 'like', '%'.$request->string('search').'%'))
+            ->when($request->filled('project_id'), fn ($query) => $query->where('project_id', $request->integer('project_id')))
+            ->when($request->filled('assigned_to'), fn ($query) => $query->where('assigned_to', $request->integer('assigned_to')))
+            ->when($request->filled('priority'), fn ($query) => $query->where('priority', $request->string('priority')))
+            ->when($request->filled('area_id'), fn ($query) => $query->whereHas('assignee', fn ($q) => $q->where('area_id', $request->integer('area_id'))))
+            ->when($request->boolean('mine'), function ($query) use ($request) {
+                $query->where('assigned_to', $request->user()->employee?->id);
+            });
+    }
+
+    private function cardData(Task $task, $user): array
+    {
+        $assignee = $task->assignee;
+        $mover = $task->statusHistory->first()?->user ?? $task->progressUpdates->first()?->user;
+
+        return [
+            'id' => $task->id,
+            'code' => $task->code ?? '#'.$task->id,
+            'title' => $task->title,
+            'status_id' => $task->status_id,
+            'status_slug' => $task->state?->slug,
+            'project_code' => $task->project?->code,
+            'project_name' => $task->project?->name ?? 'Proyecto archivado',
+            'assignee_name' => $assignee?->fullName(),
+            'assignee_initials' => $assignee
+                ? mb_strtoupper(mb_substr($assignee->first_name, 0, 1).mb_substr($assignee->last_name, 0, 1))
+                : null,
+            'area' => $assignee?->area?->name,
+            'priority' => $task->priority->value,
+            'priority_label' => $task->priority->label(),
+            'priority_color' => $task->priority->color(),
+            'progress' => $task->progress_percentage,
+            'estimated_hours' => $task->estimated_hours,
+            'actual_hours' => $task->actual_hours,
+            'due' => $this->dueData($task),
+            'overdue' => $task->isOverdue(),
+            'blocking' => $task->isBlockingState(),
+            'blocked_reason' => $task->blocked_reason,
+            'last_mover_name' => $mover?->name,
+            'last_mover_initial' => $mover ? mb_strtoupper(mb_substr($mover->name, 0, 1)) : null,
+            'can_update' => $user->can('update', $task),
+            'can_delete' => $user->can('delete', $task),
+        ];
+    }
+
+    private function dueData(Task $task): ?array
+    {
+        if ($task->due_date === null) {
+            return null;
+        }
+
+        $today = now()->startOfDay();
+        $due = $task->due_date->copy()->startOfDay();
+        $diff = $today->diffInDays($due, false);
+
+        if ($diff < 0) {
+            $days = abs((int) $diff);
+            $label = $days === 1 ? '1 día de atraso' : "{$days} días de atraso";
+        } elseif ($diff === 0) {
+            $label = 'Vence hoy';
+        } elseif ($diff === 1) {
+            $label = 'Vence mañana';
+        } elseif ($diff <= 7) {
+            $label = "Vence en {$diff} días";
+        } else {
+            $label = $task->due_date->format('d/m/Y');
+        }
+
+        return ['date' => $task->due_date->toDateString(), 'label' => $label];
+    }
+
+    private function scopedProjects($user)
+    {
+        return ProjectScope::apply(Project::orderBy('name'), $user)->get(['id', 'code', 'name']);
+    }
+
+    private function filterEmployees($user)
+    {
+        if ($user->isAdmin() || $user->isManager()) {
+            return Employee::orderBy('first_name')->get(['id', 'first_name', 'last_name']);
+        }
+
+        $employeeId = $user->employee?->id;
+
+        if ($employeeId === null) {
+            return collect();
+        }
+
+        $projectIds = Project::where('responsible_employee_id', $employeeId)->pluck('id');
+
+        return Employee::where('id', $employeeId)
+            ->orWhereHas('projects', fn ($query) => $query->whereIn('projects.id', $projectIds))
+            ->orWhereIn('id', Task::whereIn('project_id', $projectIds)->select('assigned_to'))
+            ->orderBy('first_name')
+            ->get(['id', 'first_name', 'last_name']);
+    }
+
+    public function exportCsv(): StreamedResponse
+    {
+        $this->authorize('viewAny', Task::class);
+
+        $tasks = $this->visibleTasksQuery()->with(['project', 'assignee', 'state'])->orderBy('due_date')->get();
 
         return response()->streamDownload(function () use ($tasks) {
             $handle = fopen('php://output', 'w');
-            fputcsv($handle, ['Título', 'Proyecto', 'Asignado a', 'Estado', 'Prioridad', 'Vence', 'Avance %', 'Horas estimadas', 'Horas reales']);
+            fputcsv($handle, ['Código', 'Título', 'Proyecto', 'Asignado a', 'Estado', 'Prioridad', 'Vence', 'Avance %', 'Horas estimadas', 'Horas reales']);
 
             foreach ($tasks as $task) {
                 fputcsv($handle, [
+                    $task->code ?? '#'.$task->id,
                     $task->title,
-                    $task->project->name,
+                    $task->project?->name ?? '—',
                     $task->assignee?->fullName() ?? '—',
-                    $task->status->label(),
+                    $task->state?->name ?? $task->status->label(),
                     $task->priority->label(),
                     $task->due_date?->toDateString() ?? '—',
                     $task->progress_percentage,
@@ -81,7 +229,6 @@ class TaskController extends Controller
         }, 'tareas-'.now()->format('Y-m-d').'.csv', ['Content-Type' => 'text/csv']);
     }
 
-    
     public function liveStatus(): JsonResponse
     {
         $visible = $this->visibleTasksQuery();
@@ -94,7 +241,6 @@ class TaskController extends Controller
         ]);
     }
 
-    
     public function liveStatusOne(Task $task): JsonResponse
     {
         $this->authorize('view', $task);
@@ -104,12 +250,12 @@ class TaskController extends Controller
         ]);
     }
 
-    private function visibleTasksQuery(): \Illuminate\Database\Eloquent\Builder
+    private function visibleTasksQuery(): Builder
     {
-        
+
         $user = Auth::user();
 
-        return Task::query()->when(
+        return Task::query()->whereHas('project')->when(
             ! $user->hasRole([RoleName::Administrator->value, RoleName::Manager->value]),
             function ($query) use ($user) {
                 $employeeId = $user->employee?->id;
@@ -140,17 +286,31 @@ class TaskController extends Controller
     public function store(StoreTaskRequest $request): RedirectResponse
     {
         $data = $request->validated();
+        $dependencyIds = $data['dependency_ids'] ?? [];
+        unset($data['dependency_ids'], $data['area_id']);
+
+        $state = TaskState::findOrFail($data['status_id']);
+
         $data['created_by'] = Auth::id();
-        $isCompleted = $data['status'] === TaskStatus::Completed->value;
-        $data['completed_at'] = $isCompleted ? now() : null;
-        $data['progress_percentage'] = $isCompleted ? 100 : 0;
+        $data['status'] = TaskState::enumForSlug($state->slug)?->value ?? 'pending';
+        $data['completed_at'] = $state->slug === 'completada' ? now() : null;
+        $data['progress_percentage'] = $state->slug === 'completada' ? 100 : 0;
 
         $task = Task::create($data);
+        $task->dependencies()->attach($dependencyIds);
+
+        TaskStatusHistory::create([
+            'task_id' => $task->id,
+            'from_status_id' => null,
+            'to_status_id' => $state->id,
+            'user_id' => Auth::id(),
+            'comment' => 'Tarea creada.',
+        ]);
 
         ActivityLogger::record($task, 'created', "Creó la tarea \"{$task->title}\".");
 
         return redirect()
-            ->route('tasks.index')
+            ->route('tasks.index', ['project_id' => $task->project_id])
             ->with('status', 'Tarea creada correctamente.');
     }
 
@@ -158,7 +318,7 @@ class TaskController extends Controller
     {
         $this->authorize('view', $task);
 
-        $task->load(['project', 'assignee', 'dependencies', 'dependents', 'progressUpdates.user']);
+        $task->load(['project', 'assignee.area', 'state', 'dependencies.state', 'dependents.state', 'progressUpdates.user', 'statusHistory.user']);
 
         $availableForDependency = Task::where('project_id', $task->project_id)
             ->where('id', '!=', $task->id)
@@ -166,9 +326,14 @@ class TaskController extends Controller
             ->orderBy('title')
             ->get();
 
+        $projectStates = TaskState::where(function ($query) use ($task) {
+            $query->whereNull('project_id')->orWhere('project_id', $task->project_id);
+        })->where('active', true)->orderBy('position')->get();
+
         return view('tasks.html.show', [
             'task' => $task,
             'availableForDependency' => $availableForDependency,
+            'projectStates' => $projectStates,
         ] + $this->formOptions());
     }
 
@@ -176,18 +341,40 @@ class TaskController extends Controller
     {
         $data = $request->validated();
 
-        if (array_key_exists('status', $data)) {
-            $isCompleted = $data['status'] === TaskStatus::Completed->value;
-            $data['completed_at'] = $isCompleted ? ($task->completed_at ?? now()) : null;
-        }
-
         $before = $task->getAttributes();
 
-        $task->update($data);
+        if (array_key_exists('status_id', $data) && (int) $data['status_id'] !== (int) $task->status_id) {
+            $state = TaskState::findOrFail($data['status_id']);
+
+            $task->status_id = $state->id;
+
+            if ($enum = TaskState::enumForSlug($state->slug)) {
+                $task->status = $enum;
+            }
+
+            if ($state->slug === 'completada') {
+                $task->progress_percentage = 100;
+                $task->completed_at ??= now();
+            } else {
+                $task->completed_at = null;
+            }
+
+            unset($data['status_id']);
+
+            TaskStatusHistory::create([
+                'task_id' => $task->id,
+                'from_status_id' => $before['status_id'] ?? null,
+                'to_status_id' => $state->id,
+                'user_id' => $request->user()->id,
+            ]);
+        }
+
+        $task->fill($data);
+        $task->save();
 
         ActivityLogger::recordUpdate($task, $before, "la tarea \"{$task->title}\"");
 
-        if (($data['status'] ?? null) === TaskStatus::Completed->value && $task->progress_percentage < 100) {
+        if ($task->state?->slug === 'completada' && $task->progress_percentage < 100) {
             $recordProgress->execute($task, 100, 'Marcada como completada.', $request->user());
         }
 
@@ -198,29 +385,86 @@ class TaskController extends Controller
 
     public function updateStatus(Request $request, Task $task): JsonResponse
     {
-        $this->authorize('update', $task);
+        $task->loadMissing('project');
 
         $validated = $request->validate([
-            'status' => ['required', 'in:pending,in_progress,review,blocked,completed,cancelled'],
+            'status_id' => [
+                'nullable', 'integer',
+                Rule::exists('task_statuses', 'id')->where(function ($query) use ($task) {
+                    $query->where('active', true)
+                        ->where(function ($query) use ($task) {
+                            $query->whereNull('project_id')->orWhere('project_id', $task->project_id);
+                        });
+                }),
+            ],
+            'status_slug' => ['nullable', 'string', 'max:60'],
+            'blocked_reason' => ['nullable', 'string'],
+            'comment' => ['nullable', 'string'],
         ]);
 
-        $status = TaskStatus::from($validated['status']);
-        $before = $task->getAttributes();
+        if (filled($validated['status_id'] ?? null)) {
+            $state = TaskState::findOrFail($validated['status_id']);
+        } else {
+            $state = TaskState::where('slug', $validated['status_slug'] ?? '')
+                ->where(function ($query) use ($task) {
+                    $query->where('project_id', $task->project_id)->orWhereNull('project_id');
+                })
+                ->where('active', true)
+                ->orderByRaw('project_id IS NULL')
+                ->first();
 
-        $task->status = $status;
-        $task->completed_at = $status === TaskStatus::Completed ? ($task->completed_at ?? now()) : null;
-        if ($status === TaskStatus::Completed) {
-            $task->progress_percentage = 100;
+            abort_if($state === null, 422, 'Estado no válido para este proyecto.');
         }
+
+        $this->authorize('transitionTo', [$task, $state]);
+
+        if ($state->is_blocking && blank($validated['blocked_reason'] ?? null) && blank($task->blocked_reason)) {
+            return response()->json([
+                'message' => 'Mover a un estado de bloqueo requiere indicar el motivo.',
+                'errors' => ['blocked_reason' => ['El motivo de bloqueo es obligatorio.']],
+            ], 422);
+        }
+
+        $before = $task->getAttributes();
+        $fromStatusId = $task->status_id;
+
+        $task->status_id = $state->id;
+
+        if ($enum = TaskState::enumForSlug($state->slug)) {
+            $task->status = $enum;
+        }
+
+        if ($state->slug === 'completada') {
+            $task->progress_percentage = 100;
+            $task->completed_at ??= now();
+        } else {
+            $task->completed_at = null;
+        }
+
+        if (filled($validated['blocked_reason'] ?? null)) {
+            $task->blocked_reason = $validated['blocked_reason'];
+        }
+
         $task->save();
+
+        TaskStatusHistory::create([
+            'task_id' => $task->id,
+            'from_status_id' => $fromStatusId,
+            'to_status_id' => $state->id,
+            'user_id' => $request->user()->id,
+            'comment' => $validated['comment'] ?? null,
+        ]);
 
         ActivityLogger::recordUpdate($task, $before, "la tarea \"{$task->title}\"");
 
         return response()->json([
             'id' => $task->id,
+            'status_id' => $state->id,
+            'status_slug' => $state->slug,
             'status' => $task->status->value,
-            'status_label' => $task->status->label(),
-            'status_color' => $task->status->color(),
+            'status_label' => $state->name,
+            'status_color' => $state->color,
+            'is_blocking' => $state->is_blocking,
             'progress_percentage' => $task->progress_percentage,
         ]);
     }
@@ -240,17 +484,11 @@ class TaskController extends Controller
 
     private function formOptions(): array
     {
-        
-        $user = Auth::user();
-
-        $projects = $user->hasRole(RoleName::Administrator->value)
-            ? Project::orderBy('name')->get()
-            : Project::where('responsible_employee_id', $user->employee?->id)->orderBy('name')->get();
+        $projects = ProjectScope::apply(Project::orderBy('name'), Auth::user())->get();
 
         return [
             'projects' => $projects,
             'employees' => Employee::orderBy('first_name')->get(),
-            'statuses' => TaskStatus::cases(),
             'priorities' => Priority::cases(),
         ];
     }

@@ -4,20 +4,18 @@ namespace App\Services;
 
 use App\Models\Project;
 use App\Models\Task;
-use App\Support\Enums\Priority;
 use App\Support\Enums\RiskLevel;
 use App\Support\Enums\TaskStatus;
 use Illuminate\Support\Carbon;
 
 class ProjectRiskService
 {
-    public function __construct(private ProjectMetricsService $metricsService)
-    {
-    }
+    public function __construct(private ProjectMetricsService $metricsService) {}
 
     public function calculate(Project $project): array
     {
         $tasks = $project->relationLoaded('tasks') ? $project->tasks : $project->tasks()->get();
+        $tasks->loadMissing('state');
         $metrics = $this->metricsService->forProject($project);
 
         $delayScore = $this->delayScore($tasks);
@@ -67,7 +65,7 @@ class ProjectRiskService
 
     private function delayScore($tasks): float
     {
-        $activeTasks = $tasks->filter(fn (Task $task) => ! in_array($task->status, [TaskStatus::Completed, TaskStatus::Cancelled], true));
+        $activeTasks = $tasks->filter(fn (Task $task) => $task->isActiveState());
 
         if ($activeTasks->isEmpty()) {
             return 0.0;
@@ -91,13 +89,13 @@ class ProjectRiskService
 
     private function blockedScore($tasks): float
     {
-        $activeTasks = $tasks->filter(fn (Task $task) => ! in_array($task->status, [TaskStatus::Completed, TaskStatus::Cancelled], true));
+        $activeTasks = $tasks->filter(fn (Task $task) => $task->isActiveState());
 
         if ($activeTasks->isEmpty()) {
             return 0.0;
         }
 
-        $blockedTasks = $activeTasks->filter(fn (Task $task) => $task->status === TaskStatus::Blocked);
+        $blockedTasks = $activeTasks->filter(fn (Task $task) => $task->isBlockingState());
 
         $blockedRatio = $blockedTasks->count() / $activeTasks->count();
 
@@ -138,9 +136,9 @@ class ProjectRiskService
         $maxRecommended = config('risk.employee_max_recommended_tasks');
         $activeStatuses = [TaskStatus::Pending->value, TaskStatus::InProgress->value, TaskStatus::Review->value, TaskStatus::Blocked->value];
 
-        $ratios = $members->map(function ($employee) use ($activeStatuses, $maxRecommended) {
-            $activeTaskCount = Task::where('assigned_to', $employee->id)
-                ->whereIn('status', $activeStatuses)
+        $ratios = $members->map(function ($employee) use ($maxRecommended) {
+            $activeTaskCount = Task::where('assigned_to', $employee->id)->with('state')->get()
+                ->filter(fn (Task $task) => $task->isActiveState())
                 ->count();
 
             return $activeTaskCount / $maxRecommended;

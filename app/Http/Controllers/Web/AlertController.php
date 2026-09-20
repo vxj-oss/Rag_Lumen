@@ -13,6 +13,8 @@ class AlertController extends Controller
 {
     public function index(): View
     {
+        $this->authorize('viewAny', DatabaseNotification::class);
+
         $notifications = auth()->user()->notifications()->paginate(5);
 
         return view('alerts.html.index', [

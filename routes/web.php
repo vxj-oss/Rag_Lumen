@@ -3,6 +3,8 @@
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Web\ActivityLogController;
 use App\Http\Controllers\Web\AlertController;
+use App\Http\Controllers\Web\AreaController;
+use App\Http\Controllers\Web\ClientController;
 use App\Http\Controllers\Web\DashboardController;
 use App\Http\Controllers\Web\EmployeeController;
 use App\Http\Controllers\Web\ProjectController;
@@ -12,6 +14,7 @@ use App\Http\Controllers\Web\RagQueryController;
 use App\Http\Controllers\Web\TaskController;
 use App\Http\Controllers\Web\TaskDependencyController;
 use App\Http\Controllers\Web\TaskProgressController;
+use App\Http\Controllers\Web\TaskStatusController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -35,12 +38,23 @@ Route::middleware('auth')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::get('employees/export', [EmployeeController::class, 'exportCsv'])->name('employees.export');
     Route::resource('employees', EmployeeController::class)->except(['create', 'edit']);
+    Route::get('clients/export', [ClientController::class, 'exportCsv'])->name('clients.export');
+    Route::post('clients/quick', [ClientController::class, 'quickStore'])->name('clients.quick');
+    Route::resource('clients', ClientController::class)->except(['create', 'edit']);
+    Route::resource('areas', AreaController::class)->except(['create', 'edit', 'show']);
     Route::get('projects/export', [ProjectController::class, 'exportCsv'])->name('projects.export');
     Route::get('projects/{project}/export', [ProjectController::class, 'export'])->name('projects.export.one');
     Route::resource('projects', ProjectController::class)->except(['create', 'edit']);
     Route::post('projects/{project}/members', [ProjectMemberController::class, 'store'])->name('projects.members.store');
     Route::delete('projects/{project}/members/{member}', [ProjectMemberController::class, 'destroy'])->name('projects.members.destroy');
+    Route::get('projects/{project}/scope-data', [ProjectController::class, 'scopeData'])->name('projects.scope-data');
+    Route::get('projects/{project}/statuses', [TaskStatusController::class, 'index'])->name('projects.statuses.index');
+    Route::post('projects/{project}/statuses', [TaskStatusController::class, 'store'])->name('projects.statuses.store');
+    Route::put('projects/{project}/statuses/{status}', [TaskStatusController::class, 'update'])->name('projects.statuses.update');
+    Route::delete('projects/{project}/statuses/{status}', [TaskStatusController::class, 'destroy'])->name('projects.statuses.destroy');
+    Route::post('projects/{project}/statuses/reorder', [TaskStatusController::class, 'reorder'])->name('projects.statuses.reorder');
     Route::get('tasks/export', [TaskController::class, 'exportCsv'])->name('tasks.export');
+    Route::get('tasks/board', [TaskController::class, 'board'])->name('tasks.board');
     Route::get('tasks/live-status', [TaskController::class, 'liveStatus'])->name('tasks.live-status');
     Route::get('tasks/{task}/live-status', [TaskController::class, 'liveStatusOne'])->name('tasks.live-status.one');
     Route::patch('tasks/{task}/status', [TaskController::class, 'updateStatus'])->name('tasks.status.update');

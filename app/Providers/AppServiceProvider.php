@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Policies\AlertPolicy;
 use App\RAG\Chunkers\FixedSizeTextChunker;
 use App\RAG\Chunkers\TextChunkerInterface;
 use App\RAG\ContextBuilders\ContextBuilderInterface;
@@ -16,23 +17,24 @@ use App\RAG\Retrievers\RetrieverInterface;
 use App\RAG\Retrievers\SemanticRetriever;
 use App\RAG\VectorStores\MySqlJsonVectorStore;
 use App\RAG\VectorStores\VectorStoreInterface;
+use Illuminate\Notifications\DatabaseNotification;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
-
     public function register(): void
     {
         $this->app->bind(TextChunkerInterface::class, FixedSizeTextChunker::class);
 
         $this->app->bind(EmbeddingServiceInterface::class, fn () => match (config('rag.embedding.provider')) {
-            'cohere' => new CohereEmbeddingService(),
-            default => new OllamaEmbeddingService(),
+            'cohere' => new CohereEmbeddingService,
+            default => new OllamaEmbeddingService,
         });
 
         $this->app->bind(AnswerGeneratorInterface::class, fn () => match (config('rag.completion.provider')) {
-            'groq' => new GroqAnswerGenerator(),
-            default => new OllamaAnswerGenerator(),
+            'groq' => new GroqAnswerGenerator,
+            default => new OllamaAnswerGenerator,
         });
 
         $this->app->bind(VectorStoreInterface::class, MySqlJsonVectorStore::class);
@@ -42,6 +44,6 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        
+        Gate::policy(DatabaseNotification::class, AlertPolicy::class);
     }
 }
