@@ -13,9 +13,9 @@
     </x-slot>
 
     <div class="py-8" x-data="kanbanBoard()" x-init="init()">
-        <div class="max-w-[1400px] mx-auto sm:px-6 lg:px-8 space-y-6">
+        <div class="max-w-[1500px] mx-auto sm:px-6 lg:px-8 space-y-6">
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div class="bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-5 flex items-center gap-4">
+                <div class="relative bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-5 flex items-center gap-4 overflow-hidden">
                     <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-blue-400 to-blue-600"></div>
                     <div class="min-w-0 relative">
                         <p class="text-3xl font-extrabold text-gray-900 tabular-nums" x-text="kpis.open ?? '…'">…</p>
@@ -100,96 +100,107 @@
 
             <div x-show="loading" class="text-sm text-gray-500">{{ __('Cargando tablero…') }}</div>
 
-            <div class="flex gap-4 overflow-x-auto pb-4 items-start snap-x snap-mandatory sm:snap-none">
-                <template x-for="col in columns" :key="col.slug">
-                    <section class="w-[85vw] sm:w-72 shrink-0 snap-start bg-gray-50 rounded-2xl ring-1 ring-gray-200 flex flex-col max-h-[70vh]"
-                        :data-column-id="String(col.id)"
-                        :class="hoverColumnId === String(col.id) ? 'ring-2 ring-emerald-500 bg-emerald-50' : ''">
-                        <header class="flex items-center gap-2 px-3 py-2.5 border-b border-gray-200">
-                            <span class="w-2.5 h-2.5 rounded-full shrink-0" :class="dotClass(col.color)"></span>
-                            <h3 class="text-xs font-bold text-gray-700 uppercase tracking-wide truncate" x-text="col.name"></h3>
-                            <span class="ml-auto text-[11px] font-semibold text-gray-500 bg-white ring-1 ring-gray-200 rounded-full px-2 py-0.5" x-text="col.count"></span>
-                        </header>
-                        <div class="p-2 space-y-2 overflow-y-auto">
-                            <template x-for="card in cardsIn(col.slug)" :key="card.id">
-                                <article :id="'ticket-' + card.id"
-                                    class="bg-white rounded-xl shadow-sm ring-1 ring-gray-200 p-3 space-y-2 hover:shadow-md hover:ring-emerald-300 transition"
-                                    :class="draggingId === card.id ? 'opacity-60 ring-2 ring-emerald-500' : ''">
-                                    <div class="flex items-start justify-between gap-2">
-                                        <button x-show="card.can_update" type="button"
-                                            @pointerdown.stop.prevent="pointerDragStart($event, card)"
-                                            :aria-label="@js(__('Mover tarjeta'))"
-                                            title="{{ __('Arrastrar para cambiar el estado') }}"
-                                            class="-ml-1 -mt-1 p-1 rounded-lg text-gray-400 hover:text-emerald-700 hover:bg-emerald-50 select-none touch-none"
-                                            :class="draggingId === card.id ? 'cursor-grabbing' : 'cursor-grab'">
-                                            <svg class="w-4 h-4 pointer-events-none" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                                <circle cx="7" cy="5" r="1.25" /><circle cx="13" cy="5" r="1.25" />
-                                                <circle cx="7" cy="10" r="1.25" /><circle cx="13" cy="10" r="1.25" />
-                                                <circle cx="7" cy="15" r="1.25" /><circle cx="13" cy="15" r="1.25" />
-                                            </svg>
-                                        </button>
-                                        <p class="text-[11px] font-mono text-gray-500" x-text="card.code"></p>
-                                        <div class="relative" x-data="{ open: false }">
-                                            <button @click="open = !open" :aria-label="@js(__('Acciones de la tarjeta'))"
-                                                class="p-1 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 min-w-[44px] min-h-[44px] inline-flex items-center justify-center font-bold tracking-widest" title="···">···</button>
-                                            <div x-show="open" @click.outside="open = false" @keydown.escape.window="open = false" x-cloak
-                                                 class="absolute right-0 z-20 w-44 max-h-64 overflow-y-auto rounded-xl bg-white ring-1 ring-gray-200 shadow-lg py-1 text-sm">
-                                                <a :href="@js(route('tasks.show', ['task' => '__ID__'])).replace('__ID__', card.id)"
-                                                   class="block px-3 py-2.5 text-gray-700 hover:bg-emerald-50 hover:text-emerald-700 min-h-[44px]">{{ __('Abrir ticket') }}</a>
-                                                <template x-for="target in columns.filter((c) => c.slug !== card.status_slug)" :key="target.slug">
-                                                    <button x-show="card.can_update" @click="open = false; moveViaMenu(card, target)"
-                                                        class="block w-full text-left px-3 py-2.5 text-gray-700 hover:bg-emerald-50 hover:text-emerald-700 min-h-[44px]">
-                                                        <span x-text="@js(__('Mover a')) + ' ' + target.name"></span>
-                                                    </button>
-                                                </template>
-                                                <button x-show="card.can_delete" @click="open = false; deleteCard(card)"
-                                                        class="block w-full text-left px-3 py-2.5 text-red-600 hover:bg-red-50 min-h-[44px]">{{ __('Eliminar') }}</button>
+            <div class="overflow-x-auto pb-6">
+                <div class="flex gap-4 items-start w-max">
+                    <template x-for="col in columns" :key="col.id || col.slug">
+                        <section class="w-80 min-w-[320px] shrink-0 bg-gray-50 border border-gray-200 rounded-xl flex flex-col max-h-[75vh]"
+                            :data-column-id="String(col.id)"
+                            :class="hoverColumnId === String(col.id) ? 'border-emerald-500 bg-emerald-50/40' : ''">
+                            <header class="flex items-center gap-2 px-4 py-3 border-b border-gray-200 bg-white rounded-t-xl">
+                                <span class="w-2.5 h-2.5 rounded-full shrink-0" :class="dotClass(col.color)"></span>
+                                <h3 class="text-xs font-bold text-gray-700 uppercase tracking-wide truncate" x-text="col.name"></h3>
+                                <span class="ml-auto text-xs font-semibold text-gray-600 bg-gray-100 border border-gray-200 rounded-full px-2 py-0.5" x-text="cardsIn(col.slug, col.id).length"></span>
+                            </header>
+                            
+                            <div class="p-3 space-y-3 overflow-y-auto min-h-[160px]">
+                                <template x-for="card in cardsIn(col.slug, col.id)" :key="card.id">
+                                    <article :id="'ticket-' + card.id"
+                                        class="bg-white rounded-lg border border-gray-200 p-3.5 space-y-2.5 shadow-sm hover:shadow-md hover:border-emerald-400 transition"
+                                        :class="draggingId === card.id ? 'opacity-60 border-emerald-500' : ''">
+                                        <div class="flex items-start justify-between gap-2">
+                                            <button x-show="card.can_update" type="button"
+                                                @pointerdown.stop.prevent="pointerDragStart($event, card)"
+                                                :aria-label="@js(__('Mover tarjeta'))"
+                                                title="{{ __('Arrastrar para cambiar el estado') }}"
+                                                class="-ml-1 -mt-1 p-1 rounded-lg text-gray-400 hover:text-emerald-700 hover:bg-emerald-50 select-none touch-none"
+                                                :class="draggingId === card.id ? 'cursor-grabbing' : 'cursor-grab'">
+                                                <svg class="w-4 h-4 pointer-events-none" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                                    <circle cx="7" cy="5" r="1.25" /><circle cx="13" cy="5" r="1.25" />
+                                                    <circle cx="7" cy="10" r="1.25" /><circle cx="13" cy="10" r="1.25" />
+                                                    <circle cx="7" cy="15" r="1.25" /><circle cx="13" cy="15" r="1.25" />
+                                                </svg>
+                                            </button>
+                                            <p class="text-[11px] font-mono text-gray-500" x-text="card.code"></p>
+                                            <div class="relative" x-data="{ open: false }">
+                                                <button @click="open = !open" :aria-label="@js(__('Acciones de la tarjeta'))"
+                                                    class="p-1 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 min-w-[32px] min-h-[32px] inline-flex items-center justify-center font-bold tracking-widest" title="···">···</button>
+                                                <div x-show="open" @click.outside="open = false" @keydown.escape.window="open = false" x-cloak
+                                                     class="absolute right-0 z-20 w-44 max-h-64 overflow-y-auto rounded-xl bg-white border border-gray-200 shadow-lg py-1 text-sm">
+                                                    <a :href="@js(route('tasks.show', ['task' => '__ID__'])).replace('__ID__', card.id)"
+                                                       class="block px-3 py-2 text-gray-700 hover:bg-emerald-50 hover:text-emerald-700">{{ __('Abrir ticket') }}</a>
+                                                    <template x-for="target in columns.filter((c) => String(c.id) !== String(card.status_id) && c.slug !== card.status_slug)" :key="target.slug">
+                                                        <button x-show="card.can_update" @click="open = false; moveViaMenu(card, target)"
+                                                            class="block w-full text-left px-3 py-2 text-gray-700 hover:bg-emerald-50 hover:text-emerald-700">
+                                                            <span x-text="@js(__('Mover a')) + ' ' + target.name"></span>
+                                                        </button>
+                                                    </template>
+                                                    <button x-show="card.can_delete" @click="open = false; deleteCard(card)"
+                                                            class="block w-full text-left px-3 py-2 text-red-600 hover:bg-red-50">{{ __('Eliminar') }}</button>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                    <h4 class="text-sm font-semibold text-gray-900 leading-snug" x-text="card.title"></h4>
-                                    <div class="flex items-center gap-1.5 text-xs text-gray-500 min-w-0">
-                                        <span x-show="card.assignee_initials" x-text="card.assignee_initials"
-                                              class="w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 inline-flex items-center justify-center font-bold text-[11px] shrink-0"></span>
-                                        <span class="truncate" x-text="card.assignee_name || @js(__('Sin asignar'))"></span>
-                                        <span x-show="card.last_mover_initial" :title="card.last_mover_name" x-text="card.last_mover_initial"
-                                              class="ml-auto w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 inline-flex items-center justify-center font-bold text-[11px] shrink-0"></span>
-                                    </div>
-                                    <div class="flex flex-wrap items-center gap-1.5 text-[11px]">
-                                        <span class="inline-flex items-center gap-1 font-medium text-gray-600">
-                                            <span class="w-2 h-2 rounded-full" :class="dotClass(card.priority_color)"></span>
-                                            <span x-text="card.priority_label"></span>
-                                        </span>
-                                        <span x-show="card.area" x-text="card.area"
-                                              class="px-1.5 py-0.5 rounded-md bg-gray-100 text-gray-600 font-medium"></span>
-                                        <span class="text-gray-500" x-text="card.project_code"></span>
-                                    </div>
-                                    <div>
-                                        <div class="flex items-center justify-between text-[11px] text-gray-500 mb-0.5">
-                                            <span>{{ __('Avance') }}</span>
-                                            <span x-text="card.progress + ' %'"></span>
+
+                                        <h4 class="text-sm font-semibold text-gray-900 leading-snug break-words" x-text="card.title"></h4>
+
+                                        <div class="flex items-center gap-1.5 text-xs text-gray-500 min-w-0">
+                                            <span x-show="card.assignee_initials" x-text="card.assignee_initials"
+                                                  class="w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 inline-flex items-center justify-center font-bold text-[11px] shrink-0"></span>
+                                            <span class="truncate" x-text="card.assignee_name || @js(__('Sin asignar'))"></span>
+                                            <span x-show="card.last_mover_initial" :title="card.last_mover_name" x-text="card.last_mover_initial"
+                                                  class="ml-auto w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 inline-flex items-center justify-center font-bold text-[11px] shrink-0"></span>
                                         </div>
-                                        <div class="w-full bg-gray-200 rounded-full h-1.5">
-                                            <div class="bg-emerald-500 h-1.5 rounded-full" :style="'width: ' + card.progress + '%'"></div>
+
+                                        <div class="flex flex-wrap items-center gap-1.5 text-[11px]">
+                                            <span class="inline-flex items-center gap-1 font-medium text-gray-600">
+                                                <span class="w-2 h-2 rounded-full" :class="dotClass(card.priority_color)"></span>
+                                                <span x-text="card.priority_label"></span>
+                                            </span>
+                                            <span x-show="card.area" x-text="card.area"
+                                                  class="px-1.5 py-0.5 rounded-md bg-gray-100 text-gray-600 font-medium"></span>
+                                            <span class="text-gray-500" x-text="card.project_code"></span>
                                         </div>
-                                        <p class="text-[11px] text-gray-500 mt-0.5">
-                                            <span x-text="(card.actual_hours ?? '—') + ' h / ' + (card.estimated_hours ?? '—') + ' h'"></span>
-                                        </p>
-                                    </div>
-                                    <p x-show="card.due" class="text-[11px]"
-                                       :class="card.overdue ? 'text-red-600 font-semibold' : 'text-gray-500'"
-                                       x-text="card.due ? card.due.label : ''"></p>
-                                    <div x-show="card.blocking" class="text-[11px] font-bold text-red-700 bg-red-50 ring-1 ring-red-200 rounded-lg px-2 py-1">
-                                        🔒 <span x-text="@js(__('BLOQUEADA'))"></span>
-                                        <span x-show="card.blocked_reason" class="block font-normal" x-text="card.blocked_reason"></span>
-                                    </div>
-                                    <div x-show="showSaving[card.id]" class="text-[11px] text-emerald-700">{{ __('Guardando…') }}</div>
-                                </article>
-                            </template>
-                            <p x-show="cardsIn(col.slug).length === 0" class="text-[11px] text-gray-400 text-center py-4">{{ __('Sin tareas') }}</p>
-                        </div>
-                    </section>
-                </template>
+
+                                        <div>
+                                            <div class="flex items-center justify-between text-[11px] text-gray-500 mb-0.5">
+                                                <span>{{ __('Avance') }}</span>
+                                                <span x-text="card.progress + ' %'"></span>
+                                            </div>
+                                            <div class="w-full bg-gray-200 rounded-full h-1.5">
+                                                <div class="bg-emerald-500 h-1.5 rounded-full" :style="'width: ' + card.progress + '%'"></div>
+                                            </div>
+                                            <p class="text-[11px] text-gray-500 mt-0.5">
+                                                <span x-text="(card.actual_hours ?? '—') + ' h / ' + (card.estimated_hours ?? '—') + ' h'"></span>
+                                            </p>
+                                        </div>
+
+                                        <p x-show="card.due" class="text-[11px]"
+                                           :class="card.overdue ? 'text-red-600 font-semibold' : 'text-gray-500'"
+                                           x-text="card.due ? card.due.label : ''"></p>
+
+                                        <div x-show="card.blocking" class="text-[11px] font-bold text-red-700 bg-red-50 border border-red-200 rounded-lg px-2 py-1">
+                                            <span x-text="@js(__('BLOQUEADA'))"></span>
+                                            <span x-show="card.blocked_reason" class="block font-normal" x-text="card.blocked_reason"></span>
+                                        </div>
+
+                                        <div x-show="showSaving[card.id]" class="text-[11px] text-emerald-700">{{ __('Guardando…') }}</div>
+                                    </article>
+                                </template>
+                                
+                                <p x-show="cardsIn(col.slug, col.id).length === 0" class="text-xs text-gray-400 text-center py-6">{{ __('Sin tareas') }}</p>
+                            </div>
+                        </section>
+                    </template>
+                </div>
             </div>
         </div>
 
@@ -355,14 +366,21 @@
                         this.boardAbortController?.abort();
                         this.pollAbortController?.abort();
                         this.scopeAbortController?.abort();
-                        this.boardAbortController = null;
-                        this.pollAbortController = null;
-                        this.scopeAbortController = null;
                         this.cleanupPointerDrag();
                         if (this.pageHideHandler) window.removeEventListener('pagehide', this.pageHideHandler);
-                        this.pageHideHandler = null;
                     },
                     dotClass(color) { return this.dotColors[color] || 'bg-gray-400'; },
+                    cardsIn(columnSlug, columnId) {
+                        return this.cards.filter((c) => {
+                            if (columnId !== undefined && c.status_id !== undefined) {
+                                if (String(c.status_id) === String(columnId)) return true;
+                            }
+                            if (c.status_slug && columnSlug) {
+                                return String(c.status_slug).toLowerCase() === String(columnSlug).toLowerCase();
+                            }
+                            return false;
+                        });
+                    },
                     boardUrl() {
                         const params = new URLSearchParams();
                         for (const [key, value] of Object.entries(this.filters)) {
@@ -381,7 +399,6 @@
                     },
                     async fetchBoard(silent = false) {
                         if (this.isNavigating) return;
-
                         const requestId = ++this.boardRequestId;
                         this.boardAbortController?.abort();
                         const controller = new AbortController();
@@ -436,7 +453,6 @@
                             if (this.pollAbortController === controller) this.pollAbortController = null;
                         }
                     },
-                    cardsIn(columnSlug) { return this.cards.filter((c) => c.status_slug === columnSlug); },
                     async onProjectChange() {
                         this.filters.assigned_to = '';
                         this.scopeAbortController?.abort();
@@ -582,7 +598,7 @@
                     },
                     dropOnColumn(cardId, column) {
                         const card = this.cards.find((item) => String(item.id) === String(cardId));
-                        if (!card || card.status_slug === column.slug) return;
+                        if (!card || String(card.status_id) === String(column.id) || card.status_slug === column.slug) return;
                         if (!card.can_update) {
                             this.toastOk = false;
                             this.toast = @js(__('No tienes permiso para mover esta tarjeta.'));
@@ -605,23 +621,13 @@
                         if (card) this.moveCard(card, this.blockModal.column, this.blockModal.reason.trim());
                     },
                     moveViaMenu(card, column) {
-                        if (!card.can_update) {
-                            this.toastOk = false;
-                            this.toast = @js(__('No tienes permiso para mover esta tarjeta.'));
-                            setTimeout(() => this.toast = '', 3500);
-                            return;
-                        }
-                        if (column.is_blocking && !card.blocked_reason) {
-                            this.blockModal = { open: true, cardId: card.id, column, reason: '', error: '' };
-                            return;
-                        }
-                        this.moveCard(card, column, null);
+                        this.dropOnColumn(card.id, column);
                     },
                     async moveCard(card, column, blockedReason) {
                         this.showSaving[card.id] = true;
                         try {
                             const token = document.querySelector('meta[name="csrf-token"]')?.content;
-                            const body = { status_slug: column.slug };
+                            const body = { status_slug: column.slug, status_id: column.id };
                             if (blockedReason) body.blocked_reason = blockedReason;
                             const res = await fetch(@js(route('tasks.status.update', ['task' => '__ID__'])).replace('__ID__', card.id), {
                                 method: 'PATCH',
@@ -646,7 +652,7 @@
                             if (blockedReason) card.blocked_reason = blockedReason;
                             card.progress = data.progress_percentage;
                             this.columns.forEach((c) => {
-                                c.count = this.cards.filter((x) => x.status_slug === c.slug).length;
+                                c.count = this.cards.filter((x) => String(x.status_id) === String(c.id) || x.status_slug === c.slug).length;
                             });
                             this.toastOk = true;
                             this.toast = card.code + ' → ' + data.status_label;
@@ -672,7 +678,7 @@
                             if (!res.ok) throw new Error('HTTP ' + res.status);
                             this.cards = this.cards.filter((c) => c.id !== card.id);
                             this.columns.forEach((c) => {
-                                c.count = this.cards.filter((x) => x.status_slug === c.slug).length;
+                                c.count = this.cards.filter((x) => String(x.status_id) === String(c.id) || x.status_slug === c.slug).length;
                             });
                         } catch (e) {
                             this.toastOk = false;

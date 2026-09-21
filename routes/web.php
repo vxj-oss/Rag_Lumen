@@ -16,9 +16,10 @@ use App\Http\Controllers\Web\TaskDependencyController;
 use App\Http\Controllers\Web\TaskProgressController;
 use App\Http\Controllers\Web\TaskStatusController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
 
 Route::get('/', function () {
-    return auth()->check() ? redirect()->route('dashboard') : redirect()->route('login');
+    return Auth::check() ? redirect()->route('dashboard') : redirect()->route('login');
 });
 
 Route::get('/dashboard', [DashboardController::class, 'index'])
