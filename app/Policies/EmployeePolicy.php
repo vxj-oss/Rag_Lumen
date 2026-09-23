@@ -50,6 +50,7 @@ class EmployeePolicy
             return $managerAreaId !== null && $employee->area_id === $managerAreaId;
         }
 
+
         return false;
     }
 
@@ -76,18 +77,18 @@ class EmployeePolicy
             return false;
         }
 
-        $ledProjectIds = Project::where('responsible_employee_id', $leaderEmployeeId)->pluck('id');
+        $ledProjectIds = Project::where('empleado_responsable_id', $leaderEmployeeId)->pluck('id');
 
         if ($ledProjectIds->isEmpty()) {
             return false;
         }
 
-        return ProjectMember::whereIn('project_id', $ledProjectIds)
-            ->where('employee_id', $employee->id)
-            ->where('status', 'active')
+        return ProjectMember::whereIn('proyecto_id', $ledProjectIds)
+            ->where('empleado_id', $employee->id)
+            ->where('estado', 'active')
             ->exists()
-            || Task::whereIn('project_id', $ledProjectIds)
-                ->where('assigned_to', $employee->id)
+            || Task::whereIn('proyecto_id', $ledProjectIds)
+                ->where('asignado_a', $employee->id)
                 ->exists();
     }
 }

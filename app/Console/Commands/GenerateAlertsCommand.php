@@ -108,9 +108,9 @@ class GenerateAlertsCommand extends Command
         $created = 0;
 
         $tasks = Task::with(['assignee.user', 'state'])
-            ->where('progress_percentage', '<', self::DUE_SOON_PROGRESS_CEILING)
-            ->whereNotNull('due_date')
-            ->whereBetween('due_date', [now()->startOfDay(), now()->addDays(self::DUE_SOON_DAYS)->endOfDay()])
+            ->where('porcentaje_progreso', '<', self::DUE_SOON_PROGRESS_CEILING)
+            ->whereNotNull('fecha_vencimiento')
+            ->whereBetween('fecha_vencimiento', [now()->startOfDay(), now()->addDays(self::DUE_SOON_DAYS)->endOfDay()])
             ->get()
             ->filter(fn (Task $task) => $task->isActiveState());
 
@@ -121,7 +121,7 @@ class GenerateAlertsCommand extends Command
                 continue;
             }
 
-            $daysRemaining = (int) round(now()->startOfDay()->diffInDays($task->due_date, false));
+            $daysRemaining = (int) round(now()->startOfDay()->diffInDays($task->fecha_vencimiento, false));
 
             $created += $this->notifyUnlessDuplicate(
                 collect([$user]),

@@ -59,7 +59,7 @@
                         <select name="client_id" class="w-full border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-md shadow-sm text-sm">
                             <option value="">{{ __('Todos') }}</option>
                             @foreach ($clients as $client)
-                                <option value="{{ $client->id }}" {{ (string) ($filters['client_id'] ?? '') === (string) $client->id ? 'selected' : '' }}>{{ $client->name }}</option>
+                                <option value="{{ $client->id }}" {{ (string) ($filters['client_id'] ?? '') === (string) $client->id ? 'selected' : '' }}>{{ $client->nombre }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -68,7 +68,7 @@
                         <select name="area_id" class="w-full border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-md shadow-sm text-sm">
                             <option value="">{{ __('Todas') }}</option>
                             @foreach ($areas as $area)
-                                <option value="{{ $area->id }}" {{ (string) ($filters['area_id'] ?? '') === (string) $area->id ? 'selected' : '' }}>{{ $area->name }}</option>
+                                <option value="{{ $area->id }}" {{ (string) ($filters['area_id'] ?? '') === (string) $area->id ? 'selected' : '' }}>{{ $area->nombre }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -99,16 +99,16 @@
                             @forelse ($projects as $project)
                                 <tr class="hover:bg-emerald-50/40 transition">
                                     <td class="px-3 py-3 truncate">
-                                        <div class="text-sm font-medium text-gray-900 truncate" title="{{ $project->name }}">{{ $project->name }}</div>
-                                        <div class="text-xs text-gray-400">{{ $project->code }}</div>
+                                        <div class="text-sm font-medium text-gray-900 truncate" title="{{ $project->nombre }}">{{ $project->nombre }}</div>
+                                        <div class="text-xs text-gray-400">{{ $project->codigo }}</div>
                                     </td>
-                                    <td class="px-3 py-3 text-sm text-gray-500 truncate" title="{{ $project->client?->name }}">{{ $project->client?->name ?? '—' }}</td>
+                                    <td class="px-3 py-3 text-sm text-gray-500 truncate" title="{{ $project->client?->nombre }}">{{ $project->client?->nombre ?? '—' }}</td>
                                     <td class="px-3 py-3 text-sm text-gray-500 truncate">{{ $project->responsibleEmployee?->fullName() ?? '—' }}</td>
                                     <td class="px-3 py-3">
-                                        <x-ui.badge :color="$project->status->color()">{{ $project->status->label() }}</x-ui.badge>
+                                        <x-ui.badge :color="$project->estado->color()">{{ $project->estado->label() }}</x-ui.badge>
                                     </td>
                                     <td class="px-3 py-3">
-                                        <x-ui.badge :color="$project->priority->color()">{{ $project->priority->label() }}</x-ui.badge>
+                                        <x-ui.badge :color="$project->prioridad->color()">{{ $project->prioridad->label() }}</x-ui.badge>
                                     </td>
                                     <td class="px-3 py-3">
                                         <x-ui.badge :color="$risks[$project->id]['level']->color()">
@@ -140,7 +140,7 @@
 
                                 @can('update', $project)
                                     <x-ui.form-modal :name="'edit-project-'.$project->id" :title="__('Editar proyecto')"
-                                        :subtitle="$project->code" :action="route('projects.update', $project)" method="PUT" max-width="3xl">
+                                        :subtitle="$project->codigo" :action="route('projects.update', $project)" method="PUT" max-width="3xl">
                                         <x-slot name="hidden">
                                             <input type="hidden" name="_edit_id" value="{{ $project->id }}">
                                         </x-slot>
@@ -164,13 +164,13 @@
                         <div class="p-4 space-y-3">
                             <div class="flex items-start justify-between gap-3">
                                 <div class="min-w-0">
-                                    <p class="text-sm font-semibold text-gray-900 truncate">{{ $project->name }}</p>
-                                    <p class="text-xs text-gray-400">{{ $project->code }}</p>
+                                    <p class="text-sm font-semibold text-gray-900 truncate">{{ $project->nombre }}</p>
+                                    <p class="text-xs text-gray-400">{{ $project->codigo }}</p>
                                 </div>
-                                <x-ui.badge :color="$project->status->color()">{{ $project->status->label() }}</x-ui.badge>
+                                <x-ui.badge :color="$project->estado->color()">{{ $project->estado->label() }}</x-ui.badge>
                             </div>
                             <div class="flex flex-wrap gap-1.5">
-                                <x-ui.badge :color="$project->priority->color()">{{ $project->priority->label() }}</x-ui.badge>
+                                <x-ui.badge :color="$project->prioridad->color()">{{ $project->prioridad->label() }}</x-ui.badge>
                                 <x-ui.badge :color="$risks[$project->id]['level']->color()">
                                     {{ $risks[$project->id]['level']->label() }} ({{ $risks[$project->id]['score'] }})
                                 </x-ui.badge>
@@ -178,7 +178,7 @@
                             <dl class="grid grid-cols-2 gap-2 text-xs">
                                 <div>
                                     <dt class="font-medium text-gray-400">{{ __('Cliente') }}</dt>
-                                    <dd class="text-gray-700 truncate">{{ $project->client?->name ?? '—' }}</dd>
+                                    <dd class="text-gray-700 truncate">{{ $project->client?->nombre ?? '—' }}</dd>
                                 </div>
                                 <div>
                                     <dt class="font-medium text-gray-400">{{ __('Responsable') }}</dt>

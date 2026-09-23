@@ -14,14 +14,14 @@ class ProjectMemberController extends Controller
     {
         ProjectMember::updateOrCreate(
             [
-                'project_id' => $project->id,
-                'employee_id' => $request->validated('employee_id'),
+                'proyecto_id' => $project->id,
+                'empleado_id' => $request->validated('employee_id'),
             ],
             [
-                'role_in_project' => $request->validated('role_in_project'),
-                'assigned_at' => $request->validated('assigned_at'),
-                'left_at' => null,
-                'status' => 'active',
+                'rol_en_proyecto' => $request->validated('role_in_project'),
+                'asignado_en' => $request->validated('assigned_at'),
+                'retirado_en' => null,
+                'estado' => 'active',
             ]
         );
 
@@ -34,11 +34,11 @@ class ProjectMemberController extends Controller
     {
         $this->authorize('update', $project);
 
-        abort_if($member->project_id !== $project->id, 404);
+        abort_if($member->proyecto_id !== $project->id, 404);
 
         $member->update([
-            'status' => 'inactive',
-            'left_at' => now()->toDateString(),
+            'estado' => 'inactive',
+            'retirado_en' => now()->toDateString(),
         ]);
 
         return redirect()

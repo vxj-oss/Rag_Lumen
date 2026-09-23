@@ -26,10 +26,10 @@ class ProjectScope
 
         if ($user->isManager()) {
             return Project::query()
-                ->where('manager_employee_id', $employeeId)
+                ->where('empleado_gerente_id', $employeeId)
                 ->orWhereHas('areas', function ($query) use ($employeeId) {
                     $query->whereIn('areas.id', function ($query) use ($employeeId) {
-                        $query->select('area_id')->from('employees')->where('employees.id', $employeeId);
+                        $query->select('area_id')->from('empleados')->where('empleados.id', $employeeId);
                     });
                 })
                 ->pluck('id')
@@ -37,10 +37,10 @@ class ProjectScope
         }
 
         return Project::query()
-            ->where('responsible_employee_id', $employeeId)
+            ->where('empleado_responsable_id', $employeeId)
             ->orWhereHas('members', function ($query) use ($employeeId) {
-                $query->where('employee_id', $employeeId)
-                    ->where('project_members.status', 'active');
+                $query->where('empleado_id', $employeeId)
+                    ->where('miembros_proyecto.estado', 'active');
             })
             ->pluck('id')
             ->all();

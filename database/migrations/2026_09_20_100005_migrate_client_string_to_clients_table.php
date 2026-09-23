@@ -9,36 +9,36 @@ return new class extends Migration
 {
     public function up(): void
     {
-        $names = DB::table('projects')
-            ->whereNull('client_id')
+        $names = DB::table('proyectos')
+            ->whereNull('cliente_id')
             ->whereNotNull('client')
             ->distinct()
             ->pluck('client');
 
         foreach ($names as $name) {
-            $clientId = DB::table('clients')->where('name', $name)->value('id');
+            $clientId = DB::table('clientes')->where('nombre', $name)->value('id');
 
             if ($clientId === null) {
-                $clientId = DB::table('clients')->insertGetId([
-                    'name' => $name,
-                    'status' => 'active',
+                $clientId = DB::table('clientes')->insertGetId([
+                    'nombre' => $name,
+                    'estado' => 'active',
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
             }
 
-            DB::table('projects')->whereNull('client_id')->where('client', $name)->update(['client_id' => $clientId]);
+            DB::table('proyectos')->whereNull('cliente_id')->where('client', $name)->update(['cliente_id' => $clientId]);
         }
 
-        Schema::table('projects', function (Blueprint $table) {
+        Schema::table('proyectos', function (Blueprint $table) {
             $table->dropColumn('client');
         });
     }
 
     public function down(): void
     {
-        Schema::table('projects', function (Blueprint $table) {
-            $table->string('client', 150)->nullable()->after('type');
+        Schema::table('proyectos', function (Blueprint $table) {
+            $table->string('client', 150)->nullable()->after('tipo');
         });
     }
 };

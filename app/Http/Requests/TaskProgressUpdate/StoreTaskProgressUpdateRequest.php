@@ -10,10 +10,14 @@ class StoreTaskProgressUpdateRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return $this->user()->can('update', $this->route('task'));
+        if (! $this->user()->can('update', $this->route('task'))) {
+            return false;
+        }
+
+        return ! $this->route('task')->tieneSubtareas();
     }
 
-    
+
     public function rules(): array
     {
         return [

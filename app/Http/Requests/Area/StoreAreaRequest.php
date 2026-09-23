@@ -15,8 +15,8 @@ class StoreAreaRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:100', 'unique:areas,name'],
-            'description' => ['nullable', 'string'],
+            'nombre' => ['required', 'string', 'max:100', 'unique:areas,nombre'],
+            'descripcion' => ['nullable', 'string'],
             'active' => ['sometimes', 'boolean'],
         ];
     }

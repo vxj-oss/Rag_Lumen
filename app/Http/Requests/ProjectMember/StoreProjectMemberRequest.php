@@ -13,11 +13,11 @@ class StoreProjectMemberRequest extends FormRequest
         return $this->user()->can('update', $this->route('project'));
     }
 
-    
+
     public function rules(): array
     {
         return [
-            'employee_id' => ['required', 'integer', 'exists:employees,id'],
+            'employee_id' => ['required', 'integer', 'exists:empleados,id'],
             'role_in_project' => ['required', 'string', 'max:50'],
             'assigned_at' => ['required', 'date'],
         ];

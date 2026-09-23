@@ -16,16 +16,16 @@ class AreaController extends Controller
     {
         $this->authorize('viewAny', Area::class);
 
-        $areas = Area::withCount(['employees', 'projects'])->orderBy('name')->get();
+        $areas = Area::withCount(['employees', 'projects'])->orderBy('nombre')->get();
 
         return view('areas.html.index', ['areas' => $areas]);
     }
 
     public function store(StoreAreaRequest $request): RedirectResponse
     {
-        $area = Area::create($request->validated() + ['active' => $request->boolean('active', true)]);
+        $area = Area::create($request->validated() + ['activa' => $request->boolean('active', true)]);
 
-        ActivityLogger::record($area, 'created', "Creó el área \"{$area->name}\".");
+        ActivityLogger::record($area, 'created', "Creó el área \"{$area->nombre}\".");
 
         return redirect()
             ->route('areas.index')
@@ -36,9 +36,9 @@ class AreaController extends Controller
     {
         $before = $area->getAttributes();
 
-        $area->update($request->validated() + ['active' => $request->boolean('active')]);
+        $area->update($request->validated() + ['activa' => $request->boolean('active')]);
 
-        ActivityLogger::recordUpdate($area, $before, "el área \"{$area->name}\"");
+        ActivityLogger::recordUpdate($area, $before, "el área \"{$area->nombre}\"");
 
         return redirect()
             ->route('areas.index')
@@ -55,7 +55,7 @@ class AreaController extends Controller
                 ->with('toast_error', 'No se puede eliminar: el área tiene empleados o proyectos asociados.');
         }
 
-        ActivityLogger::record($area, 'deleted', "Eliminó el área \"{$area->name}\".");
+        ActivityLogger::record($area, 'deleted', "Eliminó el área \"{$area->nombre}\".");
 
         $area->delete();
 

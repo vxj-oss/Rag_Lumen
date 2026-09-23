@@ -18,25 +18,25 @@ class StoreProjectRequest extends FormRequest
         return $this->user()->can('create', Project::class);
     }
 
-    
+
     public function rules(): array
     {
         return [
-            'code' => ['required', 'string', 'max:30', 'unique:projects,code'],
-            'name' => ['required', 'string', 'max:150'],
-            'description' => ['nullable', 'string'],
-            'type' => ['required', Rule::enum(ProjectType::class)],
-            'client_id' => ['nullable', 'integer', 'exists:clients,id'],
-            'manager_employee_id' => ['nullable', 'integer', 'exists:employees,id'],
+            'codigo' => ['required', 'string', 'max:30', 'unique:proyectos,codigo'],
+            'nombre' => ['required', 'string', 'max:150'],
+            'descripcion' => ['nullable', 'string'],
+            'tipo' => ['required', Rule::enum(ProjectType::class)],
+            'cliente_id' => ['nullable', 'integer', 'exists:clientes,id'],
+            'empleado_gerente_id' => ['nullable', 'integer', 'exists:empleados,id'],
             'area_ids' => ['nullable', 'array'],
             'area_ids.*' => ['integer', 'exists:areas,id'],
-            'start_date' => ['required', 'date'],
-            'estimated_end_date' => ['required', 'date', 'after_or_equal:start_date'],
-            'status' => ['required', Rule::enum(ProjectStatus::class)],
-            'priority' => ['required', Rule::enum(Priority::class)],
-            'responsible_employee_id' => ['nullable', 'integer', 'exists:employees,id'],
-            'budget' => ['nullable', 'numeric', 'min:0'],
-            'observations' => ['nullable', 'string'],
+            'fecha_inicio' => ['required', 'date'],
+            'fecha_fin_estimada' => ['required', 'date', 'after_or_equal:fecha_inicio'],
+            'estado' => ['required', Rule::enum(ProjectStatus::class)],
+            'prioridad' => ['required', Rule::enum(Priority::class)],
+            'empleado_responsable_id' => ['nullable', 'integer', 'exists:empleados,id'],
+            'presupuesto' => ['nullable', 'numeric', 'min:0'],
+            'observaciones' => ['nullable', 'string'],
         ];
     }
 }

@@ -15,19 +15,19 @@ class ProjectFactory extends Factory
         $startDate = fake()->dateTimeBetween('-6 months', 'now');
 
         return [
-            'code' => strtoupper(fake()->unique()->bothify('PROJ-###')),
-            'name' => fake()->catchPhrase(),
-            'description' => fake()->paragraph(),
-            'type' => fake()->randomElement(ProjectType::cases())->value,
-            'client_id' => null,
-            'start_date' => $startDate->format('Y-m-d'),
-            'estimated_end_date' => fake()->dateTimeBetween($startDate, '+6 months')->format('Y-m-d'),
-            'actual_end_date' => null,
-            'status' => fake()->randomElement(ProjectStatus::cases())->value,
-            'priority' => fake()->randomElement(Priority::cases())->value,
-            'responsible_employee_id' => Employee::inRandomOrder()->value('id'),
-            'budget' => fake()->randomFloat(2, 1000, 50000),
-            'observations' => null,
+            'codigo' => strtoupper(fake()->unique()->bothify('PROJ-###')),
+            'nombre' => fake()->catchPhrase(),
+            'descripcion' => fake()->paragraph(),
+            'tipo' => fake()->randomElement(ProjectType::cases())->value,
+            'cliente_id' => null,
+            'fecha_inicio' => $startDate->format('Y-m-d'),
+            'fecha_fin_estimada' => fake()->dateTimeBetween($startDate, '+6 months')->format('Y-m-d'),
+            'fecha_fin_real' => null,
+            'estado' => fake()->randomElement(ProjectStatus::cases())->value,
+            'prioridad' => fake()->randomElement(Priority::cases())->value,
+            'empleado_responsable_id' => Employee::inRandomOrder()->value('id'),
+            'presupuesto' => fake()->randomFloat(2, 1000, 50000),
+            'observaciones' => null,
         ];
     }
 }

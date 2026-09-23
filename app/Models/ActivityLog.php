@@ -7,18 +7,20 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
-#[Fillable(['user_id', 'subject_type', 'subject_id', 'action', 'description'])]
+#[Fillable(['usuario_id', 'sujeto_tipo', 'sujeto_id', 'accion', 'descripcion'])]
 class ActivityLog extends Model
 {
     public const UPDATED_AT = null;
 
+    protected $table = 'registros_actividad';
+
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'usuario_id');
     }
 
     public function subject(): MorphTo
     {
-        return $this->morphTo(__FUNCTION__, 'subject_type', 'subject_id');
+        return $this->morphTo(__FUNCTION__, 'sujeto_tipo', 'sujeto_id');
     }
 }

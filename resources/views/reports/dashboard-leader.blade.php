@@ -37,7 +37,7 @@
         <tbody>
             @forelse ($rows as $row)
                 <tr>
-                    <td>{{ $row['project']->name }} ({{ $row['project']->code }})</td>
+                    <td>{{ $row['project']->nombre }} ({{ $row['project']->codigo }})</td>
                     <td>{{ $row['decision']['risk_score'] }}/100 ({{ $row['decision']['risk_level']->label() }})</td>
                     <td>{{ $row['metrics']['real_progress'] }}% / {{ $row['metrics']['expected_progress'] }}%</td>
                     <td>{{ $row['metrics']['overdue_tasks'] }} / {{ $row['metrics']['blocked_tasks'] }}</td>

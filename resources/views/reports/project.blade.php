@@ -25,12 +25,12 @@
     </style>
 </head>
 <body>
-    <h1>{{ $project->name }} <span style="color:#9ca3af;font-weight:normal;">({{ $project->code }})</span></h1>
+    <h1>{{ $project->nombre }} <span style="color:#9ca3af;font-weight:normal;">({{ $project->codigo }})</span></h1>
     <p class="subtitle">Generado el {{ $generatedAt->format('d/m/Y H:i') }}</p>
 
     <div>
-        <span class="badge badge-{{ $project->status->color() }}">{{ $project->status->label() }}</span>
-        <span class="badge badge-{{ $project->priority->color() }}">Prioridad: {{ $project->priority->label() }}</span>
+        <span class="badge badge-{{ $project->estado->color() }}">{{ $project->estado->label() }}</span>
+        <span class="badge badge-{{ $project->prioridad->color() }}">Prioridad: {{ $project->prioridad->label() }}</span>
         <span class="badge badge-{{ $risk['level']->color() }}">Riesgo: {{ $risk['level']->label() }} ({{ $risk['score'] }})</span>
     </div>
 
@@ -38,15 +38,15 @@
     <table class="kv-table">
         <tr>
             <td><span class="kv-label">Responsable:</span> {{ $project->responsibleEmployee?->fullName() ?? 'sin asignar' }}</td>
-            <td><span class="kv-label">Tipo:</span> {{ $project->type->label() }}</td>
+            <td><span class="kv-label">Tipo:</span> {{ $project->tipo->label() }}</td>
         </tr>
         <tr>
-            <td><span class="kv-label">Fecha inicio:</span> {{ $project->start_date?->toDateString() ?? '—' }}</td>
-            <td><span class="kv-label">Fecha estimada de fin:</span> {{ $project->estimated_end_date?->toDateString() ?? '—' }}</td>
+            <td><span class="kv-label">Fecha inicio:</span> {{ $project->fecha_inicio?->toDateString() ?? '—' }}</td>
+            <td><span class="kv-label">Fecha estimada de fin:</span> {{ $project->fecha_fin_estimada?->toDateString() ?? '—' }}</td>
         </tr>
     </table>
-    @if ($project->description)
-        <p>{{ $project->description }}</p>
+    @if ($project->descripcion)
+        <p>{{ $project->descripcion }}</p>
     @endif
 
     <h2>Métricas de avance</h2>
@@ -104,11 +104,11 @@
         <tbody>
             @forelse ($project->tasks as $task)
                 <tr>
-                    <td>{{ $task->title }}</td>
+                    <td>{{ $task->titulo }}</td>
                     <td>{{ $task->assignee?->fullName() ?? '—' }}</td>
-                    <td>{{ $task->status->label() }}</td>
-                    <td>{{ $task->progress_percentage }}%</td>
-                    <td>{{ $task->due_date?->toDateString() ?? '—' }}</td>
+                    <td>{{ $task->estado->label() }}</td>
+                    <td>{{ $task->porcentaje_progreso }}%</td>
+                    <td>{{ $task->fecha_vencimiento?->toDateString() ?? '—' }}</td>
                 </tr>
             @empty
                 <tr><td colspan="5">Sin tareas registradas.</td></tr>

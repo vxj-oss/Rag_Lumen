@@ -59,7 +59,7 @@
                         <select name="area_id" class="w-full border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-md shadow-sm text-sm">
                             <option value="">{{ __('Todas') }}</option>
                             @foreach ($areas as $area)
-                                <option value="{{ $area->id }}" {{ (string) ($filters['area_id'] ?? '') === (string) $area->id ? 'selected' : '' }}>{{ $area->name }}</option>
+                                <option value="{{ $area->id }}" {{ (string) ($filters['area_id'] ?? '') === (string) $area->id ? 'selected' : '' }}>{{ $area->nombre }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -91,17 +91,17 @@
                                 <td class="px-3 py-3 truncate">
                                     <div class="flex items-center gap-3 min-w-0">
                                         <div class="w-9 h-9 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 text-white flex items-center justify-center text-sm font-semibold shrink-0 shadow-sm">
-                                            {{ Str::of($employee->first_name)->substr(0, 1) }}{{ Str::of($employee->last_name)->substr(0, 1) }}
+                                            {{ Str::of($employee->nombres)->substr(0, 1) }}{{ Str::of($employee->apellidos)->substr(0, 1) }}
                                         </div>
                                         <span class="text-sm font-medium text-gray-900 truncate">{{ $employee->fullName() }}</span>
                                     </div>
                                 </td>
-                                <td class="px-3 py-3 text-sm text-gray-500 truncate" title="{{ $employee->email }}">{{ $employee->email }}</td>
-                                <td class="px-3 py-3 text-sm text-gray-500 truncate">{{ $employee->specialty->label() }}</td>
-                                <td class="px-3 py-3 text-sm text-gray-500 truncate">{{ $employee->area?->name ?? '—' }}</td>
+                                <td class="px-3 py-3 text-sm text-gray-500 truncate" title="{{ $employee->correo }}">{{ $employee->correo }}</td>
+                                <td class="px-3 py-3 text-sm text-gray-500 truncate">{{ $employee->especialidad->label() }}</td>
+                                <td class="px-3 py-3 text-sm text-gray-500 truncate">{{ $employee->area?->nombre ?? '—' }}</td>
                                 <td class="px-3 py-3">
-                                    <x-ui.badge :color="$employee->status->value === 'active' ? 'green' : ($employee->status->value === 'on_leave' ? 'yellow' : 'gray')">
-                                        {{ $employee->status->label() }}
+                                    <x-ui.badge :color="$employee->estado->value === 'active' ? 'green' : ($employee->estado->value === 'on_leave' ? 'yellow' : 'gray')">
+                                        {{ $employee->estado->label() }}
                                     </x-ui.badge>
                                 </td>
                                 <td class="px-3 py-3 whitespace-nowrap text-right text-sm">
@@ -155,12 +155,12 @@
                         <div class="p-4 flex items-start justify-between gap-3">
                             <div class="flex items-center gap-3 min-w-0">
                                 <div class="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 text-white flex items-center justify-center text-sm font-semibold shrink-0 shadow-sm">
-                                    {{ Str::of($employee->first_name)->substr(0, 1) }}{{ Str::of($employee->last_name)->substr(0, 1) }}
+                                    {{ Str::of($employee->nombres)->substr(0, 1) }}{{ Str::of($employee->apellidos)->substr(0, 1) }}
                                 </div>
                                 <div class="min-w-0">
                                     <p class="text-sm font-semibold text-gray-900 truncate">{{ $employee->fullName() }}</p>
-                                    <p class="text-xs text-gray-400 truncate">{{ $employee->email }}</p>
-                                    <p class="text-xs text-gray-500 mt-0.5">{{ $employee->specialty->label() }}</p>
+                                    <p class="text-xs text-gray-400 truncate">{{ $employee->correo }}</p>
+                                    <p class="text-xs text-gray-500 mt-0.5">{{ $employee->especialidad->label() }}</p>
                                     <div class="mt-2 flex items-center gap-3 text-sm">
                                         <a href="{{ route('employees.show', $employee) }}" class="text-gray-500 hover:text-emerald-600 transition">{{ __('Ver') }}</a>
                                         @can('update', $employee)
@@ -176,8 +176,8 @@
                                     </div>
                                 </div>
                             </div>
-                            <x-ui.badge :color="$employee->status->value === 'active' ? 'green' : ($employee->status->value === 'on_leave' ? 'yellow' : 'gray')">
-                                {{ $employee->status->label() }}
+                            <x-ui.badge :color="$employee->estado->value === 'active' ? 'green' : ($employee->estado->value === 'on_leave' ? 'yellow' : 'gray')">
+                                {{ $employee->estado->label() }}
                             </x-ui.badge>
                         </div>
                     @empty

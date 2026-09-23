@@ -44,13 +44,13 @@ class ProjectController extends Controller
             ->when($request->filled('search'), function ($query) use ($request) {
                 $search = $request->string('search');
                 $query->where(function ($query) use ($search) {
-                    $query->where('name', 'like', "%{$search}%")
-                        ->orWhere('code', 'like', "%{$search}%");
+                    $query->where('nombre', 'like', "%{$search}%")
+                        ->orWhere('codigo', 'like', "%{$search}%");
                 });
             })
-            ->when($request->filled('status'), fn ($query) => $query->where('status', $request->string('status')))
-            ->when($request->filled('priority'), fn ($query) => $query->where('priority', $request->string('priority')))
-            ->when($request->filled('client_id'), fn ($query) => $query->where('client_id', $request->integer('client_id')))
+            ->when($request->filled('status'), fn ($query) => $query->where('estado', $request->string('status')))
+            ->when($request->filled('priority'), fn ($query) => $query->where('prioridad', $request->string('priority')))
+            ->when($request->filled('client_id'), fn ($query) => $query->where('cliente_id', $request->integer('client_id')))
             ->when($request->filled('area_id'), fn ($query) => $query->whereHas('areas', fn ($q) => $q->where('areas.id', $request->integer('area_id'))))
             ->orderByDesc('created_at')
             ->paginate(5)
@@ -60,8 +60,8 @@ class ProjectController extends Controller
             'projects' => $projects,
             'risks' => $risksById,
             'totalCount' => $allProjects->count(),
-            'inProgressCount' => $allProjects->where('status', ProjectStatus::InProgress)->count(),
-            'blockedCount' => $allProjects->where('status', ProjectStatus::Blocked)->count(),
+            'inProgressCount' => $allProjects->where('estado', ProjectStatus::InProgress)->count(),
+            'blockedCount' => $allProjects->where('estado', ProjectStatus::Blocked)->count(),
             'highRiskCount' => $highRiskCount,
             'filters' => $request->only(['search', 'status', 'priority', 'client_id', 'area_id']),
         ] + $this->formOptions());
@@ -77,7 +77,7 @@ class ProjectController extends Controller
         $project->areas()->sync($areaIds);
         TaskState::seedDefaults($project->id);
 
-        ActivityLogger::record($project, 'created', "Creó el proyecto \"{$project->name}\".");
+        ActivityLogger::record($project, 'created', "Creó el proyecto \"{$project->nombre}\".");
 
         return redirect()
             ->route('projects.index')
@@ -99,7 +99,7 @@ class ProjectController extends Controller
             'areas',
             'tasks.assignee.area',
             'members' => function ($query) {
-                $query->orderByPivot('status')->orderBy('first_name');
+                $query->orderByPivot('estado')->orderBy('nombres');
             },
         ]);
 
@@ -133,7 +133,7 @@ class ProjectController extends Controller
             'generatedAt' => now(),
         ])
             ->setPaper('a4', 'portrait')
-            ->download('reporte-'.$project->code.'-'.now()->format('Y-m-d').'.pdf');
+            ->download('reporte-'.$project->codigo.'-'.now()->format('Y-m-d').'.pdf');
     }
 
     public function exportCsv(): StreamedResponse
@@ -148,16 +148,16 @@ class ProjectController extends Controller
 
             foreach ($projects as $project) {
                 fputcsv($handle, [
-                    $project->code,
-                    $project->name,
-                    $project->type->label(),
-                    $project->status->label(),
-                    $project->priority->label(),
+                    $project->codigo,
+                    $project->nombre,
+                    $project->tipo->label(),
+                    $project->estado->label(),
+                    $project->prioridad->label(),
                     $project->responsibleEmployee?->fullName() ?? '—',
-                    $project->start_date?->toDateString() ?? '—',
-                    $project->estimated_end_date?->toDateString() ?? '—',
-                    $project->risk_level,
-                    $project->risk_score,
+                    $project->fecha_inicio?->toDateString() ?? '—',
+                    $project->fecha_fin_estimada?->toDateString() ?? '—',
+                    $project->nivel_riesgo,
+                    $project->puntuacion_riesgo,
                 ]);
             }
 
@@ -179,7 +179,7 @@ class ProjectController extends Controller
             $project->areas()->sync($areaIds);
         }
 
-        ActivityLogger::recordUpdate($project, $before, "el proyecto \"{$project->name}\"");
+        ActivityLogger::recordUpdate($project, $before, "el proyecto \"{$project->nombre}\"");
 
         return redirect()
             ->route('projects.index')
@@ -190,7 +190,7 @@ class ProjectController extends Controller
     {
         $this->authorize('delete', $project);
 
-        ActivityLogger::record($project, 'deleted', "Eliminó el proyecto \"{$project->name}\".");
+        ActivityLogger::record($project, 'deleted', "Eliminó el proyecto \"{$project->nombre}\".");
 
         $project->delete();
 
@@ -205,13 +205,13 @@ class ProjectController extends Controller
             'types' => ProjectType::cases(),
             'statuses' => ProjectStatus::cases(),
             'priorities' => Priority::cases(),
-            'employees' => Employee::orderBy('first_name')->get(),
+            'employees' => Employee::orderBy('nombres')->get(),
             'managers' => Employee::whereHas('user.roles', fn ($q) => $q->whereIn('name', ['administrator', 'manager']))
-                ->orderBy('first_name')->get(),
+                ->orderBy('nombres')->get(),
             'leaders' => Employee::whereHas('user.roles', fn ($q) => $q->whereIn('name', ['administrator', 'project_lead']))
-                ->orderBy('first_name')->get(),
-            'clients' => Client::where('status', 'active')->orderBy('name')->get(),
-            'areas' => Area::where('active', true)->orderBy('name')->get(),
+                ->orderBy('nombres')->get(),
+            'clients' => Client::where('estado', 'active')->orderBy('nombre')->get(),
+            'areas' => Area::where('activa', true)->orderBy('nombre')->get(),
         ];
     }
 
@@ -226,7 +226,7 @@ class ProjectController extends Controller
                 $project->areas->isNotEmpty(),
                 fn ($query) => $query->whereIn('area_id', $project->areas->pluck('id'))
             )
-            ->orderBy('first_name')
+            ->orderBy('nombres')
             ->get();
     }
 
@@ -238,12 +238,12 @@ class ProjectController extends Controller
         return $project->areas->map(function ($area) use ($project) {
             $tasks = $project->tasks->filter(fn ($task) => $task->assignee?->area_id === $area->id);
             $total = $tasks->count();
-            $completed = $tasks->filter(fn ($task) => $task->status === TaskStatus::Completed)->count();
+            $completed = $tasks->filter(fn ($task) => $task->estado === TaskStatus::Completed)->count();
 
-            $weight = $tasks->sum(fn ($task) => (float) ($task->estimated_hours ?? 1));
+            $weight = $tasks->sum(fn ($task) => (float) ($task->horas_estimadas ?? 1));
 
             $weighted = $weight > 0
-                ? round($tasks->sum(fn ($task) => $task->progress_percentage * (float) ($task->estimated_hours ?? 1)) / $weight, 1)
+                ? round($tasks->sum(fn ($task) => $task->porcentaje_progreso * (float) ($task->horas_estimadas ?? 1)) / $weight, 1)
                 : 0.0;
 
             return [
@@ -268,23 +268,27 @@ class ProjectController extends Controller
         $areaIds = $project->areas->pluck('id');
 
         $employees = Employee::when($areaIds->isNotEmpty(), fn ($query) => $query->whereIn('area_id', $areaIds))
-            ->orderBy('first_name')
-            ->get(['id', 'first_name', 'last_name', 'area_id']);
+            ->orderBy('nombres')
+            ->get(['id', 'nombres', 'apellidos', 'area_id']);
 
         return response()->json([
-            'areas' => $project->areas->map(fn ($area) => ['id' => $area->id, 'name' => $area->name])->values(),
+            'areas' => $project->areas->map(fn ($area) => ['id' => $area->id, 'name' => $area->nombre])->values(),
             'employees' => $employees->map(fn ($e) => [
                 'id' => $e->id,
                 'name' => $e->fullName(),
                 'area_id' => $e->area_id,
             ])->values(),
             'states' => TaskState::where(function ($query) use ($project) {
-                $query->whereNull('project_id')->orWhere('project_id', $project->id);
-            })->where('active', true)->orderBy('position')
-                ->get(['id', 'name', 'slug', 'color', 'is_initial', 'is_final', 'is_blocking'])
+                $query->whereNull('proyecto_id')->orWhere('proyecto_id', $project->id);
+            })->where('activo', true)->orderBy('posicion')
+                ->get(['id', 'nombre', 'slug', 'color', 'es_inicial', 'es_final', 'es_bloqueante'])
+                ->map(fn ($s) => [
+                    'id' => $s->id, 'name' => $s->nombre, 'slug' => $s->slug, 'color' => $s->color,
+                    'is_initial' => $s->es_inicial, 'is_final' => $s->es_final, 'is_blocking' => $s->es_bloqueante,
+                ])
                 ->values(),
-            'tasks' => $project->tasks()->orderBy('title')->get(['id', 'code', 'title'])
-                ->map(fn ($t) => ['id' => $t->id, 'code' => $t->code ?? '#'.$t->id, 'title' => $t->title])
+            'tasks' => $project->tasks()->orderBy('titulo')->get(['id', 'codigo', 'titulo'])
+                ->map(fn ($t) => ['id' => $t->id, 'code' => $t->codigo ?? '#'.$t->id, 'title' => $t->titulo])
                 ->values(),
         ]);
     }

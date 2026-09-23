@@ -16,6 +16,7 @@ use App\Support\ActivityLogger;
 use App\Support\Enums\Priority;
 use App\Support\Enums\RoleName;
 use App\Support\ProjectScope;
+use App\Support\TaskProgressRollup;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -34,7 +35,7 @@ class TaskController extends Controller
         return view('tasks.html.index', [
             'projects' => $this->scopedProjects($request->user()),
             'filterEmployees' => $this->filterEmployees($request->user()),
-            'areas' => Area::where('active', true)->orderBy('name')->get(),
+            'areas' => Area::where('activa', true)->orderBy('nombre')->get(),
             'priorities' => Priority::cases(),
             'filters' => $request->only(['search', 'project_id', 'assigned_to', 'area_id', 'priority', 'mine']),
         ]);
@@ -46,27 +47,27 @@ class TaskController extends Controller
 
         $tasks = $this->filteredTasks($request)
             ->with(['state', 'assignee.area', 'project', 'statusHistory.user', 'progressUpdates.user'])
-            ->orderBy('due_date')
+            ->orderBy('fecha_vencimiento')
             ->get();
 
         if ($request->filled('project_id')) {
             // Columnas únicas por slug, prefiriendo el estado propio del proyecto:
             // sin esto aparecen dos columnas idénticas y el arrastre entre ellas no hace nada.
             $statuses = TaskState::where(function ($query) use ($request) {
-                $query->whereNull('project_id')->orWhere('project_id', $request->integer('project_id'));
-            })->where('active', true)->orderBy('position')->get()
+                $query->whereNull('proyecto_id')->orWhere('proyecto_id', $request->integer('project_id'));
+            })->where('activo', true)->orderBy('posicion')->get()
                 ->groupBy('slug')
-                ->map(fn ($group) => $group->firstWhere('project_id', $request->integer('project_id')) ?? $group->first())
+                ->map(fn ($group) => $group->firstWhere('proyecto_id', $request->integer('project_id')) ?? $group->first())
                 ->values();
         } else {
-            $statuses = TaskState::whereNull('project_id')->where('active', true)->orderBy('position')->get()
+            $statuses = TaskState::whereNull('proyecto_id')->where('activo', true)->orderBy('posicion')->get()
                 ->keyBy('slug');
 
-            $extraIds = $tasks->pluck('status_id')->filter()->unique()
-                ->diff(TaskState::whereNull('project_id')->pluck('id'))
+            $extraIds = $tasks->pluck('estado_id')->filter()->unique()
+                ->diff(TaskState::whereNull('proyecto_id')->pluck('id'))
                 ->values();
 
-            foreach (TaskState::whereIn('id', $extraIds)->orderBy('position')->get() as $extra) {
+            foreach (TaskState::whereIn('id', $extraIds)->orderBy('posicion')->get() as $extra) {
                 if (! $statuses->has($extra->slug)) {
                     $statuses->put($extra->slug, $extra);
                 }
@@ -82,9 +83,9 @@ class TaskController extends Controller
             'columns' => $statuses->map(fn (TaskState $state) => [
                 'id' => $state->id,
                 'slug' => $state->slug,
-                'name' => $state->name,
+                'name' => $state->nombre,
                 'color' => $state->color,
-                'is_blocking' => $state->is_blocking,
+                'is_blocking' => $state->es_bloqueante,
                 'count' => $cards->where('status_slug', $state->slug)->count(),
             ])->values(),
             'cards' => $cards,
@@ -92,8 +93,8 @@ class TaskController extends Controller
                 'open' => $tasks->filter(fn (Task $task) => $task->isActiveState())->count(),
                 'overdue' => $tasks->filter(fn (Task $task) => $task->isOverdue())->count(),
                 'completed_week' => $tasks->filter(fn (Task $task) => $task->state?->slug === 'completada'
-                    && $task->completed_at !== null
-                    && $task->completed_at->gte(now()->startOfWeek()))->count(),
+                    && $task->completado_en !== null
+                    && $task->completado_en->gte(now()->startOfWeek()))->count(),
             ],
         ]);
     }
@@ -103,13 +104,14 @@ class TaskController extends Controller
         $visible = $this->visibleTasksQuery();
 
         return (clone $visible)
-            ->when($request->filled('search'), fn ($query) => $query->where('title', 'like', '%'.$request->string('search').'%'))
-            ->when($request->filled('project_id'), fn ($query) => $query->where('project_id', $request->integer('project_id')))
-            ->when($request->filled('assigned_to'), fn ($query) => $query->where('assigned_to', $request->integer('assigned_to')))
-            ->when($request->filled('priority'), fn ($query) => $query->where('priority', $request->string('priority')))
+            ->whereNull('tarea_padre_id')
+            ->when($request->filled('search'), fn ($query) => $query->where('titulo', 'like', '%'.$request->string('search').'%'))
+            ->when($request->filled('project_id'), fn ($query) => $query->where('proyecto_id', $request->integer('project_id')))
+            ->when($request->filled('assigned_to'), fn ($query) => $query->where('asignado_a', $request->integer('assigned_to')))
+            ->when($request->filled('priority'), fn ($query) => $query->where('prioridad', $request->string('priority')))
             ->when($request->filled('area_id'), fn ($query) => $query->whereHas('assignee', fn ($q) => $q->where('area_id', $request->integer('area_id'))))
             ->when($request->boolean('mine'), function ($query) use ($request) {
-                $query->where('assigned_to', $request->user()->employee?->id);
+                $query->where('asignado_a', $request->user()->employee?->id);
             });
     }
 
@@ -120,27 +122,27 @@ class TaskController extends Controller
 
         return [
             'id' => $task->id,
-            'code' => $task->code ?? '#'.$task->id,
-            'title' => $task->title,
-            'status_id' => $task->status_id,
+            'code' => $task->codigo ?? '#'.$task->id,
+            'title' => $task->titulo,
+            'status_id' => $task->estado_id,
             'status_slug' => $task->state?->slug,
-            'project_code' => $task->project?->code,
-            'project_name' => $task->project?->name ?? 'Proyecto archivado',
+            'project_code' => $task->project?->codigo,
+            'project_name' => $task->project?->nombre ?? 'Proyecto archivado',
             'assignee_name' => $assignee?->fullName(),
             'assignee_initials' => $assignee
-                ? mb_strtoupper(mb_substr($assignee->first_name, 0, 1).mb_substr($assignee->last_name, 0, 1))
+                ? mb_strtoupper(mb_substr($assignee->nombres, 0, 1).mb_substr($assignee->apellidos, 0, 1))
                 : null,
-            'area' => $assignee?->area?->name,
-            'priority' => $task->priority->value,
-            'priority_label' => $task->priority->label(),
-            'priority_color' => $task->priority->color(),
-            'progress' => $task->progress_percentage,
-            'estimated_hours' => $task->estimated_hours,
-            'actual_hours' => $task->actual_hours,
+            'area' => $assignee?->area?->nombre,
+            'priority' => $task->prioridad->value,
+            'priority_label' => $task->prioridad->label(),
+            'priority_color' => $task->prioridad->color(),
+            'progress' => $task->porcentaje_progreso,
+            'estimated_hours' => $task->horas_estimadas,
+            'actual_hours' => $task->horas_reales,
             'due' => $this->dueData($task),
             'overdue' => $task->isOverdue(),
             'blocking' => $task->isBlockingState(),
-            'blocked_reason' => $task->blocked_reason,
+            'blocked_reason' => $task->motivo_bloqueo,
             'last_mover_name' => $mover?->name,
             'last_mover_initial' => $mover ? mb_strtoupper(mb_substr($mover->name, 0, 1)) : null,
             'can_update' => $user->can('update', $task),
@@ -150,12 +152,12 @@ class TaskController extends Controller
 
     private function dueData(Task $task): ?array
     {
-        if ($task->due_date === null) {
+        if ($task->fecha_vencimiento === null) {
             return null;
         }
 
         $today = now()->startOfDay();
-        $due = $task->due_date->copy()->startOfDay();
+        $due = $task->fecha_vencimiento->copy()->startOfDay();
         $diff = $today->diffInDays($due, false);
 
         if ($diff < 0) {
@@ -168,21 +170,21 @@ class TaskController extends Controller
         } elseif ($diff <= 7) {
             $label = "Vence en {$diff} días";
         } else {
-            $label = $task->due_date->format('d/m/Y');
+            $label = $task->fecha_vencimiento->format('d/m/Y');
         }
 
-        return ['date' => $task->due_date->toDateString(), 'label' => $label];
+        return ['date' => $task->fecha_vencimiento->toDateString(), 'label' => $label];
     }
 
     private function scopedProjects($user)
     {
-        return ProjectScope::apply(Project::orderBy('name'), $user)->get(['id', 'code', 'name']);
+        return ProjectScope::apply(Project::orderBy('nombre'), $user)->get(['id', 'codigo', 'nombre']);
     }
 
     private function filterEmployees($user)
     {
         if ($user->isAdmin() || $user->isManager()) {
-            return Employee::orderBy('first_name')->get(['id', 'first_name', 'last_name']);
+            return Employee::orderBy('nombres')->get(['id', 'nombres', 'apellidos']);
         }
 
         $employeeId = $user->employee?->id;
@@ -191,20 +193,20 @@ class TaskController extends Controller
             return collect();
         }
 
-        $projectIds = Project::where('responsible_employee_id', $employeeId)->pluck('id');
+        $projectIds = Project::where('empleado_responsable_id', $employeeId)->pluck('id');
 
         return Employee::where('id', $employeeId)
-            ->orWhereHas('projects', fn ($query) => $query->whereIn('projects.id', $projectIds))
-            ->orWhereIn('id', Task::whereIn('project_id', $projectIds)->select('assigned_to'))
-            ->orderBy('first_name')
-            ->get(['id', 'first_name', 'last_name']);
+            ->orWhereHas('projects', fn ($query) => $query->whereIn('proyectos.id', $projectIds))
+            ->orWhereIn('id', Task::whereIn('proyecto_id', $projectIds)->select('asignado_a'))
+            ->orderBy('nombres')
+            ->get(['id', 'nombres', 'apellidos']);
     }
 
     public function exportCsv(): StreamedResponse
     {
         $this->authorize('viewAny', Task::class);
 
-        $tasks = $this->visibleTasksQuery()->with(['project', 'assignee', 'state'])->orderBy('due_date')->get();
+        $tasks = $this->visibleTasksQuery()->with(['project', 'assignee', 'state'])->orderBy('fecha_vencimiento')->get();
 
         return response()->streamDownload(function () use ($tasks) {
             $handle = fopen('php://output', 'w');
@@ -212,16 +214,16 @@ class TaskController extends Controller
 
             foreach ($tasks as $task) {
                 fputcsv($handle, [
-                    $task->code ?? '#'.$task->id,
-                    $task->title,
-                    $task->project?->name ?? '—',
+                    $task->codigo ?? '#'.$task->id,
+                    $task->titulo,
+                    $task->project?->nombre ?? '—',
                     $task->assignee?->fullName() ?? '—',
-                    $task->state?->name ?? $task->status->label(),
-                    $task->priority->label(),
-                    $task->due_date?->toDateString() ?? '—',
-                    $task->progress_percentage,
-                    $task->estimated_hours ?? '—',
-                    $task->actual_hours ?? '—',
+                    $task->state?->nombre ?? $task->estado->label(),
+                    $task->prioridad->label(),
+                    $task->fecha_vencimiento?->toDateString() ?? '—',
+                    $task->porcentaje_progreso,
+                    $task->horas_estimadas ?? '—',
+                    $task->horas_reales ?? '—',
                 ]);
             }
 
@@ -265,13 +267,13 @@ class TaskController extends Controller
 
                     if ($user->hasRole(RoleName::ProjectLead->value) && $employeeId !== null) {
                         $query->orWhereHas('project', function ($query) use ($employeeId) {
-                            $query->where('responsible_employee_id', $employeeId);
+                            $query->where('empleado_responsable_id', $employeeId);
                         });
                         $hasCondition = true;
                     }
 
                     if ($employeeId !== null) {
-                        $query->orWhere('assigned_to', $employeeId);
+                        $query->orWhere('asignado_a', $employeeId);
                         $hasCondition = true;
                     }
 
@@ -289,28 +291,36 @@ class TaskController extends Controller
         $dependencyIds = $data['dependency_ids'] ?? [];
         unset($data['dependency_ids'], $data['area_id']);
 
-        $state = TaskState::findOrFail($data['status_id']);
+        $state = TaskState::findOrFail($data['estado_id']);
 
-        $data['created_by'] = Auth::id();
-        $data['status'] = TaskState::enumForSlug($state->slug)?->value ?? 'pending';
-        $data['completed_at'] = $state->slug === 'completada' ? now() : null;
-        $data['progress_percentage'] = $state->slug === 'completada' ? 100 : 0;
+        $data['creado_por'] = Auth::id();
+        $data['estado'] = TaskState::enumForSlug($state->slug)?->value ?? 'pending';
+        $data['completado_en'] = $state->slug === 'completada' ? now() : null;
+        $data['porcentaje_progreso'] = $state->slug === 'completada' ? 100 : 0;
 
         $task = Task::create($data);
         $task->dependencies()->attach($dependencyIds);
 
         TaskStatusHistory::create([
-            'task_id' => $task->id,
-            'from_status_id' => null,
-            'to_status_id' => $state->id,
-            'user_id' => Auth::id(),
-            'comment' => 'Tarea creada.',
+            'tarea_id' => $task->id,
+            'estado_origen_id' => null,
+            'estado_destino_id' => $state->id,
+            'usuario_id' => Auth::id(),
+            'comentario' => 'Tarea creada.',
         ]);
 
-        ActivityLogger::record($task, 'created', "Creó la tarea \"{$task->title}\".");
+        ActivityLogger::record($task, 'created', "Creó la tarea \"{$task->titulo}\".");
+
+        if ($task->tarea_padre_id !== null) {
+            TaskProgressRollup::recalculateAncestors($task, Auth::user());
+
+            return redirect()
+                ->route('tasks.show', $task->tarea_padre_id)
+                ->with('status', 'Subtarea creada correctamente.');
+        }
 
         return redirect()
-            ->route('tasks.index', ['project_id' => $task->project_id])
+            ->route('tasks.index', ['project_id' => $task->proyecto_id])
             ->with('status', 'Tarea creada correctamente.');
     }
 
@@ -318,22 +328,35 @@ class TaskController extends Controller
     {
         $this->authorize('view', $task);
 
-        $task->load(['project', 'assignee.area', 'state', 'dependencies.state', 'dependents.state', 'progressUpdates.user', 'statusHistory.user']);
+        $task->load([
+            'project', 'assignee.area', 'state', 'dependencies.state', 'dependents.state',
+            'progressUpdates.user', 'statusHistory.user', 'tareaPadre',
+            'subtareas' => fn ($query) => $query->orderBy('titulo'),
+            'subtareas.state', 'subtareas.assignee',
+        ]);
 
-        $availableForDependency = Task::where('project_id', $task->project_id)
+        $availableForDependency = Task::where('proyecto_id', $task->proyecto_id)
             ->where('id', '!=', $task->id)
             ->whereNotIn('id', $task->dependencies->pluck('id'))
-            ->orderBy('title')
+            ->orderBy('titulo')
             ->get();
 
         $projectStates = TaskState::where(function ($query) use ($task) {
-            $query->whereNull('project_id')->orWhere('project_id', $task->project_id);
-        })->where('active', true)->orderBy('position')->get();
+            $query->whereNull('proyecto_id')->orWhere('proyecto_id', $task->proyecto_id);
+        })->where('activo', true)->orderBy('posicion')->get();
+
+        $availableAsParent = Task::where('proyecto_id', $task->proyecto_id)
+            ->where('id', '!=', $task->id)
+            ->whereNotIn('id', $task->subtareas->pluck('id'))
+            ->orderBy('titulo')
+            ->get()
+            ->reject(fn (Task $candidate) => $candidate->esDescendienteDe($task));
 
         return view('tasks.html.show', [
             'task' => $task,
             'availableForDependency' => $availableForDependency,
             'projectStates' => $projectStates,
+            'availableAsParent' => $availableAsParent,
         ] + $this->formOptions());
     }
 
@@ -342,44 +365,57 @@ class TaskController extends Controller
         $data = $request->validated();
 
         $before = $task->getAttributes();
+        $previousParentId = $task->tarea_padre_id;
 
-        if (array_key_exists('status_id', $data) && (int) $data['status_id'] !== (int) $task->status_id) {
-            $state = TaskState::findOrFail($data['status_id']);
+        if (array_key_exists('estado_id', $data) && (int) $data['estado_id'] !== (int) $task->estado_id) {
+            $state = TaskState::findOrFail($data['estado_id']);
 
-            $task->status_id = $state->id;
+            $task->estado_id = $state->id;
 
             if ($enum = TaskState::enumForSlug($state->slug)) {
-                $task->status = $enum;
+                $task->estado = $enum;
             }
 
             if ($state->slug === 'completada') {
-                $task->progress_percentage = 100;
-                $task->completed_at ??= now();
+                $task->porcentaje_progreso = 100;
+                $task->completado_en ??= now();
             } else {
-                $task->completed_at = null;
+                $task->completado_en = null;
             }
 
-            unset($data['status_id']);
+            unset($data['estado_id']);
 
             TaskStatusHistory::create([
-                'task_id' => $task->id,
-                'from_status_id' => $before['status_id'] ?? null,
-                'to_status_id' => $state->id,
-                'user_id' => $request->user()->id,
+                'tarea_id' => $task->id,
+                'estado_origen_id' => $before['estado_id'] ?? null,
+                'estado_destino_id' => $state->id,
+                'usuario_id' => $request->user()->id,
             ]);
         }
 
         $task->fill($data);
         $task->save();
 
-        ActivityLogger::recordUpdate($task, $before, "la tarea \"{$task->title}\"");
+        ActivityLogger::recordUpdate($task, $before, "la tarea \"{$task->titulo}\"");
 
-        if ($task->state?->slug === 'completada' && $task->progress_percentage < 100) {
+        if ($task->state?->slug === 'completada' && $task->porcentaje_progreso < 100) {
             $recordProgress->execute($task, 100, 'Marcada como completada.', $request->user());
         }
 
+        if ($previousParentId !== $task->tarea_padre_id) {
+            if ($previousParentId !== null) {
+                $previousParent = Task::find($previousParentId);
+
+                if ($previousParent !== null) {
+                    TaskProgressRollup::recalculate($previousParent, $request->user());
+                }
+            }
+
+            TaskProgressRollup::recalculateAncestors($task, $request->user());
+        }
+
         return redirect()
-            ->route('tasks.index')
+            ->route($task->tarea_padre_id !== null ? 'tasks.show' : 'tasks.index', $task->tarea_padre_id ?? [])
             ->with('status', 'Tarea actualizada correctamente.');
     }
 
@@ -390,10 +426,10 @@ class TaskController extends Controller
         $validated = $request->validate([
             'status_id' => [
                 'nullable', 'integer',
-                Rule::exists('task_statuses', 'id')->where(function ($query) use ($task) {
-                    $query->where('active', true)
+                Rule::exists('estados_tarea', 'id')->where(function ($query) use ($task) {
+                    $query->where('activo', true)
                         ->where(function ($query) use ($task) {
-                            $query->whereNull('project_id')->orWhere('project_id', $task->project_id);
+                            $query->whereNull('proyecto_id')->orWhere('proyecto_id', $task->proyecto_id);
                         });
                 }),
             ],
@@ -407,10 +443,10 @@ class TaskController extends Controller
         } else {
             $state = TaskState::where('slug', $validated['status_slug'] ?? '')
                 ->where(function ($query) use ($task) {
-                    $query->where('project_id', $task->project_id)->orWhereNull('project_id');
+                    $query->where('proyecto_id', $task->proyecto_id)->orWhereNull('proyecto_id');
                 })
-                ->where('active', true)
-                ->orderByRaw('project_id IS NULL')
+                ->where('activo', true)
+                ->orderByRaw('proyecto_id IS NULL')
                 ->first();
 
             abort_if($state === null, 422, 'Estado no válido para este proyecto.');
@@ -418,7 +454,7 @@ class TaskController extends Controller
 
         $this->authorize('transitionTo', [$task, $state]);
 
-        if ($state->is_blocking && blank($validated['blocked_reason'] ?? null) && blank($task->blocked_reason)) {
+        if ($state->es_bloqueante && blank($validated['blocked_reason'] ?? null) && blank($task->motivo_bloqueo)) {
             return response()->json([
                 'message' => 'Mover a un estado de bloqueo requiere indicar el motivo.',
                 'errors' => ['blocked_reason' => ['El motivo de bloqueo es obligatorio.']],
@@ -426,46 +462,48 @@ class TaskController extends Controller
         }
 
         $before = $task->getAttributes();
-        $fromStatusId = $task->status_id;
+        $fromStatusId = $task->estado_id;
 
-        $task->status_id = $state->id;
+        $task->estado_id = $state->id;
 
         if ($enum = TaskState::enumForSlug($state->slug)) {
-            $task->status = $enum;
+            $task->estado = $enum;
         }
 
         if ($state->slug === 'completada') {
-            $task->progress_percentage = 100;
-            $task->completed_at ??= now();
+            $task->porcentaje_progreso = 100;
+            $task->completado_en ??= now();
         } else {
-            $task->completed_at = null;
+            $task->completado_en = null;
         }
 
         if (filled($validated['blocked_reason'] ?? null)) {
-            $task->blocked_reason = $validated['blocked_reason'];
+            $task->motivo_bloqueo = $validated['blocked_reason'];
         }
 
         $task->save();
 
         TaskStatusHistory::create([
-            'task_id' => $task->id,
-            'from_status_id' => $fromStatusId,
-            'to_status_id' => $state->id,
-            'user_id' => $request->user()->id,
-            'comment' => $validated['comment'] ?? null,
+            'tarea_id' => $task->id,
+            'estado_origen_id' => $fromStatusId,
+            'estado_destino_id' => $state->id,
+            'usuario_id' => $request->user()->id,
+            'comentario' => $validated['comment'] ?? null,
         ]);
 
-        ActivityLogger::recordUpdate($task, $before, "la tarea \"{$task->title}\"");
+        ActivityLogger::recordUpdate($task, $before, "la tarea \"{$task->titulo}\"");
+
+        TaskProgressRollup::recalculateAncestors($task, $request->user());
 
         return response()->json([
             'id' => $task->id,
             'status_id' => $state->id,
             'status_slug' => $state->slug,
-            'status' => $task->status->value,
-            'status_label' => $state->name,
+            'status' => $task->estado->value,
+            'status_label' => $state->nombre,
             'status_color' => $state->color,
-            'is_blocking' => $state->is_blocking,
-            'progress_percentage' => $task->progress_percentage,
+            'is_blocking' => $state->es_bloqueante,
+            'progress_percentage' => $task->porcentaje_progreso,
         ]);
     }
 
@@ -473,9 +511,29 @@ class TaskController extends Controller
     {
         $this->authorize('delete', $task);
 
-        ActivityLogger::record($task, 'deleted', "Eliminó la tarea \"{$task->title}\".");
+        if ($task->tieneSubtareas()) {
+            return redirect()
+                ->back()
+                ->with('toast_error', 'No puedes eliminar una tarea con subtareas. Elimínalas o quítalas primero.');
+        }
+
+        $parentId = $task->tarea_padre_id;
+
+        ActivityLogger::record($task, 'deleted', "Eliminó la tarea \"{$task->titulo}\".");
 
         $task->delete();
+
+        if ($parentId !== null) {
+            $parent = Task::find($parentId);
+
+            if ($parent !== null) {
+                TaskProgressRollup::recalculate($parent, Auth::user());
+            }
+
+            return redirect()
+                ->route('tasks.show', $parentId)
+                ->with('status', 'Subtarea eliminada correctamente.');
+        }
 
         return redirect()
             ->route('tasks.index')
@@ -484,11 +542,11 @@ class TaskController extends Controller
 
     private function formOptions(): array
     {
-        $projects = ProjectScope::apply(Project::orderBy('name'), Auth::user())->get();
+        $projects = ProjectScope::apply(Project::orderBy('nombre'), Auth::user())->get();
 
         return [
             'projects' => $projects,
-            'employees' => Employee::orderBy('first_name')->get(),
+            'employees' => Employee::orderBy('nombres')->get(),
             'priorities' => Priority::cases(),
         ];
     }

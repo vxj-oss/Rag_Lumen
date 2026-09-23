@@ -8,15 +8,15 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('employees', function (Blueprint $table) {
+        Schema::create('empleados', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->nullable()->unique()->constrained('users')->nullOnDelete();
-            $table->string('first_name', 100);
-            $table->string('last_name', 100);
-            $table->string('email', 150)->unique();
-            $table->string('phone', 30)->nullable();
-            $table->string('position', 100)->nullable();
-            $table->enum('specialty', [
+            $table->foreignId('usuario_id')->nullable()->unique()->constrained('users')->nullOnDelete();
+            $table->string('nombres', 100);
+            $table->string('apellidos', 100);
+            $table->string('correo', 150)->unique();
+            $table->string('telefono', 30)->nullable();
+            $table->string('cargo', 100)->nullable();
+            $table->enum('especialidad', [
                 'backend',
                 'frontend',
                 'fullstack',
@@ -28,18 +28,18 @@ return new class extends Migration
                 'project_manager',
                 'other',
             ]);
-            $table->enum('status', ['active', 'inactive', 'on_leave'])->default('active');
-            $table->date('hire_date')->nullable();
+            $table->enum('estado', ['active', 'inactive', 'on_leave'])->default('active');
+            $table->date('fecha_contratacion')->nullable();
             $table->timestamps();
             $table->softDeletes();
 
-            $table->index('specialty');
-            $table->index('status');
+            $table->index('especialidad');
+            $table->index('estado');
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('employees');
+        Schema::dropIfExists('empleados');
     }
 };

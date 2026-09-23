@@ -17,13 +17,13 @@ class UpdateClientRequest extends FormRequest
         $clientId = $this->route('client')->id;
 
         return [
-            'name' => ['required', 'string', 'max:150'],
-            'tax_id' => ['nullable', 'string', 'max:50', Rule::unique('clients', 'tax_id')->ignore($clientId)],
-            'contact_name' => ['nullable', 'string', 'max:150'],
-            'email' => ['nullable', 'email', 'max:150'],
-            'phone' => ['nullable', 'string', 'max:30'],
+            'nombre' => ['required', 'string', 'max:150'],
+            'identificacion_fiscal' => ['nullable', 'string', 'max:50', Rule::unique('clientes', 'identificacion_fiscal')->ignore($clientId)],
+            'nombre_contacto' => ['nullable', 'string', 'max:150'],
+            'correo' => ['nullable', 'email', 'max:150'],
+            'telefono' => ['nullable', 'string', 'max:30'],
             'sector' => ['nullable', 'string', 'max:100'],
-            'status' => ['required', 'in:active,inactive'],
+            'estado' => ['required', 'in:active,inactive'],
         ];
     }
 }

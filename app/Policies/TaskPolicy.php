@@ -56,7 +56,7 @@ class TaskPolicy
             return false;
         }
 
-        if ($state->is_final) {
+        if ($state->es_final) {
             return $user->isAdmin() || $user->isManager() || $this->leadsProject($user, $task);
         }
 
@@ -81,12 +81,12 @@ class TaskPolicy
     private function leadsProject(User $user, Task $task): bool
     {
         return $user->hasRole(RoleName::ProjectLead->value)
-            && $task->project?->responsible_employee_id !== null
-            && $user->employee?->id === $task->project?->responsible_employee_id;
+            && $task->project?->empleado_responsable_id !== null
+            && $user->employee?->id === $task->project?->empleado_responsable_id;
     }
 
     private function isAssignee(User $user, Task $task): bool
     {
-        return $task->assigned_to !== null && $user->employee?->id === $task->assigned_to;
+        return $task->asignado_a !== null && $user->employee?->id === $task->asignado_a;
     }
 }

@@ -15,9 +15,9 @@ class StoreRagQueryRequest extends FormRequest
     {
         return [
             'question' => ['required', 'string', 'max:2000'],
-            'project_id' => ['nullable', 'integer', 'exists:projects,id'],
-            'task_id' => ['nullable', 'integer', 'exists:tasks,id'],
-            'conversation_id' => ['nullable', 'integer', 'exists:rag_conversations,id'],
+            'project_id' => ['nullable', 'integer', 'exists:proyectos,id'],
+            'task_id' => ['nullable', 'integer', 'exists:tareas,id'],
+            'conversation_id' => ['nullable', 'integer', 'exists:conversaciones_rag,id'],
         ];
     }
 }

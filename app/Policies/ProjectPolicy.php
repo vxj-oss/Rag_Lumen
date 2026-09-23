@@ -38,13 +38,13 @@ class ProjectPolicy
             return false;
         }
 
-        if ($project->tasks()->where('assigned_to', $employeeId)->exists()) {
+        if ($project->tasks()->where('asignado_a', $employeeId)->exists()) {
             return true;
         }
 
         return $project->members()
-            ->wherePivot('status', 'active')
-            ->where('employees.id', $employeeId)
+            ->wherePivot('estado', 'active')
+            ->where('empleados.id', $employeeId)
             ->exists();
     }
 
@@ -84,8 +84,8 @@ class ProjectPolicy
 
     private function isResponsibleFor(User $user, Project $project): bool
     {
-        return $project->responsible_employee_id !== null
-            && $user->employee?->id === $project->responsible_employee_id;
+        return $project->empleado_responsable_id !== null
+            && $user->employee?->id === $project->empleado_responsable_id;
     }
 
     private function inScope(User $user, Project $project): bool

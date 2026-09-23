@@ -14,13 +14,13 @@ return new class extends Migration
         foreach (Project::withTrashed()->get() as $project) {
             TaskState::seedDefaults($project->id);
 
-            $states = TaskState::where('project_id', $project->id)->get()->keyBy('slug');
+            $states = TaskState::where('proyecto_id', $project->id)->get()->keyBy('slug');
             $counter = 0;
 
-            foreach (Task::withTrashed()->where('project_id', $project->id)->orderBy('id')->get() as $task) {
+            foreach (Task::withTrashed()->where('proyecto_id', $project->id)->orderBy('id')->get() as $task) {
                 $counter++;
 
-                $slug = match ($task->getAttributes()['status'] ?? null) {
+                $slug = match ($task->getAttributes()['estado'] ?? null) {
                     'pending' => 'pendiente',
                     'in_progress' => 'en-progreso',
                     'blocked' => 'bloqueada',
@@ -31,19 +31,19 @@ return new class extends Migration
                 };
 
                 $task->forceFill([
-                    'status_id' => $states[$slug]->id,
-                    'code' => "{$project->code}-T{$counter}",
+                    'estado_id' => $states[$slug]->id,
+                    'codigo' => "{$project->codigo}-T{$counter}",
                 ])->save();
             }
 
-            $project->forceFill(['task_counter' => $counter])->save();
+            $project->forceFill(['contador_tareas' => $counter])->save();
         }
     }
 
     public function down(): void
     {
-        Task::query()->update(['status_id' => null, 'code' => null]);
-        Project::query()->update(['task_counter' => 0]);
+        Task::query()->update(['estado_id' => null, 'codigo' => null]);
+        Project::query()->update(['contador_tareas' => 0]);
         TaskState::query()->delete();
     }
 };

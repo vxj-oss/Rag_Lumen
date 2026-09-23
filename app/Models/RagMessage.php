@@ -6,18 +6,20 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['conversation_id', 'role', 'content', 'sources'])]
+#[Fillable(['conversacion_id', 'rol', 'contenido', 'fuentes'])]
 class RagMessage extends Model
 {
+    protected $table = 'mensajes_rag';
+
     protected function casts(): array
     {
         return [
-            'sources' => 'array',
+            'fuentes' => 'array',
         ];
     }
 
     public function conversation(): BelongsTo
     {
-        return $this->belongsTo(RagConversation::class, 'conversation_id');
+        return $this->belongsTo(RagConversation::class, 'conversacion_id');
     }
 }

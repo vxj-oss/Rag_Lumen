@@ -15,13 +15,13 @@ class StoreClientRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:150'],
-            'tax_id' => ['nullable', 'string', 'max:50', 'unique:clients,tax_id'],
-            'contact_name' => ['nullable', 'string', 'max:150'],
-            'email' => ['nullable', 'email', 'max:150'],
-            'phone' => ['nullable', 'string', 'max:30'],
+            'nombre' => ['required', 'string', 'max:150'],
+            'identificacion_fiscal' => ['nullable', 'string', 'max:50', 'unique:clientes,identificacion_fiscal'],
+            'nombre_contacto' => ['nullable', 'string', 'max:150'],
+            'correo' => ['nullable', 'email', 'max:150'],
+            'telefono' => ['nullable', 'string', 'max:30'],
             'sector' => ['nullable', 'string', 'max:100'],
-            'status' => ['sometimes', 'in:active,inactive'],
+            'estado' => ['sometimes', 'in:active,inactive'],
         ];
     }
 }

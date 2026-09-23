@@ -8,22 +8,22 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('task_status_history', function (Blueprint $table) {
+        Schema::create('historial_estados_tarea', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('task_id')->constrained('tasks')->cascadeOnDelete();
-            $table->foreignId('from_status_id')->nullable()->constrained('task_statuses')->nullOnDelete();
-            $table->foreignId('to_status_id')->nullable()->constrained('task_statuses')->nullOnDelete();
-            $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
-            $table->text('comment')->nullable();
+            $table->foreignId('tarea_id')->constrained('tareas')->cascadeOnDelete();
+            $table->foreignId('estado_origen_id')->nullable()->constrained('estados_tarea')->nullOnDelete();
+            $table->foreignId('estado_destino_id')->nullable()->constrained('estados_tarea')->nullOnDelete();
+            $table->foreignId('usuario_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->text('comentario')->nullable();
             $table->timestamp('created_at')->useCurrent();
 
-            $table->index('task_id');
+            $table->index('tarea_id');
             $table->index('created_at');
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('task_status_history');
+        Schema::dropIfExists('historial_estados_tarea');
     }
 };

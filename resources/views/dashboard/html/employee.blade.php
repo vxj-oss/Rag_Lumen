@@ -34,12 +34,12 @@
                                 <li class="px-4 py-3 flex items-center gap-3">
                                     <div class="flex-1 min-w-0">
                                         <a href="{{ route('tasks.show', $task) }}" class="text-sm font-medium text-gray-900 hover:text-emerald-700 truncate block">
-                                            {{ $task->code }} · {{ $task->title }}
+                                            {{ $task->codigo }} · {{ $task->titulo }}
                                         </a>
                                         <p class="text-xs text-gray-400">
-                                            {{ $task->project?->name ?? __('Proyecto archivado') }}
-                                            @if ($task->due_date)
-                                                · {{ __('vence') }} {{ $task->due_date->format('d/m/Y') }}
+                                            {{ $task->project?->nombre ?? __('Proyecto archivado') }}
+                                            @if ($task->fecha_vencimiento)
+                                                · {{ __('vence') }} {{ $task->fecha_vencimiento->format('d/m/Y') }}
                                             @endif
                                         </p>
                                     </div>
@@ -49,7 +49,7 @@
                                     @if ($task->isBlockingState())
                                         <x-ui.badge color="red">{{ __('Bloqueada') }}</x-ui.badge>
                                     @endif
-                                    <div class="w-24 shrink-0"><x-ui.progress-bar :value="$task->progress_percentage" /></div>
+                                    <div class="w-24 shrink-0"><x-ui.progress-bar :value="$task->porcentaje_progreso" /></div>
                                 </li>
                             @endforeach
                         </ul>
@@ -65,10 +65,10 @@
                     @forelse ($upcoming as $task)
                         <li class="py-2 flex items-center justify-between text-sm">
                             <a href="{{ route('tasks.show', $task) }}" class="text-gray-800 hover:text-emerald-700 font-medium truncate">
-                                {{ $task->title }}
+                                {{ $task->titulo }}
                             </a>
                             <span class="{{ $task->isOverdue() ? 'text-red-600 font-semibold' : 'text-gray-500' }} text-xs whitespace-nowrap ml-3">
-                                {{ $task->due_date->format('d/m/Y') }}
+                                {{ $task->fecha_vencimiento->format('d/m/Y') }}
                             </span>
                         </li>
                     @empty

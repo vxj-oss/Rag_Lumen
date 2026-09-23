@@ -50,14 +50,14 @@ class RagDocumentController extends Controller
         $path = $file->store(config('rag.storage_path'), config('rag.storage_disk'));
 
         $document = RagDocument::create([
-            'project_id' => $request->validated('project_id'),
-            'uploaded_by' => $request->user()->id,
-            'title' => $request->validated('title'),
-            'file_name' => $file->getClientOriginalName(),
-            'file_path' => $path,
-            'mime_type' => $file->getMimeType(),
-            'source_type' => $sourceType->value,
-            'status' => RagDocumentStatus::Pending->value,
+            'proyecto_id' => $request->validated('project_id'),
+            'subido_por' => $request->user()->id,
+            'titulo' => $request->validated('title'),
+            'nombre_archivo' => $file->getClientOriginalName(),
+            'ruta_archivo' => $path,
+            'tipo_mime' => $file->getMimeType(),
+            'tipo_origen' => $sourceType->value,
+            'estado' => RagDocumentStatus::Pending->value,
         ]);
 
         ProcessRagDocument::dispatch($document->id);
@@ -71,7 +71,7 @@ class RagDocumentController extends Controller
     {
         $this->authorize('update', $ragDocument);
 
-        $ragDocument->update(['status' => RagDocumentStatus::Pending->value, 'failure_reason' => null]);
+        $ragDocument->update(['estado' => RagDocumentStatus::Pending->value, 'motivo_fallo' => null]);
 
         ProcessRagDocument::dispatch($ragDocument->id);
 
@@ -84,7 +84,7 @@ class RagDocumentController extends Controller
     {
         $this->authorize('delete', $ragDocument);
 
-        Storage::disk(config('rag.storage_disk'))->delete($ragDocument->file_path);
+        Storage::disk(config('rag.storage_disk'))->delete($ragDocument->ruta_archivo);
         $ragDocument->delete();
 
         return redirect()
@@ -100,10 +100,10 @@ class RagDocumentController extends Controller
             $projectIds !== null,
             function ($query) use ($projectIds) {
                 $query->where(function ($query) use ($projectIds) {
-                    $query->whereNull('project_id');
+                    $query->whereNull('proyecto_id');
 
                     if ($projectIds !== []) {
-                        $query->orWhereIn('project_id', $projectIds);
+                        $query->orWhereIn('proyecto_id', $projectIds);
                     }
                 });
             }
@@ -115,9 +115,9 @@ class RagDocumentController extends Controller
         $user = auth()->user();
 
         if ($user->hasRole(RoleName::Administrator->value)) {
-            return Project::orderBy('name')->get();
+            return Project::orderBy('nombre')->get();
         }
 
-        return Project::where('responsible_employee_id', $user->employee?->id)->orderBy('name')->get();
+        return Project::where('empleado_responsable_id', $user->employee?->id)->orderBy('nombre')->get();
     }
 }

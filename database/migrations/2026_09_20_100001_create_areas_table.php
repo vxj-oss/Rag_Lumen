@@ -10,12 +10,12 @@ return new class extends Migration
     {
         Schema::create('areas', function (Blueprint $table) {
             $table->id();
-            $table->string('name', 100)->unique();
-            $table->text('description')->nullable();
-            $table->boolean('active')->default(true);
+            $table->string('nombre', 100)->unique();
+            $table->text('descripcion')->nullable();
+            $table->boolean('activa')->default(true);
             $table->timestamps();
 
-            $table->index('active');
+            $table->index('activa');
         });
     }
 

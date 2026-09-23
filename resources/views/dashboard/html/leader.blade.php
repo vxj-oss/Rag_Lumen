@@ -45,8 +45,8 @@
                             @forelse ($rows as $row)
                                 <tr class="hover:bg-emerald-50/40 transition">
                                     <td class="px-6 py-4 text-sm font-medium text-gray-900">
-                                        {{ $row['project']->name }}
-                                        <span class="block text-xs text-gray-400 font-normal">{{ $row['project']->code }}</span>
+                                        {{ $row['project']->nombre }}
+                                        <span class="block text-xs text-gray-400 font-normal">{{ $row['project']->codigo }}</span>
                                     </td>
                                     <td class="px-6 py-4">
                                         <x-ui.badge :color="$row['decision']['risk_level']->color()">
@@ -91,11 +91,11 @@
                             @forelse ($overdueTasks as $task)
                                 <tr class="hover:bg-emerald-50/40 transition">
                                     <td class="px-6 py-4 text-sm font-medium text-gray-900">
-                                        {{ $task->title }}
-                                        <span class="block text-xs text-gray-400 font-normal">{{ $task->code }} · {{ $task->project?->name }}</span>
+                                        {{ $task->titulo }}
+                                        <span class="block text-xs text-gray-400 font-normal">{{ $task->codigo }} · {{ $task->project?->nombre }}</span>
                                     </td>
                                     <td class="px-6 py-4 text-sm text-gray-500">{{ $task->assignee?->fullName() ?? '—' }}</td>
-                                    <td class="px-6 py-4 text-sm text-red-600 font-medium">{{ $task->due_date?->format('d/m/Y') }}</td>
+                                    <td class="px-6 py-4 text-sm text-red-600 font-medium">{{ $task->fecha_vencimiento?->format('d/m/Y') }}</td>
                                     <td class="px-6 py-4 text-right text-sm">
                                         <a href="{{ route('tasks.show', $task) }}" class="text-emerald-600 hover:underline">{{ __('Ver') }}</a>
                                     </td>

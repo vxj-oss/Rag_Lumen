@@ -10,14 +10,14 @@
          x-data="{
             projects: @js($projects->map(fn ($p) => [
                 'id' => $p->id,
-                'name' => $p->name,
-                'tasks' => $p->tasks->map(fn ($t) => ['id' => $t->id, 'title' => $t->title])->values(),
+                'name' => $p->nombre,
+                'tasks' => $p->tasks->map(fn ($t) => ['id' => $t->id, 'title' => $t->titulo])->values(),
             ])),
             conversations: @js($conversations->map(fn ($c) => [
                 'id' => $c->id,
-                'title' => $c->title,
-                'project_id' => $c->project_id,
-                'task_id' => $c->task_id,
+                'title' => $c->titulo,
+                'project_id' => $c->proyecto_id,
+                'task_id' => $c->tarea_id,
             ])),
             conversationId: null,
             sidebarOpen: false,

@@ -10,31 +10,31 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
 #[Fillable([
-    'project_id', 'name', 'slug', 'color', 'position',
-    'is_initial', 'is_final', 'is_blocking', 'active',
+    'proyecto_id', 'nombre', 'slug', 'color', 'posicion',
+    'es_inicial', 'es_final', 'es_bloqueante', 'activo',
 ])]
 class TaskState extends Model
 {
-    protected $table = 'task_statuses';
+    protected $table = 'estados_tarea';
 
     protected function casts(): array
     {
         return [
-            'is_initial' => 'boolean',
-            'is_final' => 'boolean',
-            'is_blocking' => 'boolean',
-            'active' => 'boolean',
+            'es_inicial' => 'boolean',
+            'es_final' => 'boolean',
+            'es_bloqueante' => 'boolean',
+            'activo' => 'boolean',
         ];
     }
 
     public function project(): BelongsTo
     {
-        return $this->belongsTo(Project::class);
+        return $this->belongsTo(Project::class, 'proyecto_id');
     }
 
     public function tasks(): HasMany
     {
-        return $this->hasMany(Task::class, 'status_id');
+        return $this->hasMany(Task::class, 'estado_id');
     }
 
     /**
@@ -45,12 +45,12 @@ class TaskState extends Model
     public static function defaultDefinitions(): array
     {
         return [
-            ['name' => 'Pendiente', 'slug' => 'pendiente', 'color' => 'gray', 'position' => 1, 'is_initial' => true, 'is_final' => false, 'is_blocking' => false],
-            ['name' => 'En progreso', 'slug' => 'en-progreso', 'color' => 'blue', 'position' => 2, 'is_initial' => false, 'is_final' => false, 'is_blocking' => false],
-            ['name' => 'Bloqueada', 'slug' => 'bloqueada', 'color' => 'red', 'position' => 3, 'is_initial' => false, 'is_final' => false, 'is_blocking' => true],
-            ['name' => 'En revisión', 'slug' => 'en-revision', 'color' => 'indigo', 'position' => 4, 'is_initial' => false, 'is_final' => false, 'is_blocking' => false],
-            ['name' => 'Completada', 'slug' => 'completada', 'color' => 'green', 'position' => 5, 'is_initial' => false, 'is_final' => true, 'is_blocking' => false],
-            ['name' => 'Cancelada', 'slug' => 'cancelada', 'color' => 'gray', 'position' => 6, 'is_initial' => false, 'is_final' => true, 'is_blocking' => false],
+            ['nombre' => 'Pendiente', 'slug' => 'pendiente', 'color' => 'gray', 'posicion' => 1, 'es_inicial' => true, 'es_final' => false, 'es_bloqueante' => false],
+            ['nombre' => 'En progreso', 'slug' => 'en-progreso', 'color' => 'blue', 'posicion' => 2, 'es_inicial' => false, 'es_final' => false, 'es_bloqueante' => false],
+            ['nombre' => 'Bloqueada', 'slug' => 'bloqueada', 'color' => 'red', 'posicion' => 3, 'es_inicial' => false, 'es_final' => false, 'es_bloqueante' => true],
+            ['nombre' => 'En revisión', 'slug' => 'en-revision', 'color' => 'indigo', 'posicion' => 4, 'es_inicial' => false, 'es_final' => false, 'es_bloqueante' => false],
+            ['nombre' => 'Completada', 'slug' => 'completada', 'color' => 'green', 'posicion' => 5, 'es_inicial' => false, 'es_final' => true, 'es_bloqueante' => false],
+            ['nombre' => 'Cancelada', 'slug' => 'cancelada', 'color' => 'gray', 'posicion' => 6, 'es_inicial' => false, 'es_final' => true, 'es_bloqueante' => false],
         ];
     }
 
@@ -58,8 +58,8 @@ class TaskState extends Model
     {
         foreach (self::defaultDefinitions() as $definition) {
             self::firstOrCreate(
-                ['project_id' => $projectId, 'slug' => $definition['slug']],
-                $definition + ['project_id' => $projectId, 'active' => true]
+                ['proyecto_id' => $projectId, 'slug' => $definition['slug']],
+                $definition + ['proyecto_id' => $projectId, 'activo' => true]
             );
         }
     }
@@ -80,6 +80,33 @@ class TaskState extends Model
         };
     }
 
+    public static function slugForEnum(TaskStatus $status): string
+    {
+        return match ($status) {
+            TaskStatus::Pending => 'pendiente',
+            TaskStatus::InProgress => 'en-progreso',
+            TaskStatus::Blocked => 'bloqueada',
+            TaskStatus::Review => 'en-revision',
+            TaskStatus::Completed => 'completada',
+            TaskStatus::Cancelled => 'cancelada',
+        };
+    }
+
+    /**
+     * Busca el estado (propio del proyecto, o el global si no hay uno propio)
+     * que corresponde a un valor del enum legado de status.
+     */
+    public static function resolveForStatus(?int $projectId, TaskStatus $status): ?self
+    {
+        return self::where('slug', self::slugForEnum($status))
+            ->where(function ($query) use ($projectId) {
+                $query->where('proyecto_id', $projectId)->orWhereNull('proyecto_id');
+            })
+            ->where('activo', true)
+            ->orderByRaw('proyecto_id IS NULL')
+            ->first();
+    }
+
     public static function makeSlug(string $name, ?int $projectId, ?int $ignoreId = null): string
     {
         $base = Str::slug($name, '-');
@@ -87,7 +114,7 @@ class TaskState extends Model
         $slug = $base;
         $counter = 2;
 
-        while (self::where('project_id', $projectId)->where('slug', $slug)
+        while (self::where('proyecto_id', $projectId)->where('slug', $slug)
             ->when($ignoreId !== null, fn ($query) => $query->where('id', '!=', $ignoreId))
             ->exists()) {
             $slug = "{$base}-{$counter}";

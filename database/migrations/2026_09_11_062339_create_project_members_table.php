@@ -8,23 +8,23 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('project_members', function (Blueprint $table) {
+        Schema::create('miembros_proyecto', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('project_id')->constrained('projects')->cascadeOnDelete();
-            $table->foreignId('employee_id')->constrained('employees')->cascadeOnDelete();
-            $table->string('role_in_project', 50);
-            $table->date('assigned_at');
-            $table->date('left_at')->nullable();
-            $table->enum('status', ['active', 'inactive'])->default('active');
+            $table->foreignId('proyecto_id')->constrained('proyectos')->cascadeOnDelete();
+            $table->foreignId('empleado_id')->constrained('empleados')->cascadeOnDelete();
+            $table->string('rol_en_proyecto', 50);
+            $table->date('asignado_en');
+            $table->date('retirado_en')->nullable();
+            $table->enum('estado', ['active', 'inactive'])->default('active');
             $table->timestamps();
 
-            $table->unique(['project_id', 'employee_id']);
-            $table->index('employee_id');
+            $table->unique(['proyecto_id', 'empleado_id']);
+            $table->index('empleado_id');
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('project_members');
+        Schema::dropIfExists('miembros_proyecto');
     }
 };

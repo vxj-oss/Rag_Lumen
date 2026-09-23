@@ -38,11 +38,11 @@
         <tbody>
             @forelse ($rows as $row)
                 <tr>
-                    <td>{{ $row['project']->name }} ({{ $row['project']->code }})</td>
-                    <td>{{ $row['project']->client?->name ?? '—' }}</td>
+                    <td>{{ $row['project']->nombre }} ({{ $row['project']->codigo }})</td>
+                    <td>{{ $row['project']->client?->nombre ?? '—' }}</td>
                     <td>{{ $row['decision']['risk_score'] }}/100 ({{ $row['decision']['risk_level']->label() }})</td>
                     <td>{{ $row['metrics']['real_progress'] }}% / {{ $row['metrics']['expected_progress'] }}%</td>
-                    <td>{{ $row['project']->budget ? number_format((float) $row['project']->budget, 0) : '—' }}</td>
+                    <td>{{ $row['project']->presupuesto ? number_format((float) $row['project']->presupuesto, 0) : '—' }}</td>
                 </tr>
             @empty
                 <tr><td colspan="5">Sin proyectos en alcance.</td></tr>
@@ -56,7 +56,7 @@
         <tbody>
             @forelse ($areaPerformance as $row)
                 <tr>
-                    <td>{{ $row['area']->name }}</td>
+                    <td>{{ $row['area']->nombre }}</td>
                     <td>{{ $row['total'] }}</td>
                     <td>{{ $row['completed'] }}</td>
                     <td>{{ $row['active'] }}</td>

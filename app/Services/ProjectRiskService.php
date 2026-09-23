@@ -14,7 +14,9 @@ class ProjectRiskService
 
     public function calculate(Project $project): array
     {
-        $tasks = $project->relationLoaded('tasks') ? $project->tasks : $project->tasks()->get();
+        // Igual que en ProjectMetricsService: solo tareas hoja, para no contar
+        // dos veces el mismo trabajo entre una tarea y sus subtareas.
+        $tasks = $project->tasks()->whereDoesntHave('subtareas')->get();
         $tasks->loadMissing('state');
         $metrics = $this->metricsService->forProject($project);
 
@@ -23,7 +25,7 @@ class ProjectRiskService
         $progressGapScore = $this->progressGapScore($metrics['progress_gap']);
         $deadlinePressureScore = $this->deadlinePressureScore($project, $metrics['real_progress']);
         $workloadScore = $this->workloadScore($project);
-        $priorityModifier = config('risk.priority_modifier')[$project->priority->value] ?? 0;
+        $priorityModifier = config('risk.priority_modifier')[$project->prioridad->value] ?? 0;
 
         $weights = config('risk.weights');
 
@@ -55,9 +57,9 @@ class ProjectRiskService
         $result = $this->calculate($project);
 
         $project->forceFill([
-            'risk_score' => $result['score'],
-            'risk_level' => $result['level']->value,
-            'risk_calculated_at' => now(),
+            'puntuacion_riesgo' => $result['score'],
+            'nivel_riesgo' => $result['level']->value,
+            'riesgo_calculado_en' => now(),
         ])->save();
 
         return $result;
@@ -79,7 +81,7 @@ class ProjectRiskService
 
         $overdueRatio = $overdueTasks->count() / $activeTasks->count();
 
-        $avgOverdueDays = $overdueTasks->avg(fn (Task $task) => Carbon::instance($task->due_date)->diffInDays(now()));
+        $avgOverdueDays = $overdueTasks->avg(fn (Task $task) => Carbon::instance($task->fecha_vencimiento)->diffInDays(now()));
 
         $saturation = config('risk.delay_days_saturation');
         $normalizedDays = min($avgOverdueDays / $saturation, 1) * 100;
@@ -111,7 +113,7 @@ class ProjectRiskService
 
     private function deadlinePressureScore(Project $project, float $realProgress): float
     {
-        $daysRemaining = now()->diffInDays($project->estimated_end_date, false);
+        $daysRemaining = now()->diffInDays($project->fecha_fin_estimada, false);
 
         if ($daysRemaining <= 0) {
             return 100.0;
@@ -126,8 +128,8 @@ class ProjectRiskService
     private function workloadScore(Project $project): float
     {
         $members = $project->relationLoaded('members')
-            ? $project->members->filter(fn ($member) => $member->pivot->status === 'active')
-            : $project->members()->wherePivot('status', 'active')->get();
+            ? $project->members->filter(fn ($member) => $member->pivot->estado === 'active')
+            : $project->members()->wherePivot('estado', 'active')->get();
 
         if ($members->isEmpty()) {
             return 0.0;
@@ -137,7 +139,7 @@ class ProjectRiskService
         $activeStatuses = [TaskStatus::Pending->value, TaskStatus::InProgress->value, TaskStatus::Review->value, TaskStatus::Blocked->value];
 
         $ratios = $members->map(function ($employee) use ($maxRecommended) {
-            $activeTaskCount = Task::where('assigned_to', $employee->id)->with('state')->get()
+            $activeTaskCount = Task::where('asignado_a', $employee->id)->whereDoesntHave('subtareas')->with('state')->get()
                 ->filter(fn (Task $task) => $task->isActiveState())
                 ->count();
 

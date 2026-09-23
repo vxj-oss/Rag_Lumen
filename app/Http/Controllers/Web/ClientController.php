@@ -24,14 +24,14 @@ class ClientController extends Controller
             ->when($request->filled('search'), function ($query) use ($request) {
                 $search = $request->string('search');
                 $query->where(function ($query) use ($search) {
-                    $query->where('name', 'like', "%{$search}%")
-                        ->orWhere('tax_id', 'like', "%{$search}%")
-                        ->orWhere('contact_name', 'like', "%{$search}%");
+                    $query->where('nombre', 'like', "%{$search}%")
+                        ->orWhere('identificacion_fiscal', 'like', "%{$search}%")
+                        ->orWhere('nombre_contacto', 'like', "%{$search}%");
                 });
             })
-            ->when($request->filled('status'), fn ($query) => $query->where('status', $request->string('status')))
+            ->when($request->filled('status'), fn ($query) => $query->where('estado', $request->string('status')))
             ->when($request->filled('sector'), fn ($query) => $query->where('sector', $request->string('sector')))
-            ->orderBy('name')
+            ->orderBy('nombre')
             ->paginate(10)
             ->withQueryString();
 
@@ -46,7 +46,7 @@ class ClientController extends Controller
     {
         $client = Client::create($request->validated());
 
-        ActivityLogger::record($client, 'created', "Creó el cliente \"{$client->name}\".");
+        ActivityLogger::record($client, 'created', "Creó el cliente \"{$client->nombre}\".");
 
         return redirect()
             ->route('clients.index')
@@ -57,9 +57,9 @@ class ClientController extends Controller
     {
         $client = Client::create($request->validated());
 
-        ActivityLogger::record($client, 'created', "Creó el cliente \"{$client->name}\" (rápido).");
+        ActivityLogger::record($client, 'created', "Creó el cliente \"{$client->nombre}\" (rápido).");
 
-        return response()->json(['id' => $client->id, 'name' => $client->name], 201);
+        return response()->json(['id' => $client->id, 'name' => $client->nombre], 201);
     }
 
     public function show(Client $client): View
@@ -70,7 +70,7 @@ class ClientController extends Controller
 
         return view('clients.html.show', [
             'client' => $client,
-            'totalBudget' => (float) $client->projects->sum('budget'),
+            'totalBudget' => (float) $client->projects->sum('presupuesto'),
         ]);
     }
 
@@ -80,7 +80,7 @@ class ClientController extends Controller
 
         $client->update($request->validated());
 
-        ActivityLogger::recordUpdate($client, $before, "el cliente \"{$client->name}\"");
+        ActivityLogger::recordUpdate($client, $before, "el cliente \"{$client->nombre}\"");
 
         return redirect()
             ->route('clients.index')
@@ -97,7 +97,7 @@ class ClientController extends Controller
                 ->with('toast_error', 'No se puede eliminar: el cliente tiene proyectos asociados.');
         }
 
-        ActivityLogger::record($client, 'deleted', "Eliminó el cliente \"{$client->name}\".");
+        ActivityLogger::record($client, 'deleted', "Eliminó el cliente \"{$client->nombre}\".");
 
         $client->delete();
 
@@ -110,7 +110,7 @@ class ClientController extends Controller
     {
         $this->authorize('viewAny', Client::class);
 
-        $clients = Client::withCount('projects')->orderBy('name')->get();
+        $clients = Client::withCount('projects')->orderBy('nombre')->get();
 
         return response()->streamDownload(function () use ($clients) {
             $handle = fopen('php://output', 'w');
@@ -118,13 +118,13 @@ class ClientController extends Controller
 
             foreach ($clients as $client) {
                 fputcsv($handle, [
-                    $client->name,
-                    $client->tax_id ?? '—',
-                    $client->contact_name ?? '—',
-                    $client->email ?? '—',
-                    $client->phone ?? '—',
+                    $client->nombre,
+                    $client->identificacion_fiscal ?? '—',
+                    $client->nombre_contacto ?? '—',
+                    $client->correo ?? '—',
+                    $client->telefono ?? '—',
                     $client->sector ?? '—',
-                    $client->status === 'active' ? 'Activo' : 'Inactivo',
+                    $client->estado === 'active' ? 'Activo' : 'Inactivo',
                     $client->projects_count,
                 ]);
             }

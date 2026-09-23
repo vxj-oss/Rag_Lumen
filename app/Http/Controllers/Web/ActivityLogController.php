@@ -26,17 +26,17 @@ class ActivityLogController extends Controller
         );
 
         $logs = ActivityLog::with('user')
-            ->when($request->filled('action'), fn ($query) => $query->where('action', $request->string('action')))
+            ->when($request->filled('action'), fn ($query) => $query->where('accion', $request->string('action')))
             ->when($user->isLeader() && ! $user->isAdmin() && ! $user->isManager(), function ($query) use ($user) {
                 $projectIds = ProjectScope::accessibleProjectIds($user) ?? [];
 
                 $query->where(function ($query) use ($projectIds) {
                     $query->where(function ($query) use ($projectIds) {
-                        $query->where('subject_type', Project::class)
-                            ->whereIn('subject_id', $projectIds);
+                        $query->where('sujeto_tipo', Project::class)
+                            ->whereIn('sujeto_id', $projectIds);
                     })->orWhere(function ($query) use ($projectIds) {
-                        $query->where('subject_type', Task::class)
-                            ->whereIn('subject_id', Task::whereIn('project_id', $projectIds)->select('id'));
+                        $query->where('sujeto_tipo', Task::class)
+                            ->whereIn('sujeto_id', Task::whereIn('proyecto_id', $projectIds)->select('id'));
                     });
                 });
             })

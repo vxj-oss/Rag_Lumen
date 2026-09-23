@@ -8,12 +8,12 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('projects', function (Blueprint $table) {
+        Schema::create('proyectos', function (Blueprint $table) {
             $table->id();
-            $table->string('code', 30)->unique();
-            $table->string('name', 150);
-            $table->text('description')->nullable();
-            $table->enum('type', [
+            $table->string('codigo', 30)->unique();
+            $table->string('nombre', 150);
+            $table->text('descripcion')->nullable();
+            $table->enum('tipo', [
                 'software_development',
                 'web_development',
                 'ux_ui_design',
@@ -26,10 +26,10 @@ return new class extends Migration
                 'other',
             ]);
             $table->string('client', 150)->nullable();
-            $table->date('start_date');
-            $table->date('estimated_end_date');
-            $table->date('actual_end_date')->nullable();
-            $table->enum('status', [
+            $table->date('fecha_inicio');
+            $table->date('fecha_fin_estimada');
+            $table->date('fecha_fin_real')->nullable();
+            $table->enum('estado', [
                 'planning',
                 'in_progress',
                 'review',
@@ -38,24 +38,24 @@ return new class extends Migration
                 'completed',
                 'cancelled',
             ])->default('planning');
-            $table->enum('priority', ['low', 'medium', 'high', 'critical'])->default('medium');
-            $table->foreignId('responsible_employee_id')->nullable()->constrained('employees')->nullOnDelete();
-            $table->decimal('budget', 12, 2)->nullable();
-            $table->unsignedTinyInteger('risk_score')->nullable();
-            $table->enum('risk_level', ['low', 'medium', 'high', 'critical'])->nullable();
-            $table->dateTime('risk_calculated_at')->nullable();
-            $table->text('observations')->nullable();
+            $table->enum('prioridad', ['low', 'medium', 'high', 'critical'])->default('medium');
+            $table->foreignId('empleado_responsable_id')->nullable()->constrained('empleados')->nullOnDelete();
+            $table->decimal('presupuesto', 12, 2)->nullable();
+            $table->unsignedTinyInteger('puntuacion_riesgo')->nullable();
+            $table->enum('nivel_riesgo', ['low', 'medium', 'high', 'critical'])->nullable();
+            $table->dateTime('riesgo_calculado_en')->nullable();
+            $table->text('observaciones')->nullable();
             $table->timestamps();
             $table->softDeletes();
 
-            $table->index('status');
-            $table->index('priority');
-            $table->index('risk_level');
+            $table->index('estado');
+            $table->index('prioridad');
+            $table->index('nivel_riesgo');
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('projects');
+        Schema::dropIfExists('proyectos');
     }
 };

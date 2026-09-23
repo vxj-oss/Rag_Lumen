@@ -17,28 +17,28 @@ class UpdateEmployeeRequest extends FormRequest
         return $this->user()->can('update', $this->route('employee'));
     }
 
-    
+
     public function rules(): array
     {
         $employee = $this->route('employee');
         $employeeId = $employee->id;
-        $hasAccess = $employee->user_id !== null;
+        $hasAccess = $employee->usuario_id !== null;
         $creatingAccess = ! $hasAccess && $this->boolean('create_access');
 
         return [
-            'user_id' => ['nullable', 'integer', 'exists:users,id', Rule::unique('employees', 'user_id')->ignore($employeeId)],
-            'first_name' => ['required', 'string', 'max:100'],
-            'last_name' => ['required', 'string', 'max:100'],
-            'email' => array_filter([
-                'required', 'string', 'email', 'max:150', Rule::unique('employees', 'email')->ignore($employeeId),
+            'usuario_id' => ['nullable', 'integer', 'exists:users,id', Rule::unique('empleados', 'usuario_id')->ignore($employeeId)],
+            'nombres' => ['required', 'string', 'max:100'],
+            'apellidos' => ['required', 'string', 'max:100'],
+            'correo' => array_filter([
+                'required', 'string', 'email', 'max:150', Rule::unique('empleados', 'correo')->ignore($employeeId),
                 $creatingAccess ? Rule::unique('users', 'email') : null,
             ]),
-            'phone' => ['nullable', 'string', 'max:30'],
-            'position' => ['nullable', 'string', 'max:100'],
-            'specialty' => ['required', Rule::enum(EmployeeSpecialty::class)],
+            'telefono' => ['nullable', 'string', 'max:30'],
+            'cargo' => ['nullable', 'string', 'max:100'],
+            'especialidad' => ['required', Rule::enum(EmployeeSpecialty::class)],
             'area_id' => ['nullable', 'integer', 'exists:areas,id'],
-            'status' => ['required', Rule::enum(EmployeeStatus::class)],
-            'hire_date' => ['nullable', 'date'],
+            'estado' => ['required', Rule::enum(EmployeeStatus::class)],
+            'fecha_contratacion' => ['nullable', 'date'],
             'create_access' => ['sometimes', 'boolean'],
             'password' => $creatingAccess
                 ? ['required', 'string', Password::defaults(), 'confirmed']

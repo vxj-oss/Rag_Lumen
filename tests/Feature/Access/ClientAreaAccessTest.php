@@ -28,7 +28,7 @@ class ClientAreaAccessTest extends TestCase
     {
         $user = User::factory()->create();
         $user->assignRole($role->value);
-        Employee::factory()->create(['user_id' => $user->id, 'email' => $user->email]);
+        Employee::factory()->create(['usuario_id' => $user->id, 'correo' => $user->email]);
 
         return $user->refresh();
     }
@@ -36,13 +36,13 @@ class ClientAreaAccessTest extends TestCase
     private function clientPayload(): array
     {
         return [
-            'name' => 'Cliente de prueba',
-            'tax_id' => 'RUC-123',
-            'contact_name' => 'Contacto',
-            'email' => 'contacto@cliente.test',
-            'phone' => '70000000',
+            'nombre' => 'Cliente de prueba',
+            'identificacion_fiscal' => 'RUC-123',
+            'nombre_contacto' => 'Contacto',
+            'correo' => 'contacto@cliente.test',
+            'telefono' => '70000000',
             'sector' => 'Retail',
-            'status' => 'active',
+            'estado' => 'active',
         ];
     }
 
@@ -55,7 +55,7 @@ class ClientAreaAccessTest extends TestCase
 
         $this->actingAs($admin)->post(route('clients.store'), $this->clientPayload())->assertRedirect();
         $this->actingAs($manager)->post(route('clients.store'), array_merge($this->clientPayload(), [
-            'name' => 'Otro cliente', 'tax_id' => 'RUC-456',
+            'nombre' => 'Otro cliente', 'identificacion_fiscal' => 'RUC-456',
         ]))->assertRedirect();
 
         $this->actingAs($lead)->post(route('clients.store'), $this->clientPayload())->assertForbidden();
@@ -67,8 +67,8 @@ class ClientAreaAccessTest extends TestCase
     {
         $manager = $this->makeUser(RoleName::Manager);
         $client = Client::create($this->clientPayload());
-        Project::factory()->create(['client_id' => $client->id, 'budget' => 1000]);
-        Project::factory()->create(['client_id' => $client->id, 'budget' => 2500]);
+        Project::factory()->create(['cliente_id' => $client->id, 'presupuesto' => 1000]);
+        Project::factory()->create(['cliente_id' => $client->id, 'presupuesto' => 2500]);
 
         $response = $this->actingAs($manager)->get(route('clients.show', $client));
 
@@ -80,11 +80,11 @@ class ClientAreaAccessTest extends TestCase
     {
         $admin = $this->makeUser(RoleName::Administrator);
         $client = Client::create($this->clientPayload());
-        Project::factory()->create(['client_id' => $client->id]);
+        Project::factory()->create(['cliente_id' => $client->id]);
 
         $this->actingAs($admin)->delete(route('clients.destroy', $client))->assertRedirect();
 
-        $this->assertNotSoftDeleted('clients', ['id' => $client->id]);
+        $this->assertNotSoftDeleted('clientes', ['id' => $client->id]);
     }
 
     public function test_only_admin_manages_areas(): void
@@ -93,10 +93,10 @@ class ClientAreaAccessTest extends TestCase
         $manager = $this->makeUser(RoleName::Manager);
         $employee = $this->makeUser(RoleName::Employee);
 
-        $this->actingAs($admin)->post(route('areas.store'), ['name' => 'Nueva área'])->assertRedirect();
-        $this->assertDatabaseHas('areas', ['name' => 'Nueva área']);
+        $this->actingAs($admin)->post(route('areas.store'), ['nombre' => 'Nueva área'])->assertRedirect();
+        $this->assertDatabaseHas('areas', ['nombre' => 'Nueva área']);
 
-        $this->actingAs($manager)->post(route('areas.store'), ['name' => 'Otra área'])->assertForbidden();
+        $this->actingAs($manager)->post(route('areas.store'), ['nombre' => 'Otra área'])->assertForbidden();
         $this->actingAs($employee)->get(route('areas.index'))->assertForbidden();
         $this->actingAs($manager)->get(route('areas.index'))->assertOk();
     }
@@ -104,7 +104,7 @@ class ClientAreaAccessTest extends TestCase
     public function test_area_cannot_be_deleted_with_employees(): void
     {
         $admin = $this->makeUser(RoleName::Administrator);
-        $area = Area::where('name', 'Diseño')->first();
+        $area = Area::where('nombre', 'Diseño')->first();
         Employee::factory()->create(['area_id' => $area->id]);
 
         $this->actingAs($admin)->delete(route('areas.destroy', $area))->assertRedirect();
@@ -120,35 +120,35 @@ class ClientAreaAccessTest extends TestCase
         $areaIds = Area::take(2)->pluck('id')->all();
 
         $response = $this->actingAs($admin)->post(route('projects.store'), [
-            'code' => 'CLI-001',
-            'name' => 'Proyecto con cliente',
-            'type' => 'digital_marketing',
-            'client_id' => $client->id,
-            'manager_employee_id' => $manager->employee->id,
+            'codigo' => 'CLI-001',
+            'nombre' => 'Proyecto con cliente',
+            'tipo' => 'digital_marketing',
+            'cliente_id' => $client->id,
+            'empleado_gerente_id' => $manager->employee->id,
             'area_ids' => $areaIds,
-            'start_date' => now()->toDateString(),
-            'estimated_end_date' => now()->addMonth()->toDateString(),
-            'status' => 'planning',
-            'priority' => 'medium',
+            'fecha_inicio' => now()->toDateString(),
+            'fecha_fin_estimada' => now()->addMonth()->toDateString(),
+            'estado' => 'planning',
+            'prioridad' => 'medium',
         ]);
 
         $response->assertRedirect(route('projects.index'));
 
-        $project = Project::where('code', 'CLI-001')->firstOrFail();
-        $this->assertSame($client->id, $project->client_id);
-        $this->assertSame($manager->employee->id, $project->manager_employee_id);
+        $project = Project::where('codigo', 'CLI-001')->firstOrFail();
+        $this->assertSame($client->id, $project->cliente_id);
+        $this->assertSame($manager->employee->id, $project->empleado_gerente_id);
         $this->assertEqualsCanonicalizing($areaIds, $project->areas->pluck('id')->all());
     }
 
     public function test_manager_scope_is_limited_to_own_areas_and_managed(): void
     {
         $manager = $this->makeUser(RoleName::Manager);
-        $area = Area::where('name', 'Diseño')->first();
+        $area = Area::where('nombre', 'Diseño')->first();
         $manager->employee->update(['area_id' => $area->id]);
 
         $inScope = Project::factory()->create();
         $inScope->areas()->sync([$area->id]);
-        $managed = Project::factory()->create(['manager_employee_id' => $manager->employee->id]);
+        $managed = Project::factory()->create(['empleado_gerente_id' => $manager->employee->id]);
         $outside = Project::factory()->create();
 
         $this->actingAs($manager)->get(route('projects.show', $inScope))->assertOk();
@@ -156,15 +156,15 @@ class ClientAreaAccessTest extends TestCase
         $this->actingAs($manager)->get(route('projects.show', $outside))->assertForbidden();
 
         $response = $this->actingAs($manager)->get(route('projects.index'));
-        $response->assertSee($inScope->name);
-        $response->assertSee($managed->name);
-        $response->assertDontSee($outside->name);
+        $response->assertSee($inScope->nombre);
+        $response->assertSee($managed->nombre);
+        $response->assertDontSee($outside->nombre);
     }
 
     public function test_project_scope_data_returns_areas_and_employees(): void
     {
         $admin = $this->makeUser(RoleName::Administrator);
-        $area = Area::where('name', 'Diseño')->first();
+        $area = Area::where('nombre', 'Diseño')->first();
         $project = Project::factory()->create();
         $project->areas()->sync([$area->id]);
         $member = Employee::factory()->create(['area_id' => $area->id]);
@@ -181,9 +181,9 @@ class ClientAreaAccessTest extends TestCase
     {
         $manager = $this->makeUser(RoleName::Manager);
 
-        $response = $this->actingAs($manager)->postJson(route('clients.quick'), ['name' => 'Rápido SRL']);
+        $response = $this->actingAs($manager)->postJson(route('clients.quick'), ['nombre' => 'Rápido SRL']);
 
         $response->assertCreated()->assertJsonFragment(['name' => 'Rápido SRL']);
-        $this->assertDatabaseHas('clients', ['name' => 'Rápido SRL']);
+        $this->assertDatabaseHas('clientes', ['nombre' => 'Rápido SRL']);
     }
 }

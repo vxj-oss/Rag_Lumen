@@ -118,19 +118,19 @@ class DashboardController extends Controller
                 'at_risk_projects' => $rows->filter(fn ($row) => in_array($row['decision']['risk_level'], [RiskLevel::High, RiskLevel::Critical], true))->count(),
                 'delayed_projects' => $rows->filter(fn ($row) => in_array(DecisionSignal::Delayed, $row['decision']['signals'], true))->count(),
                 'attention_projects' => $rows->filter(fn ($row) => ! in_array(DecisionSignal::Healthy, $row['decision']['signals'], true))->count(),
-                'total_budget' => (float) $projects->sum('budget'),
+                'total_budget' => (float) $projects->sum('presupuesto'),
                 'overdue_tasks' => $tasks->filter(fn (Task $task) => $task->isOverdue())->count(),
             ],
             'rows' => $rows->sortByDesc(fn ($row) => $row['decision']['risk_score'])->values(),
             'areaPerformance' => $this->areaPerformance($tasks),
-            'riskByProject' => $rows->take(10)->mapWithKeys(fn ($row) => [$row['project']->name => $row['decision']['risk_score']]),
-            'progressByProject' => $rows->take(10)->mapWithKeys(fn ($row) => [$row['project']->name => $row['metrics']['real_progress']]),
+            'riskByProject' => $rows->take(10)->mapWithKeys(fn ($row) => [$row['project']->nombre => $row['decision']['risk_score']]),
+            'progressByProject' => $rows->take(10)->mapWithKeys(fn ($row) => [$row['project']->nombre => $row['metrics']['real_progress']]),
         ];
     }
 
     private function areaPerformance($tasks): array
     {
-        return Area::where('active', true)->orderBy('name')->get()->map(function (Area $area) use ($tasks) {
+        return Area::where('activa', true)->orderBy('nombre')->get()->map(function (Area $area) use ($tasks) {
             $areaTasks = $tasks->filter(fn (Task $task) => $task->assignee?->area_id === $area->id);
 
             return [
@@ -139,7 +139,7 @@ class DashboardController extends Controller
                 'completed' => $areaTasks->filter(fn (Task $task) => $task->isCompletedState())->count(),
                 'active' => $areaTasks->filter(fn (Task $task) => $task->isActiveState())->count(),
                 'overdue' => $areaTasks->filter(fn (Task $task) => $task->isOverdue())->count(),
-                'employees' => $areaTasks->pluck('assigned_to')->filter()->unique()->count(),
+                'employees' => $areaTasks->pluck('asignado_a')->filter()->unique()->count(),
             ];
         })->filter(fn ($row) => $row['total'] > 0)->values()->all();
     }
@@ -149,7 +149,7 @@ class DashboardController extends Controller
         $employeeId = Auth::user()->employee?->id;
 
         $projects = Project::with(['tasks.state', 'tasks.assignee', 'members'])
-            ->where('responsible_employee_id', $employeeId)
+            ->where('empleado_responsable_id', $employeeId)
             ->get();
 
         $metricsService = app(ProjectMetricsService::class);
@@ -163,11 +163,11 @@ class DashboardController extends Controller
 
         $tasks = $projects->flatMap->tasks;
 
-        $memberIds = $projects->flatMap(fn (Project $project) => $project->members->where('pivot.status', 'active')->pluck('id'))
-            ->merge($tasks->pluck('assigned_to')->filter())
+        $memberIds = $projects->flatMap(fn (Project $project) => $project->members->where('pivot.estado', 'active')->pluck('id'))
+            ->merge($tasks->pluck('asignado_a')->filter())
             ->unique()->values();
 
-        $teamLoad = Employee::whereIn('id', $memberIds)->orderBy('first_name')->get()
+        $teamLoad = Employee::whereIn('id', $memberIds)->orderBy('nombres')->get()
             ->map(fn (Employee $employee) => [
                 'employee' => $employee,
                 'metrics' => $employeeMetrics->forEmployee($employee),
@@ -179,12 +179,12 @@ class DashboardController extends Controller
                 'overdue_tasks' => $tasks->filter(fn (Task $task) => $task->isOverdue())->count(),
                 'blocked_tasks' => $tasks->filter(fn (Task $task) => $task->isBlockingState())->count(),
                 'due_soon_tasks' => $tasks->filter(fn (Task $task) => ! $task->isFinalState()
-                    && $task->due_date !== null
-                    && $task->due_date->between(now()->startOfDay(), now()->addDays(3)->endOfDay()))->count(),
+                    && $task->fecha_vencimiento !== null
+                    && $task->fecha_vencimiento->between(now()->startOfDay(), now()->addDays(3)->endOfDay()))->count(),
             ],
             'rows' => $rows->sortByDesc(fn ($row) => $row['decision']['risk_score'])->values(),
             'overdueTasks' => $tasks->filter(fn (Task $task) => $task->isOverdue())
-                ->sortBy('due_date')->take(10)->values(),
+                ->sortBy('fecha_vencimiento')->take(10)->values(),
             'teamLoad' => $teamLoad,
         ];
     }
@@ -194,8 +194,8 @@ class DashboardController extends Controller
         $employeeId = Auth::user()->employee?->id;
 
         $tasks = Task::with(['state', 'project'])
-            ->where('assigned_to', $employeeId)
-            ->orderBy('due_date')
+            ->where('asignado_a', $employeeId)
+            ->orderBy('fecha_vencimiento')
             ->get();
 
         return [
@@ -203,14 +203,14 @@ class DashboardController extends Controller
                 'pending' => $tasks->filter(fn (Task $task) => $task->state?->slug === 'pendiente')->count(),
                 'in_progress' => $tasks->filter(fn (Task $task) => $task->state?->slug === 'en-progreso')->count(),
                 'due_soon' => $tasks->filter(fn (Task $task) => ! $task->isFinalState()
-                    && $task->due_date !== null
-                    && $task->due_date->between(now()->startOfDay(), now()->addDays(3)->endOfDay()))->count(),
+                    && $task->fecha_vencimiento !== null
+                    && $task->fecha_vencimiento->between(now()->startOfDay(), now()->addDays(3)->endOfDay()))->count(),
                 'blocked' => $tasks->filter(fn (Task $task) => $task->isBlockingState())->count(),
-                'hours_recorded' => round((float) $tasks->sum('actual_hours'), 2),
+                'hours_recorded' => round((float) $tasks->sum('horas_reales'), 2),
             ],
-            'byState' => $tasks->groupBy(fn (Task $task) => $task->state?->name ?? $task->status->label()),
-            'upcoming' => $tasks->filter(fn (Task $task) => ! $task->isFinalState() && $task->due_date !== null)
-                ->sortBy('due_date')->take(8)->values(),
+            'byState' => $tasks->groupBy(fn (Task $task) => $task->state?->nombre ?? $task->estado->label()),
+            'upcoming' => $tasks->filter(fn (Task $task) => ! $task->isFinalState() && $task->fecha_vencimiento !== null)
+                ->sortBy('fecha_vencimiento')->take(8)->values(),
         ];
     }
 
@@ -232,32 +232,32 @@ class DashboardController extends Controller
 
         $summary = [
             'total_projects' => $projects->count(),
-            'active_projects' => $projects->whereNotIn('status', [ProjectStatus::Completed, ProjectStatus::Cancelled])->count(),
+            'active_projects' => $projects->whereNotIn('estado', [ProjectStatus::Completed, ProjectStatus::Cancelled])->count(),
             'delayed_projects' => $hasSignal(DecisionSignal::Delayed)->count(),
             'critical_projects' => $decisions->filter(fn ($d) => $d['risk_level'] === RiskLevel::Critical)->count(),
             'blocked_projects' => $hasSignal(DecisionSignal::Blocked)->count(),
             'attention_projects' => $attentionProjects->count(),
-            'pending_tasks' => Task::where('status', TaskStatus::Pending->value)->count(),
-            'overdue_tasks' => Task::whereNotIn('status', [TaskStatus::Completed->value, TaskStatus::Cancelled->value])
-                ->whereDate('due_date', '<', now()->toDateString())
+            'pending_tasks' => Task::where('estado', TaskStatus::Pending->value)->count(),
+            'overdue_tasks' => Task::whereNotIn('estado', [TaskStatus::Completed->value, TaskStatus::Cancelled->value])
+                ->whereDate('fecha_vencimiento', '<', now()->toDateString())
                 ->count(),
-            'completed_tasks' => Task::where('status', TaskStatus::Completed->value)->count(),
+            'completed_tasks' => Task::where('estado', TaskStatus::Completed->value)->count(),
             'overloaded_employees' => $this->overloadedEmployeesCount(),
         ];
 
-        $projectsByStatus = $projects->groupBy(fn ($p) => $p->status->label())->map->count();
-        $tasksByStatus = Task::selectRaw('status, count(*) as total')->groupBy('status')->pluck('total', 'status')
+        $projectsByStatus = $projects->groupBy(fn ($p) => $p->estado->label())->map->count();
+        $tasksByStatus = Task::selectRaw('estado, count(*) as total')->groupBy('estado')->pluck('total', 'estado')
             ->mapWithKeys(fn ($total, $status) => [TaskStatus::from($status)->label() => $total]);
 
-        $riskByProject = $projects->take(10)->mapWithKeys(fn ($p) => [$p->name => $decisions[$p->id]['risk_score']]);
+        $riskByProject = $projects->take(10)->mapWithKeys(fn ($p) => [$p->nombre => $decisions[$p->id]['risk_score']]);
 
         $metricsService = app(ProjectMetricsService::class);
         $progressByProject = $projects->take(10)->mapWithKeys(
-            fn ($p) => [$p->name => $metricsService->forProject($p)['real_progress']]
+            fn ($p) => [$p->nombre => $metricsService->forProject($p)['real_progress']]
         );
 
         $employeePerformance = Employee::withCount([
-            'tasks as completed_tasks_count' => fn ($q) => $q->where('status', TaskStatus::Completed->value),
+            'tasks as completed_tasks_count' => fn ($q) => $q->where('estado', TaskStatus::Completed->value),
         ])->orderByDesc('completed_tasks_count')->take(8)->get()
             ->mapWithKeys(fn ($e) => [$e->fullName() => $e->completed_tasks_count]);
 
@@ -289,7 +289,7 @@ class DashboardController extends Controller
         $maxRecommended = config('risk.employee_max_recommended_tasks');
 
         return Employee::withCount([
-            'tasks as active_tasks_count' => fn ($q) => $q->whereIn('status', self::ACTIVE_TASK_STATUSES),
+            'tasks as active_tasks_count' => fn ($q) => $q->whereIn('estado', self::ACTIVE_TASK_STATUSES),
         ])->get()->filter(fn ($e) => $e->active_tasks_count > $maxRecommended)->count();
     }
 
@@ -303,7 +303,7 @@ class DashboardController extends Controller
             $weekEnd = $weekStart->copy()->endOfWeek();
 
             return (int) TaskProgressUpdate::whereBetween('created_at', [$weekStart, $weekEnd])
-                ->selectRaw('SUM(CAST(new_percentage AS SIGNED) - CAST(previous_percentage AS SIGNED)) as delta')
+                ->selectRaw('SUM(CAST(porcentaje_nuevo AS SIGNED) - CAST(porcentaje_anterior AS SIGNED)) as delta')
                 ->value('delta');
         })->all();
 

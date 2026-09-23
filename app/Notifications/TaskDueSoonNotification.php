@@ -23,9 +23,9 @@ class TaskDueSoonNotification extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject("Tarea próxima a vencer: {$this->task->title}")
+            ->subject("Tarea próxima a vencer: {$this->task->titulo}")
             ->greeting("Hola {$notifiable->name},")
-            ->line("La tarea \"{$this->task->title}\" vence en {$this->daysRemaining} día(s) y tiene solamente {$this->task->progress_percentage}% de avance.")
+            ->line("La tarea \"{$this->task->titulo}\" vence en {$this->daysRemaining} día(s) y tiene solamente {$this->task->porcentaje_progreso}% de avance.")
             ->action('Ver tarea', route('tasks.show', $this->task))
             ->line('Registra tu avance para mantener el estado actualizado.');
     }
@@ -35,9 +35,9 @@ class TaskDueSoonNotification extends Notification
         return [
             'type' => 'task_due_soon',
             'task_id' => $this->task->id,
-            'project_id' => $this->task->project_id,
-            'message' => "La tarea \"{$this->task->title}\" vence en {$this->daysRemaining} día(s) y tiene solamente {$this->task->progress_percentage}% de avance.",
-            'progress_percentage' => $this->task->progress_percentage,
+            'project_id' => $this->task->proyecto_id,
+            'message' => "La tarea \"{$this->task->titulo}\" vence en {$this->daysRemaining} día(s) y tiene solamente {$this->task->porcentaje_progreso}% de avance.",
+            'progress_percentage' => $this->task->porcentaje_progreso,
         ];
     }
 }

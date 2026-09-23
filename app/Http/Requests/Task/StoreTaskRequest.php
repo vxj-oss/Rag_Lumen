@@ -23,25 +23,35 @@ class StoreTaskRequest extends FormRequest
             return true;
         }
 
-        $project = Project::find($this->input('project_id'));
+        $project = Project::find($this->input('proyecto_id'));
 
         return $project !== null
-            && $project->responsible_employee_id !== null
-            && $this->user()->employee?->id === $project->responsible_employee_id;
+            && $project->empleado_responsable_id !== null
+            && $this->user()->employee?->id === $project->empleado_responsable_id;
     }
 
     public function rules(): array
     {
-        $projectId = $this->input('project_id');
+        $projectId = $this->input('proyecto_id');
 
         return [
-            'project_id' => ['required', 'integer', 'exists:projects,id'],
+            'proyecto_id' => ['required', 'integer', 'exists:proyectos,id'],
+            'tarea_padre_id' => [
+                'nullable', 'integer', 'exists:tareas,id',
+                function (string $attribute, mixed $value, \Closure $fail) use ($projectId) {
+                    $parent = Task::find($value);
+
+                    if ($parent === null || (int) $parent->proyecto_id !== (int) $projectId) {
+                        $fail('La tarea padre debe pertenecer al mismo proyecto.');
+                    }
+                },
+            ],
             'area_id' => [
                 'nullable', 'integer',
-                Rule::exists('project_areas', 'area_id')->where('project_id', $projectId),
+                Rule::exists('areas_proyecto', 'area_id')->where('proyecto_id', $projectId),
             ],
-            'assigned_to' => [
-                'nullable', 'integer', 'exists:employees,id',
+            'asignado_a' => [
+                'nullable', 'integer', 'exists:empleados,id',
                 function (string $attribute, mixed $value, \Closure $fail) use ($projectId) {
                     if (! $this->belongsToProject((int) $value, $projectId)) {
                         $fail('El responsable debe ser miembro activo del proyecto.');
@@ -50,29 +60,29 @@ class StoreTaskRequest extends FormRequest
                     }
                 },
             ],
-            'title' => ['required', 'string', 'max:200'],
-            'description' => ['nullable', 'string'],
-            'status_id' => [
+            'titulo' => ['required', 'string', 'max:200'],
+            'descripcion' => ['nullable', 'string'],
+            'estado_id' => [
                 'required', 'integer',
-                Rule::exists('task_statuses', 'id')->where(function ($query) use ($projectId) {
-                    $query->where('active', true)
+                Rule::exists('estados_tarea', 'id')->where(function ($query) use ($projectId) {
+                    $query->where('activo', true)
                         ->where(function ($query) use ($projectId) {
-                            $query->whereNull('project_id')->orWhere('project_id', $projectId);
+                            $query->whereNull('proyecto_id')->orWhere('proyecto_id', $projectId);
                         });
                 }),
             ],
-            'priority' => ['required', Rule::enum(Priority::class)],
-            'start_date' => ['nullable', 'date'],
-            'due_date' => ['nullable', 'date', 'after_or_equal:start_date'],
-            'estimated_hours' => ['nullable', 'numeric', 'min:0'],
-            'actual_hours' => ['nullable', 'numeric', 'min:0'],
+            'prioridad' => ['required', Rule::enum(Priority::class)],
+            'fecha_inicio' => ['nullable', 'date'],
+            'fecha_vencimiento' => ['nullable', 'date', 'after_or_equal:fecha_inicio'],
+            'horas_estimadas' => ['nullable', 'numeric', 'min:0'],
+            'horas_reales' => ['nullable', 'numeric', 'min:0'],
             'dependency_ids' => ['nullable', 'array'],
             'dependency_ids.*' => [
-                'integer', 'exists:tasks,id',
+                'integer', 'exists:tareas,id',
                 function (string $attribute, mixed $value, \Closure $fail) use ($projectId) {
                     $dependency = Task::find($value);
 
-                    if ($dependency === null || (int) $dependency->project_id !== (int) $projectId) {
+                    if ($dependency === null || (int) $dependency->proyecto_id !== (int) $projectId) {
                         $fail('Las dependencias deben ser tareas del mismo proyecto.');
                     }
                 },
@@ -86,9 +96,9 @@ class StoreTaskRequest extends FormRequest
             return false;
         }
 
-        return ProjectMember::where('project_id', $projectId)
-            ->where('employee_id', $employeeId)
-            ->where('status', 'active')
+        return ProjectMember::where('proyecto_id', $projectId)
+            ->where('empleado_id', $employeeId)
+            ->where('estado', 'active')
             ->exists();
     }
 

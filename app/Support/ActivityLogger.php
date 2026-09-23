@@ -11,11 +11,11 @@ class ActivityLogger
     public static function record(Model $subject, string $action, string $description): void
     {
         ActivityLog::create([
-            'user_id' => auth()->id(),
-            'subject_type' => $subject::class,
-            'subject_id' => $subject->getKey(),
-            'action' => $action,
-            'description' => $description,
+            'usuario_id' => auth()->id(),
+            'sujeto_tipo' => $subject::class,
+            'sujeto_id' => $subject->getKey(),
+            'accion' => $action,
+            'descripcion' => $description,
         ]);
     }
 

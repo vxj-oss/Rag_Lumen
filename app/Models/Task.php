@@ -13,85 +13,87 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable([
-    'project_id', 'assigned_to', 'created_by', 'code', 'title', 'description', 'status', 'status_id',
-    'priority', 'start_date', 'due_date', 'completed_at', 'progress_percentage', 'estimated_hours',
-    'actual_hours', 'blocked_reason',
+    'proyecto_id', 'tarea_padre_id', 'asignado_a', 'creado_por', 'codigo', 'titulo', 'descripcion', 'estado', 'estado_id',
+    'prioridad', 'fecha_inicio', 'fecha_vencimiento', 'completado_en', 'porcentaje_progreso', 'horas_estimadas',
+    'horas_reales', 'motivo_bloqueo',
 ])]
 class Task extends Model
 {
     use HasFactory, SoftDeletes;
 
+    protected $table = 'tareas';
+
     protected static function booted(): void
     {
         static::creating(function (Task $task) {
-            if (filled($task->code) || $task->project_id === null) {
+            if (filled($task->codigo) || $task->proyecto_id === null) {
                 return;
             }
 
-            $project = $task->project ?? Project::find($task->project_id);
+            $project = $task->project ?? Project::find($task->proyecto_id);
 
             if ($project === null) {
                 return;
             }
 
-            $project->increment('task_counter');
+            $project->increment('contador_tareas');
 
-            $task->code = "{$project->code}-T{$project->fresh()->task_counter}";
+            $task->codigo = "{$project->codigo}-T{$project->fresh()->contador_tareas}";
         });
     }
 
     protected function casts(): array
     {
         return [
-            'status' => TaskStatus::class,
-            'priority' => Priority::class,
-            'start_date' => 'date',
-            'due_date' => 'date',
-            'completed_at' => 'datetime',
-            'estimated_hours' => 'decimal:2',
-            'actual_hours' => 'decimal:2',
+            'estado' => TaskStatus::class,
+            'prioridad' => Priority::class,
+            'fecha_inicio' => 'date',
+            'fecha_vencimiento' => 'date',
+            'completado_en' => 'datetime',
+            'horas_estimadas' => 'decimal:2',
+            'horas_reales' => 'decimal:2',
         ];
     }
 
     public function project(): BelongsTo
     {
-        return $this->belongsTo(Project::class);
+        return $this->belongsTo(Project::class, 'proyecto_id');
     }
 
     public function assignee(): BelongsTo
     {
-        return $this->belongsTo(Employee::class, 'assigned_to');
+        return $this->belongsTo(Employee::class, 'asignado_a');
     }
 
     public function creator(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'created_by');
+        return $this->belongsTo(User::class, 'creado_por');
     }
 
     public function isOverdue(): bool
     {
-        return $this->due_date !== null
-            && $this->due_date->isPast()
+        return $this->fecha_vencimiento !== null
+            && $this->fecha_vencimiento->isPast()
             && $this->isActiveState();
     }
 
     public function state(): BelongsTo
     {
-        return $this->belongsTo(TaskState::class, 'status_id');
+        return $this->belongsTo(TaskState::class, 'estado_id');
     }
 
     public function statusHistory(): HasMany
     {
-        return $this->hasMany(TaskStatusHistory::class)->latest('id');
+        return $this->hasMany(TaskStatusHistory::class, 'tarea_id')->latest('id');
     }
 
     public function isCompletedState(): bool
     {
         if ($this->state !== null) {
-            return $this->state->is_final && $this->state->slug === 'completada';
+            return $this->state->es_final && $this->state->slug === 'completada';
         }
 
-        return $this->status === TaskStatus::Completed;
+        return $this->estado === TaskStatus::Completed;
     }
 
     public function isCancelledState(): bool
@@ -100,25 +102,25 @@ class Task extends Model
             return $this->state->slug === 'cancelada';
         }
 
-        return $this->status === TaskStatus::Cancelled;
+        return $this->estado === TaskStatus::Cancelled;
     }
 
     public function isFinalState(): bool
     {
         if ($this->state !== null) {
-            return $this->state->is_final;
+            return $this->state->es_final;
         }
 
-        return in_array($this->status, [TaskStatus::Completed, TaskStatus::Cancelled], true);
+        return in_array($this->estado, [TaskStatus::Completed, TaskStatus::Cancelled], true);
     }
 
     public function isBlockingState(): bool
     {
         if ($this->state !== null) {
-            return $this->state->is_blocking;
+            return $this->state->es_bloqueante;
         }
 
-        return $this->status === TaskStatus::Blocked;
+        return $this->estado === TaskStatus::Blocked;
     }
 
     public function isActiveState(): bool
@@ -128,17 +130,53 @@ class Task extends Model
 
     public function dependencies(): BelongsToMany
     {
-        return $this->belongsToMany(Task::class, 'task_dependencies', 'task_id', 'depends_on_task_id');
+        return $this->belongsToMany(Task::class, 'dependencias_tarea', 'tarea_id', 'depende_de_tarea_id');
     }
 
     public function dependents(): BelongsToMany
     {
-        return $this->belongsToMany(Task::class, 'task_dependencies', 'depends_on_task_id', 'task_id');
+        return $this->belongsToMany(Task::class, 'dependencias_tarea', 'depende_de_tarea_id', 'tarea_id');
     }
 
     public function progressUpdates(): HasMany
     {
-        return $this->hasMany(TaskProgressUpdate::class)->latest('created_at');
+        return $this->hasMany(TaskProgressUpdate::class, 'tarea_id')->latest('created_at');
+    }
+
+    public function tareaPadre(): BelongsTo
+    {
+        return $this->belongsTo(Task::class, 'tarea_padre_id');
+    }
+
+    public function subtareas(): HasMany
+    {
+        return $this->hasMany(Task::class, 'tarea_padre_id');
+    }
+
+    public function tieneSubtareas(): bool
+    {
+        return $this->relationLoaded('subtareas')
+            ? $this->subtareas->isNotEmpty()
+            : $this->subtareas()->exists();
+    }
+
+    /**
+     * True si $other es ancestro de esta tarea (subiendo por tarea_padre_id),
+     * usado para evitar ciclos al asignar una tarea padre.
+     */
+    public function esDescendienteDe(Task $other): bool
+    {
+        $current = $this->tareaPadre;
+
+        while ($current !== null) {
+            if ($current->id === $other->id) {
+                return true;
+            }
+
+            $current = $current->tareaPadre;
+        }
+
+        return false;
     }
 
     public function dependsOnTransitively(Task $other, array $visited = []): bool

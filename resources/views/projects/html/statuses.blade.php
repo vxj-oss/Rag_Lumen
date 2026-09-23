@@ -1,6 +1,6 @@
 <x-app-layout>
     <x-slot name="header">
-        <x-ui.page-header :title="__('Estados de :project', ['project' => $project->name])" :subtitle="__('Flujo de estados propio de este proyecto')">
+        <x-ui.page-header :title="__('Estados de :project', ['project' => $project->nombre])" :subtitle="__('Flujo de estados propio de este proyecto')">
             <x-slot name="actions">
                 <x-ui.primary-button x-data @click="$dispatch('open-modal', 'create-state')" class="min-h-[44px]">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15" /></svg>
@@ -31,14 +31,14 @@
                             <span class="w-3 h-3 rounded-full shrink-0 {{ $dots[$state->color] ?? 'bg-gray-400' }}"></span>
                             <div class="flex-1 min-w-0">
                                 <p class="text-sm font-medium text-gray-900">
-                                    {{ $index + 1 }}. {{ $state->name }}
+                                    {{ $index + 1 }}. {{ $state->nombre }}
                                     <span class="text-xs text-gray-400 font-mono">{{ $state->slug }}</span>
                                 </p>
                                 <p class="text-xs text-gray-500 mt-0.5">
-                                    @if ($state->is_initial) {{ __('Inicial') }} · @endif
-                                    @if ($state->is_final) {{ __('Final') }} · @endif
-                                    @if ($state->is_blocking) {{ __('Bloqueo') }} · @endif
-                                    {{ $state->active ? __('Activo') : __('Inactivo') }} ·
+                                    @if ($state->es_inicial) {{ __('Inicial') }} · @endif
+                                    @if ($state->es_final) {{ __('Final') }} · @endif
+                                    @if ($state->es_bloqueante) {{ __('Bloqueo') }} · @endif
+                                    {{ $state->activo ? __('Activo') : __('Inactivo') }} ·
                                     {{ __(':count tareas', ['count' => $state->tasks()->count()]) }}
                                 </p>
                             </div>
@@ -61,12 +61,12 @@
                         </li>
 
                         <x-ui.form-modal :name="'edit-state-'.$state->id" :title="__('Editar estado')"
-                            :subtitle="$state->name" :action="route('projects.statuses.update', [$project, $state])" method="PUT">
+                            :subtitle="$state->nombre" :action="route('projects.statuses.update', [$project, $state])" method="PUT">
                             <div class="grid grid-cols-1 gap-4">
                                 <div>
                                     <x-forms.input-label for="name" :value="__('Nombre')" />
                                     <x-forms.text-input id="name" name="name" type="text" class="mt-1 block w-full"
-                                        :value="old('name', $state->name)" required />
+                                        :value="old('name', $state->nombre)" required />
                                     <x-forms.input-error :messages="$errors->get('name')" class="mt-2" />
                                 </div>
                                 <div>
@@ -77,19 +77,19 @@
                                 </div>
                                 <div class="flex flex-wrap gap-4">
                                     <label class="inline-flex items-center gap-2 text-sm text-gray-700">
-                                        <input type="checkbox" name="is_initial" value="1" {{ old('is_initial', $state->is_initial) ? 'checked' : '' }} class="rounded border-gray-300 text-emerald-600 shadow-sm focus:ring-emerald-500">
+                                        <input type="checkbox" name="is_initial" value="1" {{ old('is_initial', $state->es_inicial) ? 'checked' : '' }} class="rounded border-gray-300 text-emerald-600 shadow-sm focus:ring-emerald-500">
                                         {{ __('Es inicial') }}
                                     </label>
                                     <label class="inline-flex items-center gap-2 text-sm text-gray-700">
-                                        <input type="checkbox" name="is_final" value="1" {{ old('is_final', $state->is_final) ? 'checked' : '' }} class="rounded border-gray-300 text-emerald-600 shadow-sm focus:ring-emerald-500">
+                                        <input type="checkbox" name="is_final" value="1" {{ old('is_final', $state->es_final) ? 'checked' : '' }} class="rounded border-gray-300 text-emerald-600 shadow-sm focus:ring-emerald-500">
                                         {{ __('Es final') }}
                                     </label>
                                     <label class="inline-flex items-center gap-2 text-sm text-gray-700">
-                                        <input type="checkbox" name="is_blocking" value="1" {{ old('is_blocking', $state->is_blocking) ? 'checked' : '' }} class="rounded border-gray-300 text-emerald-600 shadow-sm focus:ring-emerald-500">
+                                        <input type="checkbox" name="is_blocking" value="1" {{ old('is_blocking', $state->es_bloqueante) ? 'checked' : '' }} class="rounded border-gray-300 text-emerald-600 shadow-sm focus:ring-emerald-500">
                                         {{ __('Es bloqueo') }}
                                     </label>
                                     <label class="inline-flex items-center gap-2 text-sm text-gray-700">
-                                        <input type="checkbox" name="active" value="1" {{ old('active', $state->active) ? 'checked' : '' }} class="rounded border-gray-300 text-emerald-600 shadow-sm focus:ring-emerald-500">
+                                        <input type="checkbox" name="active" value="1" {{ old('active', $state->activo) ? 'checked' : '' }} class="rounded border-gray-300 text-emerald-600 shadow-sm focus:ring-emerald-500">
                                         {{ __('Activo') }}
                                     </label>
                                 </div>
@@ -105,7 +105,7 @@
         </div>
     </div>
 
-    <x-ui.form-modal name="create-state" :title="__('Nuevo estado')" :subtitle="$project->name"
+    <x-ui.form-modal name="create-state" :title="__('Nuevo estado')" :subtitle="$project->nombre"
         :action="route('projects.statuses.store', $project)" submit-label="{{ __('Crear estado') }}">
         <div class="grid grid-cols-1 gap-4">
             <div>

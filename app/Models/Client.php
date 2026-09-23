@@ -8,14 +8,16 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable([
-    'name', 'tax_id', 'contact_name', 'email', 'phone', 'sector', 'status',
+    'nombre', 'identificacion_fiscal', 'nombre_contacto', 'correo', 'telefono', 'sector', 'estado',
 ])]
 class Client extends Model
 {
     use SoftDeletes;
 
+    protected $table = 'clientes';
+
     public function projects(): HasMany
     {
-        return $this->hasMany(Project::class);
+        return $this->hasMany(Project::class, 'cliente_id');
     }
 }

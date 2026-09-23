@@ -58,7 +58,7 @@
             <tbody>
                 @foreach ($attentionList as $item)
                     <tr>
-                        <td>{{ $item['project']->name }}</td>
+                        <td>{{ $item['project']->nombre }}</td>
                         <td>
                             <span class="badge badge-{{ $item['decision']['risk_level']->color() === 'red' ? 'red' : ($item['decision']['risk_level']->color() === 'yellow' ? 'yellow' : 'gray') }}">
                                 {{ $item['decision']['risk_level']->label() }}

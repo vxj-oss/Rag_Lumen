@@ -45,17 +45,17 @@ class ProcessRagDocument implements ShouldQueue
             return;
         }
 
-        $document->update(['status' => RagDocumentStatus::Processing->value]);
+        $document->update(['estado' => RagDocumentStatus::Processing->value]);
 
-        $loader = $this->resolveLoader($document->mime_type);
+        $loader = $this->resolveLoader($document->tipo_mime);
 
         if ($loader === null) {
-            $this->markFailed($document, "No hay un extractor disponible para el tipo {$document->mime_type}.");
+            $this->markFailed($document, "No hay un extractor disponible para el tipo {$document->tipo_mime}.");
 
             return;
         }
 
-        $filePath = Storage::disk(config('rag.storage_disk'))->path($document->file_path);
+        $filePath = Storage::disk(config('rag.storage_disk'))->path($document->ruta_archivo);
         $rawText = $loader->extractText($filePath);
         $normalizedText = $normalizer->normalize($rawText);
 
@@ -79,19 +79,19 @@ class ProcessRagDocument implements ShouldQueue
 
         foreach ($textChunks as $index => $content) {
             $chunk = RagChunk::create([
-                'document_id' => $document->id,
-                'content' => $content,
-                'chunk_index' => $index,
-                'metadata' => null,
-                'vector_reference' => null,
+                'documento_id' => $document->id,
+                'contenido' => $content,
+                'indice_fragmento' => $index,
+                'metadatos' => null,
+                'referencia_vector' => null,
             ]);
 
             $vectorStore->store($chunk, $vectors[$index]);
         }
 
         $document->update([
-            'status' => RagDocumentStatus::Processed->value,
-            'failure_reason' => null,
+            'estado' => RagDocumentStatus::Processed->value,
+            'motivo_fallo' => null,
         ]);
     }
 
@@ -118,8 +118,8 @@ class ProcessRagDocument implements ShouldQueue
     private function markFailed(RagDocument $document, string $reason): void
     {
         $document->update([
-            'status' => RagDocumentStatus::Failed->value,
-            'failure_reason' => $reason,
+            'estado' => RagDocumentStatus::Failed->value,
+            'motivo_fallo' => $reason,
         ]);
     }
 }

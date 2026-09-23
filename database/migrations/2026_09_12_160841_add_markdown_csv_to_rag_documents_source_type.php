@@ -11,7 +11,7 @@ return new class extends Migration
             return;
         }
 
-        DB::statement("ALTER TABLE rag_documents MODIFY source_type ENUM('pdf', 'docx', 'txt', 'markdown', 'csv', 'manual', 'other') NOT NULL");
+        DB::statement("ALTER TABLE documentos_rag MODIFY tipo_origen ENUM('pdf', 'docx', 'txt', 'markdown', 'csv', 'manual', 'other') NOT NULL");
     }
 
     public function down(): void
@@ -20,6 +20,6 @@ return new class extends Migration
             return;
         }
 
-        DB::statement("ALTER TABLE rag_documents MODIFY source_type ENUM('pdf', 'docx', 'txt', 'manual', 'other') NOT NULL");
+        DB::statement("ALTER TABLE documentos_rag MODIFY tipo_origen ENUM('pdf', 'docx', 'txt', 'manual', 'other') NOT NULL");
     }
 };

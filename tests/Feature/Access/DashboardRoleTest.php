@@ -30,7 +30,7 @@ class DashboardRoleTest extends TestCase
     {
         $user = User::factory()->create();
         $user->assignRole($role->value);
-        Employee::factory()->create(['user_id' => $user->id, 'email' => $user->email]);
+        Employee::factory()->create(['usuario_id' => $user->id, 'correo' => $user->email]);
 
         return $user->refresh();
     }
@@ -56,7 +56,7 @@ class DashboardRoleTest extends TestCase
     public function test_manager_sees_only_scoped_projects(): void
     {
         $manager = $this->makeUser(RoleName::Manager);
-        $area = Area::where('name', 'Diseño')->first();
+        $area = Area::where('nombre', 'Diseño')->first();
         $manager->employee->update(['area_id' => $area->id]);
 
         $inScope = $this->projectWithStates();
@@ -66,8 +66,8 @@ class DashboardRoleTest extends TestCase
         $response = $this->actingAs($manager)->get(route('dashboard'));
 
         $response->assertOk()->assertSee('Portafolio bajo mi alcance');
-        $response->assertSee($inScope->name);
-        $response->assertDontSee($outside->name);
+        $response->assertSee($inScope->nombre);
+        $response->assertDontSee($outside->nombre);
     }
 
     public function test_leader_sees_own_projects_and_team_load(): void
@@ -75,25 +75,25 @@ class DashboardRoleTest extends TestCase
         $lead = $this->makeUser(RoleName::ProjectLead);
         $member = Employee::factory()->create();
 
-        $project = $this->projectWithStates(['responsible_employee_id' => $lead->employee->id]);
+        $project = $this->projectWithStates(['empleado_responsable_id' => $lead->employee->id]);
         $project->members()->attach($member->id, [
-            'role_in_project' => 'Miembro',
-            'assigned_at' => now()->toDateString(),
-            'status' => 'active',
+            'rol_en_proyecto' => 'Miembro',
+            'asignado_en' => now()->toDateString(),
+            'estado' => 'active',
         ]);
         Task::factory()->create([
-            'project_id' => $project->id,
-            'assigned_to' => $member->id,
-            'status_id' => TaskState::where('project_id', $project->id)->where('slug', 'pendiente')->first()->id,
-            'due_date' => now()->subDay()->toDateString(),
+            'proyecto_id' => $project->id,
+            'asignado_a' => $member->id,
+            'estado_id' => TaskState::where('proyecto_id', $project->id)->where('slug', 'pendiente')->first()->id,
+            'fecha_vencimiento' => now()->subDay()->toDateString(),
         ]);
         $this->projectWithStates();
 
         $response = $this->actingAs($lead)->get(route('dashboard'));
 
         $response->assertOk()->assertSee('Mis proyectos');
-        $response->assertSee($project->name);
-        $response->assertSee($member->first_name);
+        $response->assertSee($project->nombre);
+        $response->assertSee($member->nombres);
     }
 
     public function test_employee_sees_my_day_with_own_tasks_only(): void
@@ -101,32 +101,32 @@ class DashboardRoleTest extends TestCase
         $employee = $this->makeUser(RoleName::Employee);
         $stranger = Employee::factory()->create();
         $project = $this->projectWithStates();
-        $pending = TaskState::where('project_id', $project->id)->where('slug', 'pendiente')->first()->id;
+        $pending = TaskState::where('proyecto_id', $project->id)->where('slug', 'pendiente')->first()->id;
 
         $mine = Task::factory()->create([
-            'project_id' => $project->id,
-            'assigned_to' => $employee->employee->id,
-            'status_id' => $pending,
-            'actual_hours' => 5,
+            'proyecto_id' => $project->id,
+            'asignado_a' => $employee->employee->id,
+            'estado_id' => $pending,
+            'horas_reales' => 5,
         ]);
         $other = Task::factory()->create([
-            'project_id' => $project->id,
-            'assigned_to' => $stranger->id,
-            'status_id' => $pending,
+            'proyecto_id' => $project->id,
+            'asignado_a' => $stranger->id,
+            'estado_id' => $pending,
         ]);
 
         $response = $this->actingAs($employee)->get(route('dashboard'));
 
         $response->assertOk()->assertSee('Mi día');
-        $response->assertSee($mine->title);
-        $response->assertDontSee($other->title);
+        $response->assertSee($mine->titulo);
+        $response->assertDontSee($other->titulo);
         $response->assertSee('5');
     }
 
     public function test_exports_respect_role_scope(): void
     {
         $manager = $this->makeUser(RoleName::Manager);
-        $area = Area::where('name', 'Diseño')->first();
+        $area = Area::where('nombre', 'Diseño')->first();
         $manager->employee->update(['area_id' => $area->id]);
 
         $inScope = $this->projectWithStates();
@@ -145,17 +145,17 @@ class DashboardRoleTest extends TestCase
         $employee = $this->makeUser(RoleName::Employee);
         $stranger = Employee::factory()->create();
         $project = $this->projectWithStates();
-        $pending = TaskState::where('project_id', $project->id)->where('slug', 'pendiente')->first()->id;
+        $pending = TaskState::where('proyecto_id', $project->id)->where('slug', 'pendiente')->first()->id;
 
         $mine = Task::factory()->create([
-            'project_id' => $project->id,
-            'assigned_to' => $employee->employee->id,
-            'status_id' => $pending,
+            'proyecto_id' => $project->id,
+            'asignado_a' => $employee->employee->id,
+            'estado_id' => $pending,
         ]);
         $other = Task::factory()->create([
-            'project_id' => $project->id,
-            'assigned_to' => $stranger->id,
-            'status_id' => $pending,
+            'proyecto_id' => $project->id,
+            'asignado_a' => $stranger->id,
+            'estado_id' => $pending,
         ]);
 
         $response = $this->actingAs($employee)->get(route('dashboard.export'));
@@ -166,14 +166,14 @@ class DashboardRoleTest extends TestCase
 
         // El alcance del PDF se verifica renderizando el reporte con la misma
         // consulta acotada que usa el controlador.
-        $scoped = Task::with(['state', 'project'])->where('assigned_to', $employee->employee->id)->get();
+        $scoped = Task::with(['state', 'project'])->where('asignado_a', $employee->employee->id)->get();
         $html = view('reports.dashboard-employee', [
             'summary' => ['pending' => 1, 'in_progress' => 0, 'due_soon' => 0, 'blocked' => 0, 'hours_recorded' => 0],
-            'byState' => $scoped->groupBy(fn (Task $task) => $task->state?->name ?? $task->status->label()),
+            'byState' => $scoped->groupBy(fn (Task $task) => $task->state?->nombre ?? $task->estado->label()),
             'generatedAt' => now(),
         ])->render();
 
-        $this->assertStringContainsString($mine->title, $html);
-        $this->assertStringNotContainsString($other->title, $html);
+        $this->assertStringContainsString($mine->titulo, $html);
+        $this->assertStringNotContainsString($other->titulo, $html);
     }
 }

@@ -8,20 +8,20 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('rag_messages', function (Blueprint $table) {
+        Schema::create('mensajes_rag', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('conversation_id')->constrained('rag_conversations')->cascadeOnDelete();
-            $table->enum('role', ['user', 'assistant']);
-            $table->text('content');
-            $table->json('sources')->nullable();
+            $table->foreignId('conversacion_id')->constrained('conversaciones_rag')->cascadeOnDelete();
+            $table->enum('rol', ['user', 'assistant']);
+            $table->text('contenido');
+            $table->json('fuentes')->nullable();
             $table->timestamps();
 
-            $table->index('conversation_id');
+            $table->index('conversacion_id');
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('rag_messages');
+        Schema::dropIfExists('mensajes_rag');
     }
 };

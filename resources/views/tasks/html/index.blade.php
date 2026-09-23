@@ -12,33 +12,33 @@
         </x-ui.page-header>
     </x-slot>
 
-    <div class="py-8" x-data="kanbanBoard()" x-init="init()">
-        <div class="max-w-[1500px] mx-auto sm:px-6 lg:px-8 space-y-6">
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div class="relative bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-5 flex items-center gap-4 overflow-hidden">
+    <div class="py-4" x-data="kanbanBoard()" x-init="init()">
+        <div class="max-w-[1500px] mx-auto sm:px-6 lg:px-8 space-y-3">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div class="relative bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-3 flex items-center gap-3 overflow-hidden">
                     <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-blue-400 to-blue-600"></div>
                     <div class="min-w-0 relative">
-                        <p class="text-3xl font-extrabold text-gray-900 tabular-nums" x-text="kpis.open ?? '…'">…</p>
-                        <p class="text-sm text-gray-500">{{ __('Tareas abiertas') }}</p>
+                        <p class="text-2xl font-extrabold text-gray-900 tabular-nums" x-text="kpis.open ?? '…'">…</p>
+                        <p class="text-xs text-gray-500">{{ __('Tareas abiertas') }}</p>
                     </div>
                 </div>
-                <div class="relative bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-5 flex items-center gap-4 overflow-hidden">
+                <div class="relative bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-3 flex items-center gap-3 overflow-hidden">
                     <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-yellow-400 to-yellow-500"></div>
                     <div class="min-w-0 relative">
-                        <p class="text-3xl font-extrabold text-gray-900 tabular-nums" x-text="kpis.overdue ?? '…'">…</p>
-                        <p class="text-sm text-gray-500">{{ __('Tareas atrasadas') }}</p>
+                        <p class="text-2xl font-extrabold text-gray-900 tabular-nums" x-text="kpis.overdue ?? '…'">…</p>
+                        <p class="text-xs text-gray-500">{{ __('Tareas atrasadas') }}</p>
                     </div>
                 </div>
-                <div class="relative bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-5 flex items-center gap-4 overflow-hidden">
+                <div class="relative bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-3 flex items-center gap-3 overflow-hidden">
                     <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-emerald-400 to-emerald-600"></div>
                     <div class="min-w-0 relative">
-                        <p class="text-3xl font-extrabold text-gray-900 tabular-nums" x-text="kpis.completed_week ?? '…'">…</p>
-                        <p class="text-sm text-gray-500">{{ __('Completadas esta semana') }}</p>
+                        <p class="text-2xl font-extrabold text-gray-900 tabular-nums" x-text="kpis.completed_week ?? '…'">…</p>
+                        <p class="text-xs text-gray-500">{{ __('Completadas esta semana') }}</p>
                     </div>
                 </div>
             </div>
 
-            <x-ui.card padding="p-4">
+            <x-ui.card padding="p-3">
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 items-end">
                     <div>
                         <label class="block text-xs font-medium text-gray-500 mb-1">{{ __('Proyecto') }}</label>
@@ -46,7 +46,7 @@
                             class="w-full border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-md shadow-sm text-sm">
                             <option value="">{{ __('Todos') }}</option>
                             @foreach ($projects as $project)
-                                <option value="{{ $project->id }}">{{ $project->code }} · {{ $project->name }}</option>
+                                <option value="{{ $project->id }}">{{ $project->codigo }} · {{ $project->nombre }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -100,22 +100,22 @@
 
             <div x-show="loading" class="text-sm text-gray-500">{{ __('Cargando tablero…') }}</div>
 
-            <div class="overflow-x-auto pb-6">
-                <div class="flex gap-4 items-start w-max">
+            <div class="pb-6">
+                <div class="grid gap-3 items-start" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
                     <template x-for="col in columns" :key="col.id || col.slug">
-                        <section class="w-80 min-w-[320px] shrink-0 bg-gray-50 border border-gray-200 rounded-xl flex flex-col max-h-[75vh]"
+                        <section class="w-full min-h-[220px] bg-gray-50 border border-gray-200 border-t-4 rounded-xl flex flex-col shadow-sm"
                             :data-column-id="String(col.id)"
-                            :class="hoverColumnId === String(col.id) ? 'border-emerald-500 bg-emerald-50/40' : ''">
-                            <header class="flex items-center gap-2 px-4 py-3 border-b border-gray-200 bg-white rounded-t-xl">
+                            :class="accentClass(col.color) + ' ' + (hoverColumnId === String(col.id) ? 'border-emerald-500 bg-emerald-50/40 shadow-md' : '')">
+                            <header class="flex items-center gap-2 px-4 py-2.5 border-b border-gray-200 bg-white rounded-t-xl shrink-0">
                                 <span class="w-2.5 h-2.5 rounded-full shrink-0" :class="dotClass(col.color)"></span>
                                 <h3 class="text-xs font-bold text-gray-700 uppercase tracking-wide truncate" x-text="col.name"></h3>
                                 <span class="ml-auto text-xs font-semibold text-gray-600 bg-gray-100 border border-gray-200 rounded-full px-2 py-0.5" x-text="cardsIn(col.slug, col.id).length"></span>
                             </header>
-                            
-                            <div class="p-3 space-y-3 overflow-y-auto min-h-[160px]">
-                                <template x-for="card in cardsIn(col.slug, col.id)" :key="card.id">
+
+                            <div class="p-2 gap-2 flex-1 overflow-y-auto flex flex-col">
+                                <template x-for="card in pagedCardsIn(col)" :key="card.id">
                                     <article :id="'ticket-' + card.id"
-                                        class="bg-white rounded-lg border border-gray-200 p-3.5 space-y-2.5 shadow-sm hover:shadow-md hover:border-emerald-400 transition"
+                                        class="bg-white rounded-lg border border-gray-200 p-2.5 space-y-1.5 shadow-sm hover:shadow-md hover:border-emerald-400 transition"
                                         :class="draggingId === card.id ? 'opacity-60 border-emerald-500' : ''">
                                         <div class="flex items-start justify-between gap-2">
                                             <button x-show="card.can_update" type="button"
@@ -150,42 +150,34 @@
                                             </div>
                                         </div>
 
-                                        <h4 class="text-sm font-semibold text-gray-900 leading-snug break-words" x-text="card.title"></h4>
+                                        <h4 class="text-sm font-semibold text-gray-900 leading-snug break-words line-clamp-2" x-text="card.title"></h4>
 
                                         <div class="flex items-center gap-1.5 text-xs text-gray-500 min-w-0">
                                             <span x-show="card.assignee_initials" x-text="card.assignee_initials"
-                                                  class="w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 inline-flex items-center justify-center font-bold text-[11px] shrink-0"></span>
+                                                  class="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 inline-flex items-center justify-center font-bold text-[10px] shrink-0"></span>
                                             <span class="truncate" x-text="card.assignee_name || @js(__('Sin asignar'))"></span>
-                                            <span x-show="card.last_mover_initial" :title="card.last_mover_name" x-text="card.last_mover_initial"
-                                                  class="ml-auto w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 inline-flex items-center justify-center font-bold text-[11px] shrink-0"></span>
-                                        </div>
-
-                                        <div class="flex flex-wrap items-center gap-1.5 text-[11px]">
-                                            <span class="inline-flex items-center gap-1 font-medium text-gray-600">
+                                            <span class="ml-auto inline-flex items-center gap-1 font-medium text-gray-600 shrink-0 text-[11px]">
                                                 <span class="w-2 h-2 rounded-full" :class="dotClass(card.priority_color)"></span>
                                                 <span x-text="card.priority_label"></span>
                                             </span>
-                                            <span x-show="card.area" x-text="card.area"
-                                                  class="px-1.5 py-0.5 rounded-md bg-gray-100 text-gray-600 font-medium"></span>
-                                            <span class="text-gray-500" x-text="card.project_code"></span>
                                         </div>
 
-                                        <div>
-                                            <div class="flex items-center justify-between text-[11px] text-gray-500 mb-0.5">
-                                                <span>{{ __('Avance') }}</span>
-                                                <span x-text="card.progress + ' %'"></span>
-                                            </div>
-                                            <div class="w-full bg-gray-200 rounded-full h-1.5">
+                                        <div class="flex items-center gap-1.5 text-[11px] text-gray-500">
+                                            <span x-show="card.area" x-text="card.area"
+                                                  class="px-1.5 py-0.5 rounded-md bg-gray-100 text-gray-600 font-medium shrink-0"></span>
+                                            <span class="shrink-0" x-text="card.project_code"></span>
+                                            <span x-show="card.due" class="ml-auto truncate"
+                                                  :class="card.overdue ? 'text-red-600 font-semibold' : ''"
+                                                  x-text="card.due ? card.due.label : ''"></span>
+                                        </div>
+
+                                        <div class="flex items-center gap-2">
+                                            <div class="flex-1 bg-gray-200 rounded-full h-1.5">
                                                 <div class="bg-emerald-500 h-1.5 rounded-full" :style="'width: ' + card.progress + '%'"></div>
                                             </div>
-                                            <p class="text-[11px] text-gray-500 mt-0.5">
-                                                <span x-text="(card.actual_hours ?? '—') + ' h / ' + (card.estimated_hours ?? '—') + ' h'"></span>
-                                            </p>
+                                            <span class="text-[11px] text-gray-500 shrink-0 whitespace-nowrap"
+                                                  x-text="card.progress + '% · ' + (card.actual_hours ?? '—') + '/' + (card.estimated_hours ?? '—') + 'h'"></span>
                                         </div>
-
-                                        <p x-show="card.due" class="text-[11px]"
-                                           :class="card.overdue ? 'text-red-600 font-semibold' : 'text-gray-500'"
-                                           x-text="card.due ? card.due.label : ''"></p>
 
                                         <div x-show="card.blocking" class="text-[11px] font-bold text-red-700 bg-red-50 border border-red-200 rounded-lg px-2 py-1">
                                             <span x-text="@js(__('BLOQUEADA'))"></span>
@@ -195,8 +187,22 @@
                                         <div x-show="showSaving[card.id]" class="text-[11px] text-emerald-700">{{ __('Guardando…') }}</div>
                                     </article>
                                 </template>
-                                
-                                <p x-show="cardsIn(col.slug, col.id).length === 0" class="text-xs text-gray-400 text-center py-6">{{ __('Sin tareas') }}</p>
+
+                                <p x-show="cardsIn(col.slug, col.id).length === 0" class="flex-1 flex items-center justify-center text-xs text-gray-400">{{ __('Sin tareas') }}</p>
+                            </div>
+
+                            <div x-show="totalPages(col) > 1" class="flex items-center justify-between gap-2 px-3 py-2 border-t border-gray-200 bg-white rounded-b-xl shrink-0">
+                                <button type="button" @click="goToPage(col, currentPage(col) - 1)" :disabled="currentPage(col) === 1"
+                                    class="p-1.5 rounded-lg text-gray-500 hover:text-emerald-700 hover:bg-emerald-50 disabled:opacity-30 disabled:pointer-events-none min-w-[28px] min-h-[28px] inline-flex items-center justify-center"
+                                    :aria-label="@js(__('Página anterior'))">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+                                </button>
+                                <span class="text-xs text-gray-500 tabular-nums" x-text="currentPage(col) + ' / ' + totalPages(col)"></span>
+                                <button type="button" @click="goToPage(col, currentPage(col) + 1)" :disabled="currentPage(col) >= totalPages(col)"
+                                    class="p-1.5 rounded-lg text-gray-500 hover:text-emerald-700 hover:bg-emerald-50 disabled:opacity-30 disabled:pointer-events-none min-w-[28px] min-h-[28px] inline-flex items-center justify-center"
+                                    :aria-label="@js(__('Página siguiente'))">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                                </button>
                             </div>
                         </section>
                     </template>
@@ -222,19 +228,19 @@
         @can('create', \App\Models\Task::class)
             <x-ui.form-modal name="create-task" :title="__('Nueva tarea')" :subtitle="__('Registra una nueva tarea en un proyecto')"
                 :action="route('tasks.store')" max-width="3xl" submit-label="{{ __('Crear tarea') }}">
-                <div class="space-y-4" x-data="taskCreateForm()" x-init="initCreateForm()">
+                <div class="space-y-3" x-data="taskCreateForm()" x-init="initCreateForm()">
                     <div>
                         <x-forms.input-label for="cf_project" :value="__('Proyecto')" />
-                        <select id="cf_project" name="project_id" x-model="projectId" @change="loadScope()" required
+                        <select id="cf_project" name="proyecto_id" x-model="projectId" @change="loadScope()" required
                             class="mt-1 block w-full border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-md shadow-sm">
                             <option value="">{{ __('Selecciona un proyecto…') }}</option>
                             @foreach ($projects as $project)
-                                <option value="{{ $project->id }}">{{ $project->code }} · {{ $project->name }}</option>
+                                <option value="{{ $project->id }}">{{ $project->codigo }} · {{ $project->nombre }}</option>
                             @endforeach
                         </select>
-                        <x-forms.input-error :messages="$errors->get('project_id')" class="mt-2" />
+                        <x-forms.input-error :messages="$errors->get('proyecto_id')" class="mt-2" />
                     </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                             <x-forms.input-label for="cf_area" :value="__('Área')" />
                             <select id="cf_area" name="area_id" x-model="areaId" @change="areaId = $event.target.value"
@@ -245,28 +251,28 @@
                         </div>
                         <div>
                             <x-forms.input-label for="cf_assigned" :value="__('Empleado responsable')" />
-                            <select id="cf_assigned" name="assigned_to"
+                            <select id="cf_assigned" name="asignado_a"
                                 class="mt-1 block w-full border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-md shadow-sm">
                                 <option value="">{{ __('— Sin asignar —') }}</option>
                                 <template x-for="e in filteredEmployees()" :key="e.id"><option :value="e.id" x-text="e.name"></option></template>
                             </select>
-                            <x-forms.input-error :messages="$errors->get('assigned_to')" class="mt-2" />
+                            <x-forms.input-error :messages="$errors->get('asignado_a')" class="mt-2" />
                         </div>
                     </div>
                     <div>
                         <x-forms.input-label for="cf_title" :value="__('Título')" />
-                        <x-forms.text-input id="cf_title" name="title" type="text" class="mt-1 block w-full" required />
-                        <x-forms.input-error :messages="$errors->get('title')" class="mt-2" />
+                        <x-forms.text-input id="cf_title" name="titulo" type="text" class="mt-1 block w-full" required />
+                        <x-forms.input-error :messages="$errors->get('titulo')" class="mt-2" />
                     </div>
                     <div>
                         <x-forms.input-label for="cf_description" :value="__('Descripción')" />
-                        <textarea id="cf_description" name="description" rows="2"
+                        <textarea id="cf_description" name="descripcion" rows="2"
                             class="mt-1 block w-full border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-md shadow-sm"></textarea>
                     </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div>
                             <x-forms.input-label for="cf_priority" :value="__('Prioridad')" />
-                            <select id="cf_priority" name="priority" class="mt-1 block w-full border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-md shadow-sm">
+                            <select id="cf_priority" name="prioridad" class="mt-1 block w-full border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-md shadow-sm">
                                 @foreach ($priorities as $priority)
                                     <option value="{{ $priority->value }}">{{ $priority->label() }}</option>
                                 @endforeach
@@ -274,24 +280,26 @@
                         </div>
                         <div>
                             <x-forms.input-label for="cf_state" :value="__('Estado inicial')" />
-                            <select id="cf_state" name="status_id" class="mt-1 block w-full border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-md shadow-sm">
+                            <select id="cf_state" name="estado_id" x-model="estadoId" :disabled="!projectId"
+                                class="mt-1 block w-full border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-md shadow-sm disabled:bg-gray-50 disabled:text-gray-400">
+                                <template x-if="!projectId"><option value="">{{ __('Selecciona un proyecto primero') }}</option></template>
                                 <template x-for="s in initialStates()" :key="s.id"><option :value="s.id" x-text="s.name"></option></template>
                             </select>
-                            <x-forms.input-error :messages="$errors->get('status_id')" class="mt-2" />
+                            <x-forms.input-error :messages="$errors->get('estado_id')" class="mt-2" />
                         </div>
                         <div>
                             <x-forms.input-label for="cf_estimated" :value="__('Horas estimadas')" />
-                            <x-forms.text-input id="cf_estimated" name="estimated_hours" type="number" step="0.01" min="0" class="mt-1 block w-full" />
+                            <x-forms.text-input id="cf_estimated" name="horas_estimadas" type="number" step="0.01" min="0" class="mt-1 block w-full" />
                         </div>
                     </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                             <x-forms.input-label for="cf_start" :value="__('Fecha de inicio')" />
-                            <x-forms.text-input id="cf_start" name="start_date" type="date" class="mt-1 block w-full" />
+                            <x-forms.text-input id="cf_start" name="fecha_inicio" type="date" class="mt-1 block w-full" />
                         </div>
                         <div>
                             <x-forms.input-label for="cf_due" :value="__('Fecha límite')" />
-                            <x-forms.text-input id="cf_due" name="due_date" type="date" class="mt-1 block w-full" />
+                            <x-forms.text-input id="cf_due" name="fecha_vencimiento" type="date" class="mt-1 block w-full" />
                         </div>
                     </div>
                     <div>
@@ -338,6 +346,14 @@
                     lastSignature: undefined,
                     showSaving: {},
                     blockModal: { open: false, cardId: null, column: null, reason: '', error: '' },
+                    pageSize: 1,
+                    columnPage: {},
+                    resizeHandler: null,
+                    accentColors: {
+                        gray: 'border-t-gray-400', blue: 'border-t-blue-500', indigo: 'border-t-indigo-500',
+                        green: 'border-t-emerald-500', yellow: 'border-t-yellow-400', red: 'border-t-red-500',
+                        orange: 'border-t-orange-500', amber: 'border-t-amber-400',
+                    },
                     filters: @js([
                         'project_id' => $filters['project_id'] ?? '',
                         'assigned_to' => $filters['assigned_to'] ?? '',
@@ -346,8 +362,8 @@
                         'search' => $filters['search'] ?? '',
                         'mine' => (bool) ($filters['mine'] ?? false),
                     ]),
-                    employees: @js($filterEmployees->map(fn ($e) => ['id' => $e->id, 'name' => $e->first_name . ' ' . $e->last_name])->values()),
-                    areas: @js($areas->map(fn ($a) => ['id' => $a->id, 'name' => $a->name])->values()),
+                    employees: @js($filterEmployees->map(fn ($e) => ['id' => $e->id, 'name' => $e->nombres . ' ' . $e->apellidos])->values()),
+                    areas: @js($areas->map(fn ($a) => ['id' => $a->id, 'name' => $a->nombre])->values()),
                     dotColors: {
                         gray: 'bg-gray-400', blue: 'bg-blue-500', indigo: 'bg-indigo-500',
                         green: 'bg-emerald-500', yellow: 'bg-yellow-400', red: 'bg-red-500',
@@ -358,6 +374,12 @@
                         window.addEventListener('pagehide', this.pageHideHandler);
                         this.fetchBoard();
                         this.pollInterval = window.setInterval(() => this.poll(), 15000);
+                        let resizeTimeout = null;
+                        this.resizeHandler = () => {
+                            clearTimeout(resizeTimeout);
+                            resizeTimeout = setTimeout(() => this.syncColumnHeights(), 150);
+                        };
+                        window.addEventListener('resize', this.resizeHandler);
                     },
                     destroy() {
                         this.isNavigating = true;
@@ -368,8 +390,20 @@
                         this.scopeAbortController?.abort();
                         this.cleanupPointerDrag();
                         if (this.pageHideHandler) window.removeEventListener('pagehide', this.pageHideHandler);
+                        if (this.resizeHandler) window.removeEventListener('resize', this.resizeHandler);
+                    },
+                    syncColumnHeights() {
+                        this.$nextTick(() => {
+                            const sections = [...this.$el.querySelectorAll('[data-column-id]')];
+                            if (!sections.length) return;
+                            sections.forEach((s) => { s.style.height = 'auto'; });
+                            const tallest = Math.max(...sections.map((s) => s.offsetHeight));
+                            const target = Math.min(Math.max(tallest, 220), 480);
+                            sections.forEach((s) => { s.style.height = target + 'px'; });
+                        });
                     },
                     dotClass(color) { return this.dotColors[color] || 'bg-gray-400'; },
+                    accentClass(color) { return this.accentColors[color] || 'border-t-gray-400'; },
                     cardsIn(columnSlug, columnId) {
                         return this.cards.filter((c) => {
                             if (columnId !== undefined && c.status_id !== undefined) {
@@ -380,6 +414,23 @@
                             }
                             return false;
                         });
+                    },
+                    totalPages(col) {
+                        return Math.max(1, Math.ceil(this.cardsIn(col.slug, col.id).length / this.pageSize));
+                    },
+                    currentPage(col) {
+                        // Se autocorrige si la página guardada quedó fuera de rango
+                        // (p. ej. se movió la última tarjeta de esa página a otra columna).
+                        return Math.min(this.columnPage[col.slug] || 1, this.totalPages(col));
+                    },
+                    pagedCardsIn(col) {
+                        const page = this.currentPage(col);
+                        const start = (page - 1) * this.pageSize;
+
+                        return this.cardsIn(col.slug, col.id).slice(start, start + this.pageSize);
+                    },
+                    goToPage(col, page) {
+                        this.columnPage[col.slug] = Math.min(Math.max(1, page), this.totalPages(col));
                     },
                     boardUrl() {
                         const params = new URLSearchParams();
@@ -416,6 +467,7 @@
                             this.columns = data.columns;
                             this.cards = data.cards;
                             this.kpis = data.kpis;
+                            this.syncColumnHeights();
                         } catch (e) {
                             if (e.name === 'AbortError' || requestId !== this.boardRequestId || this.isNavigating) return;
                             this.toastOk = false;
@@ -461,8 +513,8 @@
                         try {
                             const projectId = this.filters.project_id;
                             if (!projectId) {
-                                this.employees = @js($filterEmployees->map(fn ($e) => ['id' => $e->id, 'name' => $e->first_name . ' ' . $e->last_name])->values());
-                                this.areas = @js($areas->map(fn ($a) => ['id' => $a->id, 'name' => $a->name])->values());
+                                this.employees = @js($filterEmployees->map(fn ($e) => ['id' => $e->id, 'name' => $e->nombres . ' ' . $e->apellidos])->values());
+                                this.areas = @js($areas->map(fn ($a) => ['id' => $a->id, 'name' => $a->nombre])->values());
                             } else {
                                 const res = await fetch(@js(route('projects.scope-data', ['project' => '__ID__'])).replace('__ID__', projectId), {
                                     headers: { 'Accept': 'application/json' },
@@ -657,6 +709,7 @@
                             this.toastOk = true;
                             this.toast = card.code + ' → ' + data.status_label;
                             this.lastSignature = undefined;
+                            this.syncColumnHeights();
                         } catch (e) {
                             this.toastOk = false;
                             this.toast = e.message || @js(__('No se pudo cambiar el estado.'));
@@ -680,6 +733,7 @@
                             this.columns.forEach((c) => {
                                 c.count = this.cards.filter((x) => String(x.status_id) === String(c.id) || x.status_slug === c.slug).length;
                             });
+                            this.syncColumnHeights();
                         } catch (e) {
                             this.toastOk = false;
                             this.toast = e.message;
@@ -693,6 +747,7 @@
                 return {
                     projectId: '',
                     areaId: '',
+                    estadoId: '',
                     areas: [],
                     employees: [],
                     states: [],
@@ -700,6 +755,7 @@
                     async initCreateForm() {},
                     async loadScope() {
                         this.areaId = '';
+                        this.estadoId = '';
                         this.areas = [];
                         this.employees = [];
                         this.states = [];
@@ -713,6 +769,7 @@
                             this.employees = data.employees;
                             this.states = data.states;
                             this.projectTasks = data.tasks || [];
+                            this.estadoId = this.initialStates()[0]?.id ?? '';
                         } catch (e) {}
                     },
                     filteredEmployees() {

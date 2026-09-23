@@ -8,22 +8,22 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('activity_logs', function (Blueprint $table) {
+        Schema::create('registros_actividad', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
-            $table->string('subject_type');
-            $table->unsignedBigInteger('subject_id');
-            $table->string('action', 40);
-            $table->string('description', 500);
+            $table->foreignId('usuario_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->string('sujeto_tipo');
+            $table->unsignedBigInteger('sujeto_id');
+            $table->string('accion', 40);
+            $table->string('descripcion', 500);
             $table->timestamp('created_at')->useCurrent();
 
-            $table->index(['subject_type', 'subject_id']);
+            $table->index(['sujeto_tipo', 'sujeto_id']);
             $table->index('created_at');
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('activity_logs');
+        Schema::dropIfExists('registros_actividad');
     }
 };

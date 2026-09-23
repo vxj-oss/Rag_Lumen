@@ -42,10 +42,10 @@
                             @forelse ($rows as $row)
                                 <tr class="hover:bg-emerald-50/40 transition">
                                     <td class="px-6 py-4 text-sm font-medium text-gray-900">
-                                        {{ $row['project']->name }}
-                                        <span class="block text-xs text-gray-400 font-normal">{{ $row['project']->code }}</span>
+                                        {{ $row['project']->nombre }}
+                                        <span class="block text-xs text-gray-400 font-normal">{{ $row['project']->codigo }}</span>
                                     </td>
-                                    <td class="px-6 py-4 text-sm text-gray-500">{{ $row['project']->client?->name ?? '—' }}</td>
+                                    <td class="px-6 py-4 text-sm text-gray-500">{{ $row['project']->client?->nombre ?? '—' }}</td>
                                     <td class="px-6 py-4">
                                         <x-ui.badge :color="$row['decision']['risk_level']->color()">
                                             {{ $row['decision']['risk_score'] }}/100
@@ -54,7 +54,7 @@
                                     <td class="px-6 py-4 text-sm text-gray-500">
                                         {{ $row['metrics']['real_progress'] }}% / {{ $row['metrics']['expected_progress'] }}%
                                     </td>
-                                    <td class="px-6 py-4 text-sm text-gray-500">{{ $row['project']->budget ? number_format((float) $row['project']->budget, 0) : '—' }}</td>
+                                    <td class="px-6 py-4 text-sm text-gray-500">{{ $row['project']->presupuesto ? number_format((float) $row['project']->presupuesto, 0) : '—' }}</td>
                                     <td class="px-6 py-4 text-right text-sm">
                                         <a href="{{ route('projects.show', $row['project']) }}" class="text-emerald-600 hover:underline">{{ __('Ver') }}</a>
                                     </td>
@@ -100,7 +100,7 @@
                         <tbody class="bg-white divide-y divide-gray-100">
                             @forelse ($areaPerformance as $row)
                                 <tr class="hover:bg-emerald-50/40 transition">
-                                    <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ $row['area']->name }}</td>
+                                    <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ $row['area']->nombre }}</td>
                                     <td class="px-6 py-4 text-sm text-gray-500">{{ $row['total'] }}</td>
                                     <td class="px-6 py-4 text-sm text-gray-500">{{ $row['completed'] }}</td>
                                     <td class="px-6 py-4 text-sm text-gray-500">{{ $row['active'] }}</td>

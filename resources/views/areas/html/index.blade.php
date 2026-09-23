@@ -13,7 +13,7 @@
     </x-slot>
 
     <div class="py-8">
-        <div class="max-w-4xl mx-auto sm:px-6 lg:px-8 space-y-6">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
             <x-ui.card padding="p-0">
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
@@ -30,13 +30,13 @@
                         <tbody class="bg-white divide-y divide-gray-100">
                             @forelse ($areas as $area)
                                 <tr class="hover:bg-emerald-50/40 transition">
-                                    <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ $area->name }}</td>
-                                    <td class="px-6 py-4 text-sm text-gray-500">{{ $area->description ?? '—' }}</td>
+                                    <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ $area->nombre }}</td>
+                                    <td class="px-6 py-4 text-sm text-gray-500">{{ $area->descripcion ?? '—' }}</td>
                                     <td class="px-6 py-4 text-sm text-gray-500">{{ $area->employees_count }}</td>
                                     <td class="px-6 py-4 text-sm text-gray-500">{{ $area->projects_count }}</td>
                                     <td class="px-6 py-4">
-                                        <x-ui.badge :color="$area->active ? 'green' : 'gray'">
-                                            {{ $area->active ? __('Activa') : __('Inactiva') }}
+                                        <x-ui.badge :color="$area->activa ? 'green' : 'gray'">
+                                            {{ $area->activa ? __('Activa') : __('Inactiva') }}
                                         </x-ui.badge>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
@@ -56,7 +56,7 @@
 
                                 @can('update', $area)
                                     <x-ui.form-modal :name="'edit-area-'.$area->id" :title="__('Editar área')"
-                                        :subtitle="$area->name" :action="route('areas.update', $area)" method="PUT" max-width="2xl">
+                                        :subtitle="$area->nombre" :action="route('areas.update', $area)" method="PUT" max-width="2xl">
                                         <x-slot name="hidden"><input type="hidden" name="_edit_id" value="{{ $area->id }}"></x-slot>
                                         @include('areas.html.partials.form')
                                     </x-ui.form-modal>

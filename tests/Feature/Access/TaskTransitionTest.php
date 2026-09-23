@@ -29,14 +29,14 @@ class TaskTransitionTest extends TestCase
     {
         $user = User::factory()->create();
         $user->assignRole($role->value);
-        Employee::factory()->create(['user_id' => $user->id, 'email' => $user->email]);
+        Employee::factory()->create(['usuario_id' => $user->id, 'correo' => $user->email]);
 
         return $user;
     }
 
     private function projectWithStates(?int $responsibleId = null): Project
     {
-        $project = Project::factory()->create(['responsible_employee_id' => $responsibleId]);
+        $project = Project::factory()->create(['empleado_responsable_id' => $responsibleId]);
         TaskState::seedDefaults($project->id);
 
         return $project;
@@ -44,7 +44,7 @@ class TaskTransitionTest extends TestCase
 
     private function stateId(Project $project, string $slug): int
     {
-        return TaskState::where('project_id', $project->id)->where('slug', $slug)->firstOrFail()->id;
+        return TaskState::where('proyecto_id', $project->id)->where('slug', $slug)->firstOrFail()->id;
     }
 
     public function test_employee_can_move_own_task_to_review_but_not_completed(): void
@@ -52,9 +52,9 @@ class TaskTransitionTest extends TestCase
         $employee = $this->makeUser(RoleName::Employee);
         $project = $this->projectWithStates();
         $task = Task::factory()->create([
-            'project_id' => $project->id,
-            'assigned_to' => $employee->employee->id,
-            'status_id' => $this->stateId($project, 'en-progreso'),
+            'proyecto_id' => $project->id,
+            'asignado_a' => $employee->employee->id,
+            'estado_id' => $this->stateId($project, 'en-progreso'),
         ]);
 
         $this->actingAs($employee)
@@ -75,8 +75,8 @@ class TaskTransitionTest extends TestCase
         $lead = $this->makeUser(RoleName::ProjectLead);
         $project = $this->projectWithStates($lead->employee->id);
         $task = Task::factory()->create([
-            'project_id' => $project->id,
-            'status_id' => $this->stateId($project, 'en-revision'),
+            'proyecto_id' => $project->id,
+            'estado_id' => $this->stateId($project, 'en-revision'),
         ]);
 
         $this->actingAs($lead)
@@ -85,8 +85,8 @@ class TaskTransitionTest extends TestCase
 
         $task->refresh();
         $this->assertSame('completada', $task->state->slug);
-        $this->assertSame('completed', $task->status->value);
-        $this->assertSame(100, $task->progress_percentage);
+        $this->assertSame('completed', $task->estado->value);
+        $this->assertSame(100, $task->porcentaje_progreso);
     }
 
     public function test_lead_cannot_complete_task_of_foreign_project(): void
@@ -95,9 +95,9 @@ class TaskTransitionTest extends TestCase
         $stranger = Employee::factory()->create();
         $project = $this->projectWithStates($stranger->id);
         $task = Task::factory()->create([
-            'project_id' => $project->id,
-            'assigned_to' => $stranger->id,
-            'status_id' => $this->stateId($project, 'en-revision'),
+            'proyecto_id' => $project->id,
+            'asignado_a' => $stranger->id,
+            'estado_id' => $this->stateId($project, 'en-revision'),
         ]);
 
         $this->actingAs($lead)
@@ -110,13 +110,13 @@ class TaskTransitionTest extends TestCase
     public function test_manager_can_complete_task_in_scope(): void
     {
         $manager = $this->makeUser(RoleName::Manager);
-        $area = Area::create(['name' => 'Estrategia']);
+        $area = Area::create(['nombre' => 'Estrategia']);
         $manager->employee->update(['area_id' => $area->id]);
         $project = $this->projectWithStates();
         $project->areas()->sync([$area->id]);
         $task = Task::factory()->create([
-            'project_id' => $project->id,
-            'status_id' => $this->stateId($project, 'en-revision'),
+            'proyecto_id' => $project->id,
+            'estado_id' => $this->stateId($project, 'en-revision'),
         ]);
 
         $this->actingAs($manager)
@@ -131,18 +131,18 @@ class TaskTransitionTest extends TestCase
         $employee = $this->makeUser(RoleName::Employee);
         $project = $this->projectWithStates();
         $task = Task::factory()->create([
-            'project_id' => $project->id,
-            'assigned_to' => $employee->employee->id,
-            'status_id' => $this->stateId($project, 'en-progreso'),
+            'proyecto_id' => $project->id,
+            'asignado_a' => $employee->employee->id,
+            'estado_id' => $this->stateId($project, 'en-progreso'),
         ]);
 
         $response = $this->actingAs($employee)->put(route('tasks.update', $task), [
-            'title' => $task->title,
-            'priority' => 'high',
-            'status_id' => $this->stateId($project, 'completada'),
+            'titulo' => $task->titulo,
+            'prioridad' => 'high',
+            'estado_id' => $this->stateId($project, 'completada'),
         ]);
 
-        $response->assertSessionHasErrors('status_id');
+        $response->assertSessionHasErrors('estado_id');
         $this->assertSame('en-progreso', $task->refresh()->state->slug);
     }
 
@@ -152,17 +152,17 @@ class TaskTransitionTest extends TestCase
         $project = $this->projectWithStates($lead->employee->id);
         $from = $this->stateId($project, 'pendiente');
         $to = $this->stateId($project, 'en-progreso');
-        $task = Task::factory()->create(['project_id' => $project->id, 'status_id' => $from]);
+        $task = Task::factory()->create(['proyecto_id' => $project->id, 'estado_id' => $from]);
 
         $this->actingAs($lead)
             ->patchJson(route('tasks.status.update', $task), ['status_id' => $to])
             ->assertOk();
 
-        $this->assertDatabaseHas('task_status_history', [
-            'task_id' => $task->id,
-            'from_status_id' => $from,
-            'to_status_id' => $to,
-            'user_id' => $lead->id,
+        $this->assertDatabaseHas('historial_estados_tarea', [
+            'tarea_id' => $task->id,
+            'estado_origen_id' => $from,
+            'estado_destino_id' => $to,
+            'usuario_id' => $lead->id,
         ]);
     }
 
@@ -171,10 +171,10 @@ class TaskTransitionTest extends TestCase
         $employee = $this->makeUser(RoleName::Employee);
         $project = $this->projectWithStates();
         $task = Task::factory()->create([
-            'project_id' => $project->id,
-            'assigned_to' => $employee->employee->id,
-            'status_id' => $this->stateId($project, 'en-progreso'),
-            'blocked_reason' => null,
+            'proyecto_id' => $project->id,
+            'asignado_a' => $employee->employee->id,
+            'estado_id' => $this->stateId($project, 'en-progreso'),
+            'motivo_bloqueo' => null,
         ]);
 
         $this->actingAs($employee)
@@ -190,6 +190,6 @@ class TaskTransitionTest extends TestCase
 
         $task->refresh();
         $this->assertSame('bloqueada', $task->state->slug);
-        $this->assertSame('Falta el acceso al CMS.', $task->blocked_reason);
+        $this->assertSame('Falta el acceso al CMS.', $task->motivo_bloqueo);
     }
 }

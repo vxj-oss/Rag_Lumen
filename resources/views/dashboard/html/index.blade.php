@@ -80,7 +80,7 @@
                         <tbody class="bg-white divide-y divide-gray-100">
                             @forelse ($attentionList as $item)
                             <tr class="hover:bg-emerald-50/40 transition">
-                                <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ $item['project']->name }}</td>
+                                <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ $item['project']->nombre }}</td>
                                 <td class="px-6 py-4">
                                     <x-ui.badge :color="$item['decision']['risk_level']->color()">
                                         {{ $item['decision']['risk_score'] }}/100

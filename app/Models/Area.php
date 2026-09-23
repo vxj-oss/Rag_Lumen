@@ -8,14 +8,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable([
-    'name', 'description', 'active',
+    'nombre', 'descripcion', 'activa',
 ])]
 class Area extends Model
 {
     protected function casts(): array
     {
         return [
-            'active' => 'boolean',
+            'activa' => 'boolean',
         ];
     }
 
@@ -26,8 +26,8 @@ class Area extends Model
 
     public function projects(): BelongsToMany
     {
-        return $this->belongsToMany(Project::class, 'project_areas')
-            ->withPivot(['id', 'area_lead_id', 'budget_share'])
+        return $this->belongsToMany(Project::class, 'areas_proyecto', 'area_id', 'proyecto_id')
+            ->withPivot(['id', 'lider_area_id', 'porcentaje_presupuesto'])
             ->withTimestamps();
     }
 }

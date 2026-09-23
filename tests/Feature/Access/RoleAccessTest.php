@@ -29,8 +29,8 @@ class RoleAccessTest extends TestCase
 
         if ($withEmployee) {
             Employee::factory()->create([
-                'user_id' => $user->id,
-                'email' => $user->email,
+                'usuario_id' => $user->id,
+                'correo' => $user->email,
             ]);
         }
 
@@ -40,13 +40,13 @@ class RoleAccessTest extends TestCase
     private function projectPayload(): array
     {
         return [
-            'code' => 'TST-001',
-            'name' => 'Proyecto de prueba',
-            'type' => 'digital_marketing',
-            'start_date' => now()->toDateString(),
-            'estimated_end_date' => now()->addMonth()->toDateString(),
-            'status' => 'planning',
-            'priority' => 'medium',
+            'codigo' => 'TST-001',
+            'nombre' => 'Proyecto de prueba',
+            'tipo' => 'digital_marketing',
+            'fecha_inicio' => now()->toDateString(),
+            'fecha_fin_estimada' => now()->addMonth()->toDateString(),
+            'estado' => 'planning',
+            'prioridad' => 'medium',
         ];
     }
 
@@ -57,7 +57,7 @@ class RoleAccessTest extends TestCase
         $response = $this->actingAs($admin)->post(route('projects.store'), $this->projectPayload());
 
         $response->assertRedirect(route('projects.index'));
-        $this->assertDatabaseHas('projects', ['code' => 'TST-001']);
+        $this->assertDatabaseHas('proyectos', ['codigo' => 'TST-001']);
     }
 
     public function test_manager_can_create_projects(): void
@@ -67,7 +67,7 @@ class RoleAccessTest extends TestCase
         $response = $this->actingAs($manager)->post(route('projects.store'), $this->projectPayload());
 
         $response->assertRedirect(route('projects.index'));
-        $this->assertDatabaseHas('projects', ['code' => 'TST-001']);
+        $this->assertDatabaseHas('proyectos', ['codigo' => 'TST-001']);
     }
 
     public function test_lead_cannot_create_projects(): void
@@ -93,19 +93,19 @@ class RoleAccessTest extends TestCase
         $employee = $this->makeUser(RoleName::Employee);
         $stranger = Employee::factory()->create();
 
-        $visible = Project::factory()->create(['responsible_employee_id' => $stranger->id]);
-        $hidden = Project::factory()->create(['responsible_employee_id' => $stranger->id]);
+        $visible = Project::factory()->create(['empleado_responsable_id' => $stranger->id]);
+        $hidden = Project::factory()->create(['empleado_responsable_id' => $stranger->id]);
         $visible->members()->attach($employee->employee->id, [
-            'role_in_project' => 'Miembro',
-            'assigned_at' => now()->toDateString(),
-            'status' => 'active',
+            'rol_en_proyecto' => 'Miembro',
+            'asignado_en' => now()->toDateString(),
+            'estado' => 'active',
         ]);
 
         $response = $this->actingAs($employee)->get(route('projects.index'));
 
         $response->assertOk();
-        $response->assertSee($visible->name);
-        $response->assertDontSee($hidden->name);
+        $response->assertSee($visible->nombre);
+        $response->assertDontSee($hidden->nombre);
     }
 
     public function test_employee_cannot_access_activity(): void
@@ -137,13 +137,13 @@ class RoleAccessTest extends TestCase
         $lead = $this->makeUser(RoleName::ProjectLead);
         $otherLead = $this->makeUser(RoleName::ProjectLead);
 
-        $area = \App\Models\Area::create(['name' => 'Estrategia']);
+        $area = \App\Models\Area::create(['nombre' => 'Estrategia']);
         $manager->employee->update(['area_id' => $area->id]);
 
-        $project = Project::factory()->create(['responsible_employee_id' => $lead->employee->id]);
+        $project = Project::factory()->create(['empleado_responsable_id' => $lead->employee->id]);
         $project->areas()->sync([$area->id]);
 
-        $payload = array_merge($this->projectPayload(), ['code' => $project->code]);
+        $payload = array_merge($this->projectPayload(), ['codigo' => $project->codigo]);
 
         $this->actingAs($manager)->put(route('projects.update', $project), $payload)->assertRedirect();
         $this->actingAs($lead)->put(route('projects.update', $project), $payload)->assertRedirect();
@@ -155,12 +155,12 @@ class RoleAccessTest extends TestCase
         $employee = $this->makeUser(RoleName::Employee);
         $stranger = Employee::factory()->create();
 
-        $visible = Project::factory()->create(['responsible_employee_id' => $stranger->id]);
-        $hidden = Project::factory()->create(['responsible_employee_id' => $stranger->id]);
+        $visible = Project::factory()->create(['empleado_responsable_id' => $stranger->id]);
+        $hidden = Project::factory()->create(['empleado_responsable_id' => $stranger->id]);
         $visible->members()->attach($employee->employee->id, [
-            'role_in_project' => 'Miembro',
-            'assigned_at' => now()->toDateString(),
-            'status' => 'active',
+            'rol_en_proyecto' => 'Miembro',
+            'asignado_en' => now()->toDateString(),
+            'estado' => 'active',
         ]);
 
         $this->actingAs($employee)->get(route('projects.show', $visible))->assertOk();
@@ -171,12 +171,12 @@ class RoleAccessTest extends TestCase
     {
         $employee = $this->makeUser(RoleName::Employee);
         $stranger = Employee::factory()->create();
-        $otherProject = Project::factory()->create(['responsible_employee_id' => $stranger->id]);
+        $otherProject = Project::factory()->create(['empleado_responsable_id' => $stranger->id]);
 
-        $mine = Task::factory()->create(['assigned_to' => $employee->employee->id]);
+        $mine = Task::factory()->create(['asignado_a' => $employee->employee->id]);
         $other = Task::factory()->create([
-            'project_id' => $otherProject->id,
-            'assigned_to' => $stranger->id,
+            'proyecto_id' => $otherProject->id,
+            'asignado_a' => $stranger->id,
         ]);
 
         $this->actingAs($employee)->get(route('tasks.show', $mine))->assertOk();

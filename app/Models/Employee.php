@@ -13,25 +13,27 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable([
-    'user_id', 'first_name', 'last_name', 'email', 'phone',
-    'position', 'specialty', 'area_id', 'status', 'hire_date',
+    'usuario_id', 'nombres', 'apellidos', 'correo', 'telefono',
+    'cargo', 'especialidad', 'area_id', 'estado', 'fecha_contratacion',
 ])]
 class Employee extends Model
 {
     use HasFactory, SoftDeletes;
 
+    protected $table = 'empleados';
+
     protected function casts(): array
     {
         return [
-            'specialty' => EmployeeSpecialty::class,
-            'status' => EmployeeStatus::class,
-            'hire_date' => 'date',
+            'especialidad' => EmployeeSpecialty::class,
+            'estado' => EmployeeStatus::class,
+            'fecha_contratacion' => 'date',
         ];
     }
 
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'usuario_id');
     }
 
     public function area(): BelongsTo
@@ -41,19 +43,19 @@ class Employee extends Model
 
     public function fullName(): string
     {
-        return "{$this->first_name} {$this->last_name}";
+        return "{$this->nombres} {$this->apellidos}";
     }
 
     public function projects(): BelongsToMany
     {
-        return $this->belongsToMany(Project::class, 'project_members')
+        return $this->belongsToMany(Project::class, 'miembros_proyecto', 'empleado_id', 'proyecto_id')
             ->using(ProjectMember::class)
-            ->withPivot(['id', 'role_in_project', 'assigned_at', 'left_at', 'status'])
+            ->withPivot(['id', 'rol_en_proyecto', 'asignado_en', 'retirado_en', 'estado'])
             ->withTimestamps();
     }
 
     public function tasks(): HasMany
     {
-        return $this->hasMany(Task::class, 'assigned_to');
+        return $this->hasMany(Task::class, 'asignado_a');
     }
 }

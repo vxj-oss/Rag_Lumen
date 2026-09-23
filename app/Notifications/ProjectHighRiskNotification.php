@@ -23,12 +23,12 @@ class ProjectHighRiskNotification extends Notification
 
     public function toMail(object $notifiable): MailMessage
     {
-        $riskLabel = mb_strtolower(RiskLevel::from($this->project->risk_level)->label());
+        $riskLabel = mb_strtolower(RiskLevel::from($this->project->nivel_riesgo)->label());
 
         return (new MailMessage)
-            ->subject("Riesgo {$riskLabel}: {$this->project->name}")
+            ->subject("Riesgo {$riskLabel}: {$this->project->nombre}")
             ->greeting("Hola {$notifiable->name},")
-            ->line("El proyecto \"{$this->project->name}\" presenta riesgo {$riskLabel} (puntaje: {$this->project->risk_score}).")
+            ->line("El proyecto \"{$this->project->nombre}\" presenta riesgo {$riskLabel} (puntaje: {$this->project->puntuacion_riesgo}).")
             ->action('Ver proyecto', route('projects.show', $this->project))
             ->line('Se recomienda revisar la situación cuanto antes.');
     }
@@ -38,8 +38,8 @@ class ProjectHighRiskNotification extends Notification
         return [
             'type' => 'project_high_risk',
             'project_id' => $this->project->id,
-            'message' => "El proyecto \"{$this->project->name}\" presenta riesgo ".mb_strtolower(RiskLevel::from($this->project->risk_level)->label()).'.',
-            'risk_score' => $this->project->risk_score,
+            'message' => "El proyecto \"{$this->project->nombre}\" presenta riesgo ".mb_strtolower(RiskLevel::from($this->project->nivel_riesgo)->label()).'.',
+            'risk_score' => $this->project->puntuacion_riesgo,
         ];
     }
 }

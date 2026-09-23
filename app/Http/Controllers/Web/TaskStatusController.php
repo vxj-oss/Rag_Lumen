@@ -17,7 +17,7 @@ class TaskStatusController extends Controller
     {
         $this->authorize('update', $project);
 
-        $states = TaskState::where('project_id', $project->id)->orderBy('position')->get();
+        $states = TaskState::where('proyecto_id', $project->id)->orderBy('posicion')->get();
 
         return view('projects.html.statuses', ['project' => $project, 'states' => $states]);
     }
@@ -35,18 +35,18 @@ class TaskStatusController extends Controller
         ]);
 
         $state = TaskState::create([
-            'project_id' => $project->id,
-            'name' => $data['name'],
+            'proyecto_id' => $project->id,
+            'nombre' => $data['name'],
             'slug' => TaskState::makeSlug($data['name'], $project->id),
             'color' => $data['color'],
-            'position' => (int) (TaskState::where('project_id', $project->id)->max('position') ?? 0) + 1,
-            'is_initial' => $request->boolean('is_initial'),
-            'is_final' => $request->boolean('is_final'),
-            'is_blocking' => $request->boolean('is_blocking'),
-            'active' => true,
+            'posicion' => (int) (TaskState::where('proyecto_id', $project->id)->max('posicion') ?? 0) + 1,
+            'es_inicial' => $request->boolean('is_initial'),
+            'es_final' => $request->boolean('is_final'),
+            'es_bloqueante' => $request->boolean('is_blocking'),
+            'activo' => true,
         ]);
 
-        ActivityLogger::record($project, 'created', "Agregó el estado \"{$state->name}\" al proyecto \"{$project->name}\".");
+        ActivityLogger::record($project, 'created', "Agregó el estado \"{$state->nombre}\" al proyecto \"{$project->nombre}\".");
 
         return redirect()
             ->route('projects.statuses.index', $project)
@@ -56,7 +56,7 @@ class TaskStatusController extends Controller
     public function update(Request $request, Project $project, TaskState $status): RedirectResponse
     {
         $this->authorize('update', $project);
-        abort_if($status->project_id !== $project->id, 404);
+        abort_if($status->proyecto_id !== $project->id, 404);
 
         $data = $request->validate([
             'name' => ['required', 'string', 'max:60'],
@@ -70,17 +70,17 @@ class TaskStatusController extends Controller
         $before = $status->getAttributes();
 
         $status->update([
-            'name' => $data['name'],
+            'nombre' => $data['name'],
             'slug' => TaskState::makeSlug($data['name'], $project->id, $status->id),
             'color' => $data['color'],
-            'is_initial' => $request->boolean('is_initial'),
-            'is_final' => $request->boolean('is_final'),
-            'is_blocking' => $request->boolean('is_blocking'),
-            'active' => $request->boolean('active'),
+            'es_inicial' => $request->boolean('is_initial'),
+            'es_final' => $request->boolean('is_final'),
+            'es_bloqueante' => $request->boolean('is_blocking'),
+            'activo' => $request->boolean('active'),
         ]);
 
-        if (! TaskState::where('project_id', $project->id)->where('is_initial', true)->exists()
-            || ! TaskState::where('project_id', $project->id)->where('is_final', true)->exists()) {
+        if (! TaskState::where('proyecto_id', $project->id)->where('es_inicial', true)->exists()
+            || ! TaskState::where('proyecto_id', $project->id)->where('es_final', true)->exists()) {
             $status->update($before);
 
             return redirect()
@@ -88,7 +88,7 @@ class TaskStatusController extends Controller
                 ->with('toast_error', 'El proyecto debe conservar al menos un estado inicial y uno final.');
         }
 
-        ActivityLogger::recordUpdate($status, $before, "el estado \"{$status->name}\" del proyecto \"{$project->name}\"");
+        ActivityLogger::recordUpdate($status, $before, "el estado \"{$status->nombre}\" del proyecto \"{$project->nombre}\"");
 
         return redirect()
             ->route('projects.statuses.index', $project)
@@ -98,7 +98,7 @@ class TaskStatusController extends Controller
     public function destroy(Project $project, TaskState $status): RedirectResponse
     {
         $this->authorize('update', $project);
-        abort_if($status->project_id !== $project->id, 404);
+        abort_if($status->proyecto_id !== $project->id, 404);
 
         if ($status->tasks()->exists()) {
             return redirect()
@@ -106,7 +106,7 @@ class TaskStatusController extends Controller
                 ->with('toast_error', 'No se puede eliminar: hay tareas usando este estado.');
         }
 
-        ActivityLogger::record($project, 'deleted', "Eliminó el estado \"{$status->name}\" del proyecto \"{$project->name}\".");
+        ActivityLogger::record($project, 'deleted', "Eliminó el estado \"{$status->nombre}\" del proyecto \"{$project->nombre}\".");
 
         $status->delete();
 
@@ -121,11 +121,11 @@ class TaskStatusController extends Controller
 
         $data = $request->validate([
             'ordered_ids' => ['required', 'array', 'min:1'],
-            'ordered_ids.*' => ['integer', Rule::exists('task_statuses', 'id')->where('project_id', $project->id)],
+            'ordered_ids.*' => ['integer', Rule::exists('estados_tarea', 'id')->where('proyecto_id', $project->id)],
         ]);
 
         foreach (array_values($data['ordered_ids']) as $position => $id) {
-            TaskState::where('id', $id)->update(['position' => $position + 1]);
+            TaskState::where('id', $id)->update(['posicion' => $position + 1]);
         }
 
         return redirect()

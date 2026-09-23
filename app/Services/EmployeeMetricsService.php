@@ -8,7 +8,9 @@ class EmployeeMetricsService
 {
     public function forEmployee(Employee $employee): array
     {
-        $tasks = $employee->relationLoaded('tasks') ? $employee->tasks : $employee->tasks()->get();
+        // Solo tareas hoja: una tarea con subtareas no es "trabajo propio" del
+        // empleado, su avance es derivado (ver TaskProgressRollup).
+        $tasks = $employee->tasks()->whereDoesntHave('subtareas')->get();
         $tasks->loadMissing('state');
 
         $completedTasks = $tasks->filter(fn ($task) => $task->isCompletedState());
@@ -20,8 +22,8 @@ class EmployeeMetricsService
             'completed_tasks' => $completedTasks->count(),
             'blocked_tasks' => $tasks->filter(fn ($task) => $task->isBlockingState())->count(),
             'overdue_tasks' => $tasks->filter(fn ($task) => $task->isOverdue())->count(),
-            'estimated_hours' => round((float) $tasks->sum('estimated_hours'), 2),
-            'actual_hours' => round((float) $tasks->sum('actual_hours'), 2),
+            'estimated_hours' => round((float) $tasks->sum('horas_estimadas'), 2),
+            'actual_hours' => round((float) $tasks->sum('horas_reales'), 2),
             'on_time_completion_rate' => $this->onTimeCompletionRate($completedTasks),
         ];
     }
@@ -33,11 +35,11 @@ class EmployeeMetricsService
         }
 
         $onTime = $completedTasks->filter(function ($task) {
-            if ($task->due_date === null || $task->completed_at === null) {
+            if ($task->fecha_vencimiento === null || $task->completado_en === null) {
                 return true;
             }
 
-            return $task->completed_at->toDateString() <= $task->due_date->toDateString();
+            return $task->completado_en->toDateString() <= $task->fecha_vencimiento->toDateString();
         });
 
         return round(($onTime->count() / $completedTasks->count()) * 100, 1);

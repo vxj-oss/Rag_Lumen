@@ -39,16 +39,16 @@ class PromptContextBuilder implements ContextBuilderInterface
     {
         $lines = [
             '## Contexto del proyecto',
-            "- Nombre: {$project->name} ({$project->code})",
-            '- Estado: '.$project->status->label(),
-            '- Prioridad: '.$project->priority->label(),
+            "- Nombre: {$project->nombre} ({$project->codigo})",
+            '- Estado: '.$project->estado->label(),
+            '- Prioridad: '.$project->prioridad->label(),
             '- Responsable: '.($project->responsibleEmployee?->fullName() ?? 'sin asignar'),
-            '- Fecha inicio: '.($project->start_date?->toDateString() ?? 'sin definir'),
-            '- Fecha estimada de fin: '.($project->estimated_end_date?->toDateString() ?? 'sin definir'),
+            '- Fecha inicio: '.($project->fecha_inicio?->toDateString() ?? 'sin definir'),
+            '- Fecha estimada de fin: '.($project->fecha_fin_estimada?->toDateString() ?? 'sin definir'),
         ];
 
-        if (filled($project->description)) {
-            $lines[] = "- Descripcion: {$project->description}";
+        if (filled($project->descripcion)) {
+            $lines[] = "- Descripcion: {$project->descripcion}";
         }
 
         return implode("\n", $lines);
@@ -58,20 +58,20 @@ class PromptContextBuilder implements ContextBuilderInterface
     {
         $lines = [
             '## Contexto de la tarea',
-            "- Titulo: {$task->title}",
-            '- Estado: '.$task->status->label(),
-            '- Prioridad: '.$task->priority->label(),
+            "- Titulo: {$task->titulo}",
+            '- Estado: '.$task->estado->label(),
+            '- Prioridad: '.$task->prioridad->label(),
             '- Asignado a: '.($task->assignee?->fullName() ?? 'sin asignar'),
-            '- Fecha limite: '.($task->due_date?->toDateString() ?? 'sin definir'),
-            '- Progreso: '.$task->progress_percentage.'%',
+            '- Fecha limite: '.($task->fecha_vencimiento?->toDateString() ?? 'sin definir'),
+            '- Progreso: '.$task->porcentaje_progreso.'%',
         ];
 
-        if (filled($task->description)) {
-            $lines[] = "- Descripcion: {$task->description}";
+        if (filled($task->descripcion)) {
+            $lines[] = "- Descripcion: {$task->descripcion}";
         }
 
-        if (filled($task->blocked_reason)) {
-            $lines[] = "- Motivo de bloqueo: {$task->blocked_reason}";
+        if (filled($task->motivo_bloqueo)) {
+            $lines[] = "- Motivo de bloqueo: {$task->motivo_bloqueo}";
         }
 
         return implode("\n", $lines);
@@ -90,7 +90,7 @@ class PromptContextBuilder implements ContextBuilderInterface
 
         foreach ($retrieved as $index => $result) {
             $chunk = $result['chunk'];
-            $entryText = $chunk->content;
+            $entryText = $chunk->contenido;
             $entryLength = mb_strlen($entryText);
 
             if ($usedChars > 0 && $usedChars + $entryLength > $maxChars) {
@@ -98,10 +98,10 @@ class PromptContextBuilder implements ContextBuilderInterface
             }
 
             $usedChars += $entryLength;
-            $title = $chunk->document?->title ?? 'documento desconocido';
+            $title = $chunk->document?->titulo ?? 'documento desconocido';
             $reference = $index + 1;
 
-            $entries[] = "[{$reference}] (Fuente: \"{$title}\", fragmento {$chunk->chunk_index})\n{$entryText}";
+            $entries[] = "[{$reference}] (Fuente: \"{$title}\", fragmento {$chunk->indice_fragmento})\n{$entryText}";
         }
 
         return "## Documentos relevantes\n".implode("\n\n", $entries);

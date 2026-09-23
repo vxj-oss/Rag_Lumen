@@ -24,7 +24,7 @@ class RagDocumentPolicy
             return true;
         }
 
-        if ($ragDocument->project_id === null) {
+        if ($ragDocument->proyecto_id === null) {
             return true;
         }
 

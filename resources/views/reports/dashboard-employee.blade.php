@@ -39,11 +39,11 @@
             <tbody>
                 @foreach ($tasks as $task)
                     <tr>
-                        <td>{{ $task->code }}</td>
-                        <td>{{ $task->title }}</td>
-                        <td>{{ $task->project?->name ?? 'Proyecto archivado' }}</td>
-                        <td>{{ $task->due_date?->format('d/m/Y') ?? '—' }}</td>
-                        <td>{{ $task->progress_percentage }}%</td>
+                        <td>{{ $task->codigo }}</td>
+                        <td>{{ $task->titulo }}</td>
+                        <td>{{ $task->project?->nombre ?? 'Proyecto archivado' }}</td>
+                        <td>{{ $task->fecha_vencimiento?->format('d/m/Y') ?? '—' }}</td>
+                        <td>{{ $task->porcentaje_progreso }}%</td>
                     </tr>
                 @endforeach
             </tbody>

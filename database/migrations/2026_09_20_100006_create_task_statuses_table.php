@@ -8,45 +8,45 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('task_statuses', function (Blueprint $table) {
+        Schema::create('estados_tarea', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('project_id')->nullable()->constrained('projects')->cascadeOnDelete();
-            $table->string('name', 60);
+            $table->foreignId('proyecto_id')->nullable()->constrained('proyectos')->cascadeOnDelete();
+            $table->string('nombre', 60);
             $table->string('slug', 60);
             $table->string('color', 20)->default('gray');
-            $table->unsignedInteger('position')->default(0);
-            $table->boolean('is_initial')->default(false);
-            $table->boolean('is_final')->default(false);
-            $table->boolean('is_blocking')->default(false);
-            $table->boolean('active')->default(true);
+            $table->unsignedInteger('posicion')->default(0);
+            $table->boolean('es_inicial')->default(false);
+            $table->boolean('es_final')->default(false);
+            $table->boolean('es_bloqueante')->default(false);
+            $table->boolean('activo')->default(true);
             $table->timestamps();
 
-            $table->unique(['project_id', 'slug']);
-            $table->index('project_id');
+            $table->unique(['proyecto_id', 'slug']);
+            $table->index('proyecto_id');
         });
 
-        Schema::table('tasks', function (Blueprint $table) {
-            $table->foreignId('status_id')->nullable()->after('status')->constrained('task_statuses')->nullOnDelete();
-            $table->string('code', 60)->nullable()->unique()->after('id');
+        Schema::table('tareas', function (Blueprint $table) {
+            $table->foreignId('estado_id')->nullable()->after('estado')->constrained('estados_tarea')->nullOnDelete();
+            $table->string('codigo', 60)->nullable()->unique()->after('id');
         });
 
-        Schema::table('projects', function (Blueprint $table) {
-            $table->unsignedInteger('task_counter')->default(0)->after('budget');
+        Schema::table('proyectos', function (Blueprint $table) {
+            $table->unsignedInteger('contador_tareas')->default(0)->after('presupuesto');
         });
     }
 
     public function down(): void
     {
-        Schema::table('projects', function (Blueprint $table) {
-            $table->dropColumn('task_counter');
+        Schema::table('proyectos', function (Blueprint $table) {
+            $table->dropColumn('contador_tareas');
         });
 
-        Schema::table('tasks', function (Blueprint $table) {
-            $table->dropConstrainedForeignId('status_id');
-            $table->dropUnique(['code']);
-            $table->dropColumn('code');
+        Schema::table('tareas', function (Blueprint $table) {
+            $table->dropConstrainedForeignId('estado_id');
+            $table->dropUnique(['codigo']);
+            $table->dropColumn('codigo');
         });
 
-        Schema::dropIfExists('task_statuses');
+        Schema::dropIfExists('estados_tarea');
     }
 };

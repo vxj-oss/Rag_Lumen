@@ -50,7 +50,7 @@ class ProjectDecisionService
             $actions[] = 'Revisar las tareas bloqueadas y resolver los impedimentos.';
         }
 
-        $daysRemaining = now()->diffInDays($project->estimated_end_date, false);
+        $daysRemaining = now()->diffInDays($project->fecha_fin_estimada, false);
 
         if ($daysRemaining <= config('decisions.deadline_risk_days') && $metrics['real_progress'] < 100) {
             $signals[] = DecisionSignal::DeadlineRisk;
@@ -89,14 +89,14 @@ class ProjectDecisionService
     private function overloadedEmployees(Project $project)
     {
         $members = $project->relationLoaded('members')
-            ? $project->members->filter(fn ($member) => $member->pivot->status === 'active')
-            : $project->members()->wherePivot('status', 'active')->get();
+            ? $project->members->filter(fn ($member) => $member->pivot->estado === 'active')
+            : $project->members()->wherePivot('estado', 'active')->get();
 
         $maxRecommended = config('risk.employee_max_recommended_tasks');
         $overloadRatio = config('decisions.employee_overload_ratio');
 
         return $members->map(function ($employee) use ($maxRecommended) {
-            $activeTaskCount = Task::where('assigned_to', $employee->id)->with('state')->get()
+            $activeTaskCount = Task::where('asignado_a', $employee->id)->with('state')->get()
                 ->filter(fn (Task $task) => $task->isActiveState())
                 ->count();
 

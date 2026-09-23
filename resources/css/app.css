@@ -24,8 +24,16 @@
     background-color: rgb(148 163 184 / 0.9);
 }
 
+/*
+ * Sin "forwards"/"both": una vez termina la animación, el transform se
+ * suelta. Si quedara pegado (fill-mode both/forwards), <main> se vuelve
+ * el contenedor de referencia de TODO lo que sea position:fixed dentro de
+ * él (spec de CSS Transforms) — incluidos los modales — y entonces se
+ * centran contra el alto del contenido de la página en vez de la ventana
+ * real, haciendo que se corten los botones inferiores en páginas largas.
+ */
 main {
-    animation: fade-in-up .35s ease-out both;
+    animation: fade-in-up .35s ease-out;
 }
 
 /* Evita el zoom automático de iOS al enfocar campos (mínimo 16px en móvil). */
@@ -34,5 +42,29 @@ main {
     select,
     textarea {
         font-size: 16px;
+    }
+}
+
+/* Formularios dentro de modales: más compactos para que quepan en pantalla sin scroll excesivo. */
+@media (min-width: 640px) {
+    .modal-compact-form label {
+        font-size: 0.8125rem;
+        margin-bottom: 0.125rem;
+    }
+
+    .modal-compact-form h4 {
+        margin-bottom: 0.125rem;
+    }
+
+    .modal-compact-form input:not([type='checkbox']):not([type='radio']),
+    .modal-compact-form select,
+    .modal-compact-form textarea {
+        font-size: 0.8125rem;
+        padding-top: 0.375rem;
+        padding-bottom: 0.375rem;
+    }
+
+    .modal-compact-form p {
+        font-size: 0.75rem;
     }
 }

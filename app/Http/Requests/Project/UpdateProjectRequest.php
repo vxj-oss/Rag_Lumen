@@ -17,28 +17,28 @@ class UpdateProjectRequest extends FormRequest
         return $this->user()->can('update', $this->route('project'));
     }
 
-    
+
     public function rules(): array
     {
         $projectId = $this->route('project')->id;
 
         return [
-            'code' => ['required', 'string', 'max:30', Rule::unique('projects', 'code')->ignore($projectId)],
-            'name' => ['required', 'string', 'max:150'],
-            'description' => ['nullable', 'string'],
-            'type' => ['required', Rule::enum(ProjectType::class)],
-            'client_id' => ['nullable', 'integer', 'exists:clients,id'],
-            'manager_employee_id' => ['nullable', 'integer', 'exists:employees,id'],
+            'codigo' => ['required', 'string', 'max:30', Rule::unique('proyectos', 'codigo')->ignore($projectId)],
+            'nombre' => ['required', 'string', 'max:150'],
+            'descripcion' => ['nullable', 'string'],
+            'tipo' => ['required', Rule::enum(ProjectType::class)],
+            'cliente_id' => ['nullable', 'integer', 'exists:clientes,id'],
+            'empleado_gerente_id' => ['nullable', 'integer', 'exists:empleados,id'],
             'area_ids' => ['nullable', 'array'],
             'area_ids.*' => ['integer', 'exists:areas,id'],
-            'start_date' => ['required', 'date'],
-            'estimated_end_date' => ['required', 'date', 'after_or_equal:start_date'],
-            'actual_end_date' => ['nullable', 'date'],
-            'status' => ['required', Rule::enum(ProjectStatus::class)],
-            'priority' => ['required', Rule::enum(Priority::class)],
-            'responsible_employee_id' => ['nullable', 'integer', 'exists:employees,id'],
-            'budget' => ['nullable', 'numeric', 'min:0'],
-            'observations' => ['nullable', 'string'],
+            'fecha_inicio' => ['required', 'date'],
+            'fecha_fin_estimada' => ['required', 'date', 'after_or_equal:fecha_inicio'],
+            'fecha_fin_real' => ['nullable', 'date'],
+            'estado' => ['required', Rule::enum(ProjectStatus::class)],
+            'prioridad' => ['required', Rule::enum(Priority::class)],
+            'empleado_responsable_id' => ['nullable', 'integer', 'exists:empleados,id'],
+            'presupuesto' => ['nullable', 'numeric', 'min:0'],
+            'observaciones' => ['nullable', 'string'],
         ];
     }
 }

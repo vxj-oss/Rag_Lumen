@@ -10,6 +10,7 @@ use App\Models\ProjectMember;
 use App\Models\Task;
 use App\Models\TaskDependency;
 use App\Models\TaskProgressUpdate;
+use App\Models\TaskState;
 use App\Models\User;
 use App\Services\ProjectRiskService;
 use App\Support\Enums\EmployeeSpecialty;
@@ -47,7 +48,7 @@ class DemoDataSeeder extends Seeder
         $leadEmployee = $this->employeeFor($lead, 'Líder', 'Demo', EmployeeSpecialty::ProjectManager, 'Líder de Proyecto');
         $managerEmployee = $this->employeeFor($manager, 'Gerente', 'Demo', EmployeeSpecialty::Marketing, 'Gerente de Marketing');
 
-        $areasByName = Area::pluck('id', 'name');
+        $areasByName = Area::pluck('id', 'nombre');
 
         $areaBySpecialty = [
             EmployeeSpecialty::Marketing->value => 'Contenido',
@@ -60,7 +61,7 @@ class DemoDataSeeder extends Seeder
         ];
 
         foreach (Employee::all() as $employee) {
-            $areaName = $areaBySpecialty[$employee->specialty->value] ?? 'Estrategia';
+            $areaName = $areaBySpecialty[$employee->especialidad->value] ?? 'Estrategia';
             $employee->update(['area_id' => $areasByName[$areaName] ?? null]);
         }
 
@@ -73,15 +74,15 @@ class DemoDataSeeder extends Seeder
             ['RetailMax', 'Retail'],
         ] as [$clientName, $sector]) {
             $clientsByName[$clientName] = Client::firstOrCreate(
-                ['name' => $clientName],
-                ['sector' => $sector, 'status' => 'active']
+                ['nombre' => $clientName],
+                ['sector' => $sector, 'estado' => 'active']
             );
         }
 
-        $allEmployees = Employee::whereIn('email', array_merge(
+        $allEmployees = Employee::whereIn('correo', array_merge(
             ['lider.demo@example.com', 'gerente.demo@example.com'],
             $employeeUsers->pluck('email')->all()
-        ))->get()->keyBy('email');
+        ))->get()->keyBy('correo');
 
         // Proyecto sano: campaña en curso con buen avance.
         $campaign = $this->project([
@@ -159,8 +160,8 @@ class DemoDataSeeder extends Seeder
         ]);
 
         $campaign->update([
-            'client_id' => $clientsByName['EnerPlus']->id,
-            'manager_employee_id' => $managerEmployee->id,
+            'cliente_id' => $clientsByName['EnerPlus']->id,
+            'empleado_gerente_id' => $managerEmployee->id,
         ]);
         $campaign->areas()->sync([
             $areasByName['Redes sociales'],
@@ -169,8 +170,8 @@ class DemoDataSeeder extends Seeder
         ]);
 
         $website->update([
-            'client_id' => $clientsByName['Corporación Andina']->id,
-            'manager_employee_id' => $managerEmployee->id,
+            'cliente_id' => $clientsByName['Corporación Andina']->id,
+            'empleado_gerente_id' => $managerEmployee->id,
         ]);
         $website->areas()->sync([
             $areasByName['Diseño'],
@@ -178,15 +179,15 @@ class DemoDataSeeder extends Seeder
             $areasByName['Estrategia'],
         ]);
 
-        $seo->update(['client_id' => $clientsByName['Tiendas Nativas']->id]);
+        $seo->update(['cliente_id' => $clientsByName['Tiendas Nativas']->id]);
         $seo->areas()->sync([$areasByName['SEO/SEM'], $areasByName['Contenido']]);
 
-        $branding->update(['client_id' => $clientsByName['Café Lumen']->id]);
+        $branding->update(['cliente_id' => $clientsByName['Café Lumen']->id]);
         $branding->areas()->sync([$areasByName['Diseño']]);
 
         $ads->update([
-            'client_id' => $clientsByName['RetailMax']->id,
-            'manager_employee_id' => $managerEmployee->id,
+            'cliente_id' => $clientsByName['RetailMax']->id,
+            'empleado_gerente_id' => $managerEmployee->id,
         ]);
         $ads->areas()->sync([$areasByName['Redes sociales'], $areasByName['Estrategia']]);
 
@@ -335,7 +336,7 @@ class DemoDataSeeder extends Seeder
         // Recalcula riesgo/métricas persistidos para que el dashboard muestre valores reales.
         $riskService = app(ProjectRiskService::class);
 
-        foreach (Project::whereIn('code', ['MKT-001', 'WEB-002', 'SEO-003', 'BRD-004', 'ADV-005'])->get() as $project) {
+        foreach (Project::whereIn('codigo', ['MKT-001', 'WEB-002', 'SEO-003', 'BRD-004', 'ADV-005'])->get() as $project) {
             $riskService->recalculate($project);
         }
     }
@@ -361,21 +362,21 @@ class DemoDataSeeder extends Seeder
         [$firstName, $lastName] = array_pad(explode(' ', $fullName, 2), 2, '');
 
         Employee::firstOrCreate(
-            ['email' => $email],
+            ['correo' => $email],
             [
-                'user_id' => $user->id,
-                'first_name' => $firstName,
-                'last_name' => $lastName ?: $firstName,
-                'phone' => '+591 7'.random_int(1000000, 7999999),
-                'position' => $position,
-                'specialty' => $specialty->value,
-                'status' => EmployeeStatus::Active->value,
-                'hire_date' => now()->subMonths(random_int(2, 24))->toDateString(),
+                'usuario_id' => $user->id,
+                'nombres' => $firstName,
+                'apellidos' => $lastName ?: $firstName,
+                'telefono' => '+591 7'.random_int(1000000, 7999999),
+                'cargo' => $position,
+                'especialidad' => $specialty->value,
+                'estado' => EmployeeStatus::Active->value,
+                'fecha_contratacion' => now()->subMonths(random_int(2, 24))->toDateString(),
             ]
         );
 
         // Si el empleado ya existía sin usuario vinculado, lo vincula.
-        Employee::where('email', $email)->whereNull('user_id')->update(['user_id' => $user->id]);
+        Employee::where('correo', $email)->whereNull('usuario_id')->update(['usuario_id' => $user->id]);
 
         return $user;
     }
@@ -383,20 +384,20 @@ class DemoDataSeeder extends Seeder
     private function employeeFor(User $user, string $firstName, string $lastName, EmployeeSpecialty $specialty, string $position): Employee
     {
         $employee = Employee::firstOrCreate(
-            ['email' => $user->email],
+            ['correo' => $user->email],
             [
-                'user_id' => $user->id,
-                'first_name' => $firstName,
-                'last_name' => $lastName,
-                'position' => $position,
-                'specialty' => $specialty->value,
-                'status' => EmployeeStatus::Active->value,
-                'hire_date' => now()->subYear()->toDateString(),
+                'usuario_id' => $user->id,
+                'nombres' => $firstName,
+                'apellidos' => $lastName,
+                'cargo' => $position,
+                'especialidad' => $specialty->value,
+                'estado' => EmployeeStatus::Active->value,
+                'fecha_contratacion' => now()->subYear()->toDateString(),
             ]
         );
 
-        if ($employee->user_id === null) {
-            $employee->update(['user_id' => $user->id]);
+        if ($employee->usuario_id === null) {
+            $employee->update(['usuario_id' => $user->id]);
         }
 
         return $employee->refresh();
@@ -407,9 +408,19 @@ class DemoDataSeeder extends Seeder
      */
     private function project(array $attributes): Project
     {
+        $map = [
+            'code' => 'codigo', 'name' => 'nombre', 'description' => 'descripcion', 'type' => 'tipo',
+            'client_id' => 'cliente_id', 'start_date' => 'fecha_inicio', 'estimated_end_date' => 'fecha_fin_estimada',
+            'actual_end_date' => 'fecha_fin_real', 'status' => 'estado', 'priority' => 'prioridad',
+            'responsible_employee_id' => 'empleado_responsable_id', 'manager_employee_id' => 'empleado_gerente_id',
+            'budget' => 'presupuesto', 'observations' => 'observaciones',
+        ];
+
+        $translated = collect($attributes)->mapWithKeys(fn (mixed $value, string $key) => [$map[$key] ?? $key => $value]);
+
         return Project::updateOrCreate(
-            ['code' => $attributes['code']],
-            collect($attributes)->except('code')->mapWithKeys(function (mixed $value, string $key) {
+            ['codigo' => $attributes['code']],
+            $translated->except('codigo')->mapWithKeys(function (mixed $value, string $key) {
                 if ($value instanceof \BackedEnum) {
                     return [$key => $value->value];
                 }
@@ -430,8 +441,8 @@ class DemoDataSeeder extends Seeder
     {
         foreach ($members as [$employee, $role]) {
             ProjectMember::firstOrCreate(
-                ['project_id' => $project->id, 'employee_id' => $employee->id],
-                ['role_in_project' => $role, 'assigned_at' => $now->copy()->subDays(30)->toDateString(), 'status' => 'active']
+                ['proyecto_id' => $project->id, 'empleado_id' => $employee->id],
+                ['rol_en_proyecto' => $role, 'asignado_en' => $now->copy()->subDays(30)->toDateString(), 'estado' => 'active']
             );
         }
     }
@@ -441,24 +452,36 @@ class DemoDataSeeder extends Seeder
      */
     private function task(Project $project, string $title, int $assigneeId, int $creatorId, array $attributes): Task
     {
+        $map = [
+            'status' => 'estado', 'priority' => 'prioridad', 'start_date' => 'fecha_inicio', 'due_date' => 'fecha_vencimiento',
+            'progress_percentage' => 'porcentaje_progreso', 'estimated_hours' => 'horas_estimadas', 'actual_hours' => 'horas_reales',
+            'completed_at' => 'completado_en', 'blocked_reason' => 'motivo_bloqueo',
+        ];
+
+        $attributes = collect($attributes)->mapWithKeys(fn (mixed $value, string $key) => [$map[$key] ?? $key => $value])->all();
+
         $payload = array_merge($attributes, [
-            'project_id' => $project->id,
-            'assigned_to' => $assigneeId,
-            'created_by' => $creatorId,
-            'title' => $title,
+            'proyecto_id' => $project->id,
+            'asignado_a' => $assigneeId,
+            'creado_por' => $creatorId,
+            'titulo' => $title,
         ]);
 
-        foreach (['status', 'priority'] as $enumKey) {
+        foreach (['estado', 'prioridad'] as $enumKey) {
             if (($payload[$enumKey] ?? null) instanceof \BackedEnum) {
                 $payload[$enumKey] = $payload[$enumKey]->value;
             }
         }
 
-        if (($payload['completed_at'] ?? null) instanceof Carbon) {
-            $payload['completed_at'] = $payload['completed_at']->toDateTimeString();
+        if (($payload['completado_en'] ?? null) instanceof Carbon) {
+            $payload['completado_en'] = $payload['completado_en']->toDateTimeString();
         }
 
-        $task = Task::where('project_id', $project->id)->where('title', $title)->first();
+        $payload['estado_id'] = TaskState::whereNull('proyecto_id')
+            ->where('slug', $this->slugForStatus($payload['estado'] ?? 'pending'))
+            ->value('id');
+
+        $task = Task::where('proyecto_id', $project->id)->where('titulo', $title)->first();
 
         if ($task) {
             $task->update($payload);
@@ -469,6 +492,19 @@ class DemoDataSeeder extends Seeder
         return Task::create($payload);
     }
 
+    private function slugForStatus(string $status): string
+    {
+        return match ($status) {
+            'pending' => 'pendiente',
+            'in_progress' => 'en-progreso',
+            'blocked' => 'bloqueada',
+            'review' => 'en-revision',
+            'completed' => 'completada',
+            'cancelled' => 'cancelada',
+            default => 'pendiente',
+        };
+    }
+
     private function dependsOn(Task $task, Task $dependsOn): void
     {
         if ($task->id === $dependsOn->id) {
@@ -476,8 +512,8 @@ class DemoDataSeeder extends Seeder
         }
 
         TaskDependency::firstOrCreate([
-            'task_id' => $task->id,
-            'depends_on_task_id' => $dependsOn->id,
+            'tarea_id' => $task->id,
+            'depende_de_tarea_id' => $dependsOn->id,
         ]);
     }
 
@@ -488,8 +524,8 @@ class DemoDataSeeder extends Seeder
     {
         foreach ($steps as $i => [$previous, $new, $comment]) {
             TaskProgressUpdate::firstOrCreate(
-                ['task_id' => $task->id, 'previous_percentage' => $previous, 'new_percentage' => $new],
-                ['user_id' => $userId, 'comment' => $comment, 'created_at' => $base->copy()->addHours($i * 5)]
+                ['tarea_id' => $task->id, 'porcentaje_anterior' => $previous, 'porcentaje_nuevo' => $new],
+                ['usuario_id' => $userId, 'comentario' => $comment, 'created_at' => $base->copy()->addHours($i * 5)]
             );
         }
     }

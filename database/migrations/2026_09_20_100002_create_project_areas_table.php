@@ -8,20 +8,20 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('project_areas', function (Blueprint $table) {
+        Schema::create('areas_proyecto', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('project_id')->constrained('projects')->cascadeOnDelete();
+            $table->foreignId('proyecto_id')->constrained('proyectos')->cascadeOnDelete();
             $table->foreignId('area_id')->constrained('areas')->cascadeOnDelete();
-            $table->foreignId('area_lead_id')->nullable()->constrained('employees')->nullOnDelete();
-            $table->decimal('budget_share', 5, 2)->nullable();
+            $table->foreignId('lider_area_id')->nullable()->constrained('empleados')->nullOnDelete();
+            $table->decimal('porcentaje_presupuesto', 5, 2)->nullable();
             $table->timestamps();
 
-            $table->unique(['project_id', 'area_id']);
+            $table->unique(['proyecto_id', 'area_id']);
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('project_areas');
+        Schema::dropIfExists('areas_proyecto');
     }
 };

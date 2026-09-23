@@ -68,22 +68,22 @@
                             @forelse ($clients as $client)
                                 <tr class="hover:bg-emerald-50/40 transition">
                                     <td class="px-6 py-4">
-                                        <a href="{{ route('clients.show', $client) }}" class="text-sm font-medium text-emerald-600 hover:underline">{{ $client->name }}</a>
-                                        @if ($client->tax_id)
-                                            <div class="text-xs text-gray-400">{{ $client->tax_id }}</div>
+                                        <a href="{{ route('clients.show', $client) }}" class="text-sm font-medium text-emerald-600 hover:underline">{{ $client->nombre }}</a>
+                                        @if ($client->identificacion_fiscal)
+                                            <div class="text-xs text-gray-400">{{ $client->identificacion_fiscal }}</div>
                                         @endif
                                     </td>
                                     <td class="px-6 py-4 text-sm text-gray-500">
-                                        {{ $client->contact_name ?? '—' }}
-                                        @if ($client->email)
-                                            <div class="text-xs text-gray-400">{{ $client->email }}</div>
+                                        {{ $client->nombre_contacto ?? '—' }}
+                                        @if ($client->correo)
+                                            <div class="text-xs text-gray-400">{{ $client->correo }}</div>
                                         @endif
                                     </td>
                                     <td class="px-6 py-4 text-sm text-gray-500">{{ $client->sector ?? '—' }}</td>
                                     <td class="px-6 py-4 text-sm text-gray-500">{{ $client->projects_count }}</td>
                                     <td class="px-6 py-4">
-                                        <x-ui.badge :color="$client->status === 'active' ? 'green' : 'gray'">
-                                            {{ $client->status === 'active' ? __('Activo') : __('Inactivo') }}
+                                        <x-ui.badge :color="$client->estado === 'active' ? 'green' : 'gray'">
+                                            {{ $client->estado === 'active' ? __('Activo') : __('Inactivo') }}
                                         </x-ui.badge>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
@@ -103,7 +103,7 @@
 
                                 @can('update', $client)
                                     <x-ui.form-modal :name="'edit-client-'.$client->id" :title="__('Editar cliente')"
-                                        :subtitle="$client->name" :action="route('clients.update', $client)" method="PUT" max-width="2xl">
+                                        :subtitle="$client->nombre" :action="route('clients.update', $client)" method="PUT" max-width="2xl">
                                         <x-slot name="hidden"><input type="hidden" name="_edit_id" value="{{ $client->id }}"></x-slot>
                                         @include('clients.html.partials.form')
                                     </x-ui.form-modal>

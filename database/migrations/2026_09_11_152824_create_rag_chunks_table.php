@@ -8,21 +8,21 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('rag_chunks', function (Blueprint $table) {
+        Schema::create('fragmentos_rag', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('document_id')->constrained('rag_documents')->cascadeOnDelete();
-            $table->text('content');
-            $table->unsignedInteger('chunk_index');
-            $table->json('metadata')->nullable();
-            $table->json('vector_reference')->nullable();
+            $table->foreignId('documento_id')->constrained('documentos_rag')->cascadeOnDelete();
+            $table->text('contenido');
+            $table->unsignedInteger('indice_fragmento');
+            $table->json('metadatos')->nullable();
+            $table->json('referencia_vector')->nullable();
             $table->timestamps();
 
-            $table->unique(['document_id', 'chunk_index']);
+            $table->unique(['documento_id', 'indice_fragmento']);
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('rag_chunks');
+        Schema::dropIfExists('fragmentos_rag');
     }
 };

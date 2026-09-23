@@ -14,64 +14,66 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable([
-    'code', 'name', 'description', 'type', 'client_id', 'start_date', 'estimated_end_date',
-    'actual_end_date', 'status', 'priority', 'responsible_employee_id', 'manager_employee_id', 'budget', 'observations',
+    'codigo', 'nombre', 'descripcion', 'tipo', 'cliente_id', 'fecha_inicio', 'fecha_fin_estimada',
+    'fecha_fin_real', 'estado', 'prioridad', 'empleado_responsable_id', 'empleado_gerente_id', 'presupuesto', 'observaciones',
 ])]
 class Project extends Model
 {
     use HasFactory, SoftDeletes;
 
+    protected $table = 'proyectos';
+
     protected function casts(): array
     {
         return [
-            'type' => ProjectType::class,
-            'status' => ProjectStatus::class,
-            'priority' => Priority::class,
-            'start_date' => 'date',
-            'estimated_end_date' => 'date',
-            'actual_end_date' => 'date',
-            'budget' => 'decimal:2',
-            'risk_calculated_at' => 'datetime',
+            'tipo' => ProjectType::class,
+            'estado' => ProjectStatus::class,
+            'prioridad' => Priority::class,
+            'fecha_inicio' => 'date',
+            'fecha_fin_estimada' => 'date',
+            'fecha_fin_real' => 'date',
+            'presupuesto' => 'decimal:2',
+            'riesgo_calculado_en' => 'datetime',
         ];
     }
 
     public function responsibleEmployee(): BelongsTo
     {
-        return $this->belongsTo(Employee::class, 'responsible_employee_id');
+        return $this->belongsTo(Employee::class, 'empleado_responsable_id');
     }
 
     public function manager(): BelongsTo
     {
-        return $this->belongsTo(Employee::class, 'manager_employee_id');
+        return $this->belongsTo(Employee::class, 'empleado_gerente_id');
     }
 
     public function client(): BelongsTo
     {
-        return $this->belongsTo(Client::class);
+        return $this->belongsTo(Client::class, 'cliente_id');
     }
 
     public function areas(): BelongsToMany
     {
-        return $this->belongsToMany(Area::class, 'project_areas')
-            ->withPivot(['id', 'area_lead_id', 'budget_share'])
+        return $this->belongsToMany(Area::class, 'areas_proyecto', 'proyecto_id', 'area_id')
+            ->withPivot(['id', 'lider_area_id', 'porcentaje_presupuesto'])
             ->withTimestamps();
     }
 
     public function members(): BelongsToMany
     {
-        return $this->belongsToMany(Employee::class, 'project_members')
+        return $this->belongsToMany(Employee::class, 'miembros_proyecto', 'proyecto_id', 'empleado_id')
             ->using(ProjectMember::class)
-            ->withPivot(['id', 'role_in_project', 'assigned_at', 'left_at', 'status'])
+            ->withPivot(['id', 'rol_en_proyecto', 'asignado_en', 'retirado_en', 'estado'])
             ->withTimestamps();
     }
 
     public function tasks(): HasMany
     {
-        return $this->hasMany(Task::class);
+        return $this->hasMany(Task::class, 'proyecto_id');
     }
 
     public function ragDocuments(): HasMany
     {
-        return $this->hasMany(RagDocument::class);
+        return $this->hasMany(RagDocument::class, 'proyecto_id');
     }
 }

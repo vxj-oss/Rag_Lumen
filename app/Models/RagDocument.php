@@ -11,34 +11,36 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable([
-    'project_id', 'uploaded_by', 'title', 'file_name', 'file_path',
-    'mime_type', 'source_type', 'status', 'failure_reason', 'metadata',
+    'proyecto_id', 'subido_por', 'titulo', 'nombre_archivo', 'ruta_archivo',
+    'tipo_mime', 'tipo_origen', 'estado', 'motivo_fallo', 'metadatos',
 ])]
 class RagDocument extends Model
 {
     use SoftDeletes;
 
+    protected $table = 'documentos_rag';
+
     protected function casts(): array
     {
         return [
-            'source_type' => RagSourceType::class,
-            'status' => RagDocumentStatus::class,
-            'metadata' => 'array',
+            'tipo_origen' => RagSourceType::class,
+            'estado' => RagDocumentStatus::class,
+            'metadatos' => 'array',
         ];
     }
 
     public function project(): BelongsTo
     {
-        return $this->belongsTo(Project::class);
+        return $this->belongsTo(Project::class, 'proyecto_id');
     }
 
     public function uploader(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'uploaded_by');
+        return $this->belongsTo(User::class, 'subido_por');
     }
 
     public function chunks(): HasMany
     {
-        return $this->hasMany(RagChunk::class, 'document_id');
+        return $this->hasMany(RagChunk::class, 'documento_id');
     }
 }

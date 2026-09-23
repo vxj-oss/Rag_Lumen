@@ -63,15 +63,18 @@
         ]"
         class="fixed inset-y-0 left-0 z-50 w-64 h-screen bg-slate-900 text-slate-200 flex flex-col transition-[width,transform] duration-200 lg:translate-x-0 lg:static lg:sticky lg:top-0 lg:z-auto"
     >
-        <div class="h-16 flex items-center gap-2 px-5 border-b border-slate-800 shrink-0">
-            <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-700 flex items-center justify-center font-bold text-white text-sm shadow-sm transition-transform duration-300 ease-out hover:rotate-6 hover:scale-110 shrink-0">
-                {{ Str::of(config('app.name'))->substr(0, 1) }}
-            </div>
-            <span x-show="!collapsed" class="font-semibold text-white tracking-tight truncate">{{ config('app.name') }}</span>
+        <div class="h-16 flex items-center gap-2 px-5 border-b border-slate-800 shrink-0" :class="collapsed ? 'lg:px-0 lg:justify-center' : ''">
             <button @click="collapsed = !collapsed; localStorage.setItem('sidebar-collapsed', collapsed ? '1' : '0')"
                 :aria-label="collapsed ? @js(__('Expandir menú')) : @js(__('Colapsar menú'))"
+                class="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-700 flex items-center justify-center font-bold text-white text-sm shadow-sm transition-transform duration-300 ease-out hover:rotate-6 hover:scale-110 shrink-0 lg:cursor-pointer">
+                {{ Str::of(config('app.name'))->substr(0, 1) }}
+            </button>
+            <span x-show="!collapsed" class="font-semibold text-white tracking-tight truncate">{{ config('app.name') }}</span>
+            <button @click="collapsed = !collapsed; localStorage.setItem('sidebar-collapsed', collapsed ? '1' : '0')"
+                x-show="!collapsed"
+                :aria-label="collapsed ? @js(__('Expandir menú')) : @js(__('Colapsar menú'))"
                 class="hidden lg:inline-flex ml-auto p-2 -mr-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition min-w-[44px] min-h-[44px] items-center justify-center shrink-0">
-                <svg class="w-5 h-5 transition-transform duration-200" :class="collapsed ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-5 h-5 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
                 </svg>
             </button>

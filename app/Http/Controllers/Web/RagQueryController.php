@@ -35,41 +35,41 @@ class RagQueryController extends Controller
 
         $projects = Project::query()
             ->when($accessibleIds !== null, fn ($query) => $query->whereIn('id', $accessibleIds))
-            ->orderBy('name')
-            ->with(['tasks' => fn ($query) => $query->orderBy('title')])
+            ->orderBy('nombre')
+            ->with(['tasks' => fn ($query) => $query->orderBy('titulo')])
             ->get();
 
-        $conversations = RagConversation::where('user_id', auth()->id())
+        $conversations = RagConversation::where('usuario_id', auth()->id())
             ->orderByDesc('updated_at')
             ->limit(30)
-            ->get(['id', 'title', 'project_id', 'task_id', 'updated_at']);
+            ->get(['id', 'titulo', 'proyecto_id', 'tarea_id', 'updated_at']);
 
         return view('rag-chat.html.index', ['projects' => $projects, 'conversations' => $conversations]);
     }
 
-    
+
     public function showConversation(RagConversation $conversation): JsonResponse
     {
-        abort_unless($conversation->user_id === auth()->id(), 403);
+        abort_unless($conversation->usuario_id === auth()->id(), 403);
 
         return response()->json([
             'conversation' => [
                 'id' => $conversation->id,
-                'title' => $conversation->title,
-                'project_id' => $conversation->project_id,
-                'task_id' => $conversation->task_id,
+                'title' => $conversation->titulo,
+                'project_id' => $conversation->proyecto_id,
+                'task_id' => $conversation->tarea_id,
             ],
             'messages' => $conversation->messages->map(fn (RagMessage $message) => [
-                'role' => $message->role,
-                'text' => $message->content,
-                'sources' => $message->sources ?? [],
+                'role' => $message->rol,
+                'text' => $message->contenido,
+                'sources' => $message->fuentes ?? [],
             ]),
         ]);
     }
 
     public function destroyConversation(RagConversation $conversation): JsonResponse
     {
-        abort_unless($conversation->user_id === auth()->id(), 403);
+        abort_unless($conversation->usuario_id === auth()->id(), 403);
 
         $conversation->delete();
 
@@ -103,21 +103,21 @@ class RagQueryController extends Controller
         $answer = $this->generator->generate($prompt);
 
         $sources = collect($retrieved)->map(fn (array $result) => [
-            'document_id' => $result['chunk']->document_id,
-            'document_title' => $result['chunk']->document?->title,
-            'chunk_index' => $result['chunk']->chunk_index,
+            'document_id' => $result['chunk']->documento_id,
+            'document_title' => $result['chunk']->document?->titulo,
+            'chunk_index' => $result['chunk']->indice_fragmento,
             'score' => $result['score'],
         ])->values();
 
-        $conversation->messages()->create(['role' => 'user', 'content' => $question]);
-        $conversation->messages()->create(['role' => 'assistant', 'content' => $answer, 'sources' => $sources]);
+        $conversation->messages()->create(['rol' => 'user', 'contenido' => $question]);
+        $conversation->messages()->create(['rol' => 'assistant', 'contenido' => $answer, 'fuentes' => $sources]);
         $conversation->touch();
 
         return response()->json([
             'answer' => $answer,
             'sources' => $sources,
             'conversation_id' => $conversation->id,
-            'conversation_title' => $conversation->title,
+            'conversation_title' => $conversation->titulo,
         ]);
     }
 
@@ -125,7 +125,7 @@ class RagQueryController extends Controller
     {
         if ($request->filled('conversation_id')) {
             $conversation = RagConversation::findOrFail($request->validated('conversation_id'));
-            abort_unless($conversation->user_id === $user->id, 403);
+            abort_unless($conversation->usuario_id === $user->id, 403);
 
             return $conversation;
         }
@@ -133,10 +133,10 @@ class RagQueryController extends Controller
         $question = $request->validated('question');
 
         return RagConversation::create([
-            'user_id' => $user->id,
-            'project_id' => $project?->id,
-            'task_id' => $task?->id,
-            'title' => Str::limit($question, 60),
+            'usuario_id' => $user->id,
+            'proyecto_id' => $project?->id,
+            'tarea_id' => $task?->id,
+            'titulo' => Str::limit($question, 60),
         ]);
     }
 

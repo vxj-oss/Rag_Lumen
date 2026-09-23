@@ -35,18 +35,18 @@
                             @forelse ($documents as $document)
                                 <tr class="hover:bg-emerald-50/40 transition">
                                     <td class="px-6 py-4">
-                                        <div class="text-sm font-medium text-gray-900">{{ $document->title }}</div>
-                                        <div class="text-xs text-gray-500">{{ $document->file_name }}</div>
+                                        <div class="text-sm font-medium text-gray-900">{{ $document->titulo }}</div>
+                                        <div class="text-xs text-gray-500">{{ $document->nombre_archivo }}</div>
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $document->project?->name ?? __('General') }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $document->source_type->label() }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $document->project?->nombre ?? __('General') }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $document->tipo_origen->label() }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <x-ui.badge :color="$document->status->color()" :title="$document->failure_reason">{{ $document->status->label() }}</x-ui.badge>
+                                        <x-ui.badge :color="$document->estado->color()" :title="$document->motivo_fallo">{{ $document->estado->label() }}</x-ui.badge>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $document->uploader?->name ?? '—' }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
                                         <div class="flex items-center justify-end gap-3">
-                                            @if ($document->status->value === 'failed')
+                                            @if ($document->estado->value === 'failed')
                                                 @can('update', $document)
                                                     <form action="{{ route('rag-documents.retry', $document) }}" method="POST">
                                                         @csrf
@@ -81,23 +81,23 @@
                         <div class="p-4 space-y-2">
                             <div class="flex items-start justify-between gap-3">
                                 <div class="min-w-0">
-                                    <p class="text-sm font-medium text-gray-900 truncate">{{ $document->title }}</p>
-                                    <p class="text-xs text-gray-400 truncate">{{ $document->file_name }}</p>
+                                    <p class="text-sm font-medium text-gray-900 truncate">{{ $document->titulo }}</p>
+                                    <p class="text-xs text-gray-400 truncate">{{ $document->nombre_archivo }}</p>
                                 </div>
-                                <x-ui.badge :color="$document->status->color()" :title="$document->failure_reason">{{ $document->status->label() }}</x-ui.badge>
+                                <x-ui.badge :color="$document->estado->color()" :title="$document->motivo_fallo">{{ $document->estado->label() }}</x-ui.badge>
                             </div>
                             <dl class="grid grid-cols-2 gap-2 text-xs">
                                 <div>
                                     <dt class="font-medium text-gray-400">{{ __('Proyecto') }}</dt>
-                                    <dd class="text-gray-700 truncate">{{ $document->project?->name ?? __('General') }}</dd>
+                                    <dd class="text-gray-700 truncate">{{ $document->project?->nombre ?? __('General') }}</dd>
                                 </div>
                                 <div>
                                     <dt class="font-medium text-gray-400">{{ __('Tipo') }}</dt>
-                                    <dd class="text-gray-700">{{ $document->source_type->label() }}</dd>
+                                    <dd class="text-gray-700">{{ $document->tipo_origen->label() }}</dd>
                                 </div>
                             </dl>
                             <div class="flex items-center gap-4 pt-1 text-sm border-t border-gray-100 mt-1 pt-3">
-                                @if ($document->status->value === 'failed')
+                                @if ($document->estado->value === 'failed')
                                     @can('update', $document)
                                         <form action="{{ route('rag-documents.retry', $document) }}" method="POST">
                                             @csrf
@@ -140,7 +140,7 @@
             <div>
                 <x-forms.input-label for="project_id" :value="__('Proyecto (opcional)')" />
                 <x-forms.select id="project_id" name="project_id" class="mt-1 block w-full"
-                    :options="['' => __('— Conocimiento general —')] + $projects->mapWithKeys(fn ($p) => [$p->id => $p->name])->toArray()"
+                    :options="['' => __('— Conocimiento general —')] + $projects->mapWithKeys(fn ($p) => [$p->id => $p->nombre])->toArray()"
                     :selected="old('project_id')" />
                 <x-forms.input-error :messages="$errors->get('project_id')" class="mt-2" />
             </div>

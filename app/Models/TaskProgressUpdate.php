@@ -6,10 +6,12 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['task_id', 'user_id', 'previous_percentage', 'new_percentage', 'comment'])]
+#[Fillable(['tarea_id', 'usuario_id', 'porcentaje_anterior', 'porcentaje_nuevo', 'comentario'])]
 class TaskProgressUpdate extends Model
 {
     const UPDATED_AT = null;
+
+    protected $table = 'avances_tarea';
 
     protected function casts(): array
     {
@@ -20,11 +22,11 @@ class TaskProgressUpdate extends Model
 
     public function task(): BelongsTo
     {
-        return $this->belongsTo(Task::class);
+        return $this->belongsTo(Task::class, 'tarea_id');
     }
 
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'usuario_id');
     }
 }

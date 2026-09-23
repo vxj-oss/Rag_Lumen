@@ -8,19 +8,19 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('task_dependencies', function (Blueprint $table) {
+        Schema::create('dependencias_tarea', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('task_id')->constrained('tasks')->cascadeOnDelete();
-            $table->foreignId('depends_on_task_id')->constrained('tasks')->cascadeOnDelete();
+            $table->foreignId('tarea_id')->constrained('tareas')->cascadeOnDelete();
+            $table->foreignId('depende_de_tarea_id')->constrained('tareas')->cascadeOnDelete();
             $table->timestamps();
 
-            $table->unique(['task_id', 'depends_on_task_id']);
-            $table->index('depends_on_task_id');
+            $table->unique(['tarea_id', 'depende_de_tarea_id']);
+            $table->index('depende_de_tarea_id');
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('task_dependencies');
+        Schema::dropIfExists('dependencias_tarea');
     }
 };

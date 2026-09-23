@@ -7,26 +7,28 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['user_id', 'project_id', 'task_id', 'title'])]
+#[Fillable(['usuario_id', 'proyecto_id', 'tarea_id', 'titulo'])]
 class RagConversation extends Model
 {
+    protected $table = 'conversaciones_rag';
+
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'usuario_id');
     }
 
     public function project(): BelongsTo
     {
-        return $this->belongsTo(Project::class);
+        return $this->belongsTo(Project::class, 'proyecto_id');
     }
 
     public function task(): BelongsTo
     {
-        return $this->belongsTo(Task::class);
+        return $this->belongsTo(Task::class, 'tarea_id');
     }
 
     public function messages(): HasMany
     {
-        return $this->hasMany(RagMessage::class, 'conversation_id')->orderBy('created_at');
+        return $this->hasMany(RagMessage::class, 'conversacion_id')->orderBy('created_at');
     }
 }

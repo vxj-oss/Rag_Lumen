@@ -16,7 +16,7 @@ class StoreTaskDependencyRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'depends_on_task_id' => ['required', 'integer', 'exists:tasks,id'],
+            'depends_on_task_id' => ['required', 'integer', 'exists:tareas,id'],
         ];
     }
 
@@ -33,7 +33,7 @@ class StoreTaskDependencyRequest extends FormRequest
                 return;
             }
 
-            if ($task->dependencies()->where('depends_on_task_id', $dependsOnTaskId)->exists()) {
+            if ($task->dependencies()->where('depende_de_tarea_id', $dependsOnTaskId)->exists()) {
                 $validator->errors()->add('depends_on_task_id', 'Esa dependencia ya existe.');
 
                 return;
@@ -41,7 +41,7 @@ class StoreTaskDependencyRequest extends FormRequest
 
             $dependsOnTask = Task::find($dependsOnTaskId);
 
-            if ($dependsOnTask === null || (int) $dependsOnTask->project_id !== (int) $task->project_id) {
+            if ($dependsOnTask === null || (int) $dependsOnTask->proyecto_id !== (int) $task->proyecto_id) {
                 $validator->errors()->add('depends_on_task_id', 'Las dependencias deben ser tareas del mismo proyecto.');
 
                 return;

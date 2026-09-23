@@ -24,12 +24,12 @@ class StoreRagDocumentRequest extends FormRequest
         return true;
     }
 
-    
+
     public function rules(): array
     {
         return [
             'title' => ['required', 'string', 'max:200'],
-            'project_id' => ['nullable', 'integer', 'exists:projects,id'],
+            'project_id' => ['nullable', 'integer', 'exists:proyectos,id'],
             'file' => [
                 'required',
                 'file',

@@ -45,11 +45,11 @@
                 <ul class="divide-y divide-gray-100">
                     @forelse ($logs as $log)
                         <li class="p-4 flex items-start gap-3">
-                            <x-ui.badge :color="$actionColors[$log->action] ?? 'gray'" class="mt-0.5 shrink-0">
-                                {{ $actionLabels[$log->action] ?? $log->action }}
+                            <x-ui.badge :color="$actionColors[$log->accion] ?? 'gray'" class="mt-0.5 shrink-0">
+                                {{ $actionLabels[$log->accion] ?? $log->accion }}
                             </x-ui.badge>
                             <div class="flex-1 min-w-0">
-                                <p class="text-sm text-gray-800">{{ $log->description }}</p>
+                                <p class="text-sm text-gray-800">{{ $log->descripcion }}</p>
                                 <p class="text-xs text-gray-400 mt-0.5">
                                     {{ $log->user?->name ?? __('Sistema') }} · {{ $log->created_at->format('d/m/Y H:i') }}
                                 </p>

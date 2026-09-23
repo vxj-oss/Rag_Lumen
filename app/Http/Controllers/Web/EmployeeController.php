@@ -30,15 +30,15 @@ class EmployeeController extends Controller
             ->when($request->filled('search'), function ($query) use ($request) {
                 $search = $request->string('search');
                 $query->where(function ($query) use ($search) {
-                    $query->where('first_name', 'like', "%{$search}%")
-                        ->orWhere('last_name', 'like', "%{$search}%")
-                        ->orWhere('email', 'like', "%{$search}%");
+                    $query->where('nombres', 'like', "%{$search}%")
+                        ->orWhere('apellidos', 'like', "%{$search}%")
+                        ->orWhere('correo', 'like', "%{$search}%");
                 });
             })
-            ->when($request->filled('status'), fn ($query) => $query->where('status', $request->string('status')))
-            ->when($request->filled('specialty'), fn ($query) => $query->where('specialty', $request->string('specialty')))
+            ->when($request->filled('status'), fn ($query) => $query->where('estado', $request->string('status')))
+            ->when($request->filled('specialty'), fn ($query) => $query->where('especialidad', $request->string('specialty')))
             ->when($request->filled('area_id'), fn ($query) => $query->where('area_id', $request->integer('area_id')))
-            ->orderBy('first_name')
+            ->orderBy('nombres')
             ->paginate(5)
             ->withQueryString();
 
@@ -46,10 +46,10 @@ class EmployeeController extends Controller
             'employees' => $employees,
             'specialties' => EmployeeSpecialty::cases(),
             'statuses' => EmployeeStatus::cases(),
-            'areas' => Area::where('active', true)->orderBy('name')->get(),
+            'areas' => Area::where('activa', true)->orderBy('nombre')->get(),
             'totalCount' => Employee::count(),
-            'activeCount' => Employee::where('status', EmployeeStatus::Active->value)->count(),
-            'onLeaveCount' => Employee::where('status', EmployeeStatus::OnLeave->value)->count(),
+            'activeCount' => Employee::where('estado', EmployeeStatus::Active->value)->count(),
+            'onLeaveCount' => Employee::where('estado', EmployeeStatus::OnLeave->value)->count(),
             'filters' => $request->only(['search', 'status', 'specialty', 'area_id']),
         ]);
     }
@@ -58,7 +58,7 @@ class EmployeeController extends Controller
     {
         $this->authorize('viewAny', Employee::class);
 
-        $employees = Employee::orderBy('first_name')->get();
+        $employees = Employee::orderBy('nombres')->get();
 
         return response()->streamDownload(function () use ($employees) {
             $handle = fopen('php://output', 'w');
@@ -67,11 +67,11 @@ class EmployeeController extends Controller
             foreach ($employees as $employee) {
                 fputcsv($handle, [
                     $employee->fullName(),
-                    $employee->specialty->label(),
-                    $employee->status->label(),
-                    $employee->email,
-                    $employee->phone ?? '—',
-                    $employee->hire_date?->toDateString() ?? '—',
+                    $employee->especialidad->label(),
+                    $employee->estado->label(),
+                    $employee->correo,
+                    $employee->telefono ?? '—',
+                    $employee->fecha_contratacion?->toDateString() ?? '—',
                 ]);
             }
 
@@ -113,13 +113,13 @@ class EmployeeController extends Controller
     {
         $user = User::create([
             'name' => $employee->fullName(),
-            'email' => $employee->email,
+            'email' => $employee->correo,
             'password' => $password,
         ]);
 
         $user->assignRole(RoleName::Employee->value);
 
-        $employee->update(['user_id' => $user->id]);
+        $employee->update(['usuario_id' => $user->id]);
     }
 
     public function show(Employee $employee, EmployeeMetricsService $metricsService): View
@@ -130,7 +130,7 @@ class EmployeeController extends Controller
             'employee' => $employee,
             'specialties' => EmployeeSpecialty::cases(),
             'statuses' => EmployeeStatus::cases(),
-            'areas' => Area::where('active', true)->orderBy('name')->get(),
+            'areas' => Area::where('activa', true)->orderBy('nombre')->get(),
             'metrics' => $metricsService->forEmployee($employee),
         ]);
     }
@@ -148,10 +148,10 @@ class EmployeeController extends Controller
 
         ActivityLogger::recordUpdate($employee, $before, "al empleado \"{$employee->fullName()}\"");
 
-        if ($employee->user_id === null && $createAccess && $password) {
+        if ($employee->usuario_id === null && $createAccess && $password) {
             $this->createUserAccount($employee, $password);
             ActivityLogger::record($employee, 'updated', "Le creó acceso al sistema a \"{$employee->fullName()}\".");
-        } elseif ($employee->user_id !== null && $password) {
+        } elseif ($employee->usuario_id !== null && $password) {
             $employee->user->update(['password' => $password]);
             ActivityLogger::record($employee, 'updated', "Restableció la contraseña de \"{$employee->fullName()}\".");
         }

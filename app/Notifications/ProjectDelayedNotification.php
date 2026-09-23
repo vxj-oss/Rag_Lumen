@@ -23,9 +23,9 @@ class ProjectDelayedNotification extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject("Proyecto atrasado: {$this->project->name}")
+            ->subject("Proyecto atrasado: {$this->project->nombre}")
             ->greeting("Hola {$notifiable->name},")
-            ->line("El proyecto \"{$this->project->name}\" tiene {$this->overdueTasks} tarea(s) atrasada(s).")
+            ->line("El proyecto \"{$this->project->nombre}\" tiene {$this->overdueTasks} tarea(s) atrasada(s).")
             ->action('Ver proyecto', route('projects.show', $this->project))
             ->line('Revisa el estado de las tareas para destrabar el avance.');
     }
@@ -35,7 +35,7 @@ class ProjectDelayedNotification extends Notification
         return [
             'type' => 'project_delayed',
             'project_id' => $this->project->id,
-            'message' => "El proyecto \"{$this->project->name}\" tiene {$this->overdueTasks} tarea(s) atrasada(s).",
+            'message' => "El proyecto \"{$this->project->nombre}\" tiene {$this->overdueTasks} tarea(s) atrasada(s).",
             'overdue_tasks' => $this->overdueTasks,
         ];
     }
