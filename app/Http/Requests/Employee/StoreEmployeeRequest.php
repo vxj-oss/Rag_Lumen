@@ -27,6 +27,8 @@ class StoreEmployeeRequest extends FormRequest
             'usuario_id' => ['nullable', 'integer', 'exists:users,id', 'unique:empleados,usuario_id'],
             'nombres' => ['required', 'string', 'max:100'],
             'apellidos' => ['required', 'string', 'max:100'],
+            'documento_identidad' => ['nullable', 'string', 'max:20', 'unique:empleados,documento_identidad'],
+            'firma' => ['nullable', 'image', 'mimes:png,jpg,jpeg', 'max:2048'],
             'correo' => array_filter([
                 'required', 'string', 'email', 'max:150', 'unique:empleados,correo',
                 $creatingAccess ? Rule::unique('users', 'email') : null,

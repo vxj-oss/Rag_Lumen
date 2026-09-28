@@ -25,7 +25,7 @@ return [
 
     
     'embedding' => [
-        'provider' => env('RAG_EMBEDDING_PROVIDER', 'ollama'),
+        'provider' => env('RAG_EMBEDDING_PROVIDER', 'cohere'),
         'base_url' => env('OLLAMA_BASE_URL', 'http://127.0.0.1:11434'),
         'model' => env('OLLAMA_EMBEDDING_MODEL', 'all-minilm'),
         'dimensions' => 384,
@@ -37,7 +37,7 @@ return [
     ],
 
     'completion' => [
-        'provider' => env('RAG_COMPLETION_PROVIDER', 'ollama'),
+        'provider' => env('RAG_COMPLETION_PROVIDER', 'groq'),
         'base_url' => env('OLLAMA_BASE_URL', 'http://127.0.0.1:11434'),
         'model' => env('OLLAMA_COMPLETION_MODEL', 'llama3:8b'),
         'groq' => [

@@ -56,7 +56,10 @@
                 </ul>
             </div>
 
-            <p class="text-xs text-slate-400">{{ __('Uso interno de la empresa.') }}</p>
+            <p class="text-xs text-slate-400">
+                {{ __('Uso interno de la empresa.') }}
+                <a href="{{ route('legal.security-policy') }}" class="underline hover:text-slate-300">{{ __('Políticas de seguridad y cookies') }}</a>
+            </p>
         </div>
 
         <div class="flex-1 flex flex-col justify-center items-center p-6 sm:p-12 lg:p-16 min-h-screen bg-slate-50">

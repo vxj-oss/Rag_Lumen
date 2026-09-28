@@ -36,7 +36,29 @@
                 :value="old('telefono', $employee?->telefono)" />
             <x-forms.input-error :messages="$errors->get('telefono')" class="mt-2" />
         </div>
+        <div>
+            <x-forms.input-label for="documento_identidad" :value="__('DNI')" />
+            <x-forms.text-input id="documento_identidad" name="documento_identidad" type="text" class="mt-1 block w-full"
+                :value="old('documento_identidad', $employee?->documento_identidad)" />
+            <p class="text-xs text-gray-400 mt-1">{{ __('Se usa para generar el convenio de colaboración.') }}</p>
+            <x-forms.input-error :messages="$errors->get('documento_identidad')" class="mt-2" />
+        </div>
     </div>
+</div>
+
+<div>
+    <h4 class="text-xs font-semibold text-emerald-700 uppercase tracking-wider mb-3">{{ __('Firma') }}</h4>
+    @if ($employee?->tieneFirma())
+        <div class="mb-3 flex items-center gap-3">
+            <img src="{{ route('employees.firma', $employee) }}" alt="{{ __('Firma actual') }}" class="h-16 border border-gray-200 rounded-lg bg-white p-1">
+            <p class="text-xs text-gray-500">{{ __('Firma registrada. Sube un archivo para reemplazarla.') }}</p>
+        </div>
+    @endif
+    <x-forms.input-label for="firma" :value="__('Firma escaneada (PNG o JPG)')" />
+    <input id="firma" name="firma" type="file" accept=".png,.jpg,.jpeg"
+           class="mt-1 block w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:bg-emerald-50 file:text-emerald-700 file:text-sm file:font-medium hover:file:bg-emerald-100">
+    <p class="text-xs text-gray-400 mt-1">{{ __('Se incrustará automáticamente en el convenio y demás documentos que se generen para este colaborador.') }}</p>
+    <x-forms.input-error :messages="$errors->get('firma')" class="mt-2" />
 </div>
 
 <div>

@@ -11,10 +11,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Storage;
 
 #[Fillable([
-    'usuario_id', 'nombres', 'apellidos', 'correo', 'telefono',
-    'cargo', 'especialidad', 'area_id', 'estado', 'fecha_contratacion',
+    'usuario_id', 'nombres', 'apellidos', 'documento_identidad', 'correo', 'telefono',
+    'cargo', 'especialidad', 'area_id', 'estado', 'fecha_contratacion', 'firma_path',
 ])]
 class Employee extends Model
 {
@@ -44,6 +45,22 @@ class Employee extends Model
     public function fullName(): string
     {
         return "{$this->nombres} {$this->apellidos}";
+    }
+
+    public function tieneFirma(): bool
+    {
+        return $this->firma_path !== null;
+    }
+
+    public function firmaBase64(): ?string
+    {
+        if ($this->firma_path === null || ! Storage::disk('local')->exists($this->firma_path)) {
+            return null;
+        }
+
+        $mime = str_ends_with($this->firma_path, '.png') ? 'image/png' : 'image/jpeg';
+
+        return 'data:'.$mime.';base64,'.base64_encode(Storage::disk('local')->get($this->firma_path));
     }
 
     public function projects(): BelongsToMany

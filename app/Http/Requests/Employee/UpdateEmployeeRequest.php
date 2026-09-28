@@ -29,6 +29,8 @@ class UpdateEmployeeRequest extends FormRequest
             'usuario_id' => ['nullable', 'integer', 'exists:users,id', Rule::unique('empleados', 'usuario_id')->ignore($employeeId)],
             'nombres' => ['required', 'string', 'max:100'],
             'apellidos' => ['required', 'string', 'max:100'],
+            'documento_identidad' => ['nullable', 'string', 'max:20', Rule::unique('empleados', 'documento_identidad')->ignore($employeeId)],
+            'firma' => ['nullable', 'image', 'mimes:png,jpg,jpeg', 'max:2048'],
             'correo' => array_filter([
                 'required', 'string', 'email', 'max:150', Rule::unique('empleados', 'correo')->ignore($employeeId),
                 $creatingAccess ? Rule::unique('users', 'email') : null,

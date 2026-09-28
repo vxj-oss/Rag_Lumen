@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Employee\StoreEmployeeBreachNoticeRequest;
 use App\Http\Requests\Employee\StoreEmployeeRequest;
 use App\Http\Requests\Employee\UpdateEmployeeRequest;
 use App\Models\Area;
@@ -10,12 +11,18 @@ use App\Models\Employee;
 use App\Models\User;
 use App\Services\EmployeeMetricsService;
 use App\Support\ActivityLogger;
+use App\Support\CompanySignature;
 use App\Support\Enums\EmployeeSpecialty;
 use App\Support\Enums\EmployeeStatus;
 use App\Support\Enums\RoleName;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -84,9 +91,14 @@ class EmployeeController extends Controller
         $data = $request->validated();
         $createAccess = $request->boolean('create_access');
         $password = $data['password'] ?? null;
-        unset($data['create_access'], $data['password']);
+        $firma = $request->file('firma');
+        unset($data['create_access'], $data['password'], $data['firma']);
 
-        $employee = DB::transaction(function () use ($data, $createAccess, $password) {
+        $employee = DB::transaction(function () use ($data, $createAccess, $password, $firma) {
+            if ($firma !== null) {
+                $data['firma_path'] = $firma->store('firmas/colaboradores', 'local');
+            }
+
             $employee = Employee::create($data);
 
             if ($createAccess) {
@@ -142,7 +154,16 @@ class EmployeeController extends Controller
         $data = $request->validated();
         $createAccess = $request->boolean('create_access');
         $password = $data['password'] ?? null;
-        unset($data['create_access'], $data['password']);
+        $firma = $request->file('firma');
+        unset($data['create_access'], $data['password'], $data['firma']);
+
+        if ($firma !== null) {
+            if ($employee->firma_path !== null) {
+                Storage::disk('local')->delete($employee->firma_path);
+            }
+
+            $data['firma_path'] = $firma->store('firmas/colaboradores', 'local');
+        }
 
         $employee->update($data);
 
@@ -159,6 +180,50 @@ class EmployeeController extends Controller
         return redirect()
             ->route('employees.index')
             ->with('status', 'Empleado actualizado correctamente.');
+    }
+
+    public function firma(Employee $employee): Response
+    {
+        $this->authorize('view', $employee);
+
+        abort_if($employee->firma_path === null || ! Storage::disk('local')->exists($employee->firma_path), 404);
+
+        return response(Storage::disk('local')->get($employee->firma_path), 200, [
+            'Content-Type' => Storage::disk('local')->mimeType($employee->firma_path),
+            'Cache-Control' => 'private, no-store',
+        ]);
+    }
+
+    public function contract(Employee $employee): Response
+    {
+        $this->authorize('update', $employee);
+
+        return Pdf::loadView('reports.employee-contract', [
+            'employee' => $employee,
+            'generatedAt' => now(),
+            'empresaFirma' => CompanySignature::base64(),
+        ])
+            ->setPaper('a4', 'portrait')
+            ->download('convenio-'.Str::slug($employee->fullName()).'.pdf');
+    }
+
+    public function breachNotice(StoreEmployeeBreachNoticeRequest $request, Employee $employee): Response
+    {
+        $data = $request->validated();
+
+        ActivityLogger::record($employee, 'updated', "Generó un acta de incumplimiento para \"{$employee->fullName()}\".");
+
+        return Pdf::loadView('reports.employee-breach-notice', [
+            'employee' => $employee,
+            'generatedAt' => now(),
+            'fechaHechos' => Carbon::parse($data['fecha_hechos']),
+            'hechos' => $data['hechos'],
+            'clausulaInfringida' => $data['clausula_infringida'] ?? null,
+            'monto' => $data['monto'] ?? null,
+            'empresaFirma' => CompanySignature::base64(),
+        ])
+            ->setPaper('a4', 'portrait')
+            ->download('acta-incumplimiento-'.Str::slug($employee->fullName()).'-'.now()->format('Y-m-d').'.pdf');
     }
 
     public function destroy(Employee $employee): RedirectResponse

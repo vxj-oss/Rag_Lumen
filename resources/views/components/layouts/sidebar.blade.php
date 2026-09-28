@@ -130,6 +130,10 @@
 
                 <x-slot name="content">
                     <x-ui.dropdown-link :href="route('profile.edit')">{{ __('Perfil') }}</x-ui.dropdown-link>
+                    @if (auth()->user()->hasRole(\App\Support\Enums\RoleName::Administrator->value))
+                        <x-ui.dropdown-link :href="route('settings.company-signature.edit')">{{ __('Firma del Gerente General') }}</x-ui.dropdown-link>
+                    @endif
+                    <x-ui.dropdown-link :href="route('legal.security-policy')">{{ __('Políticas de seguridad y cookies') }}</x-ui.dropdown-link>
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
                         <x-ui.dropdown-link :href="route('logout')" onclick="event.preventDefault(); this.closest('form').submit();">

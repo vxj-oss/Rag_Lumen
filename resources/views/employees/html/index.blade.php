@@ -129,7 +129,7 @@
 
                             @can('update', $employee)
                             <x-ui.form-modal :name="'edit-employee-'.$employee->id" :title="__('Editar empleado')"
-                                :subtitle="$employee->fullName()" :action="route('employees.update', $employee)" method="PUT">
+                                :subtitle="$employee->fullName()" :action="route('employees.update', $employee)" method="PUT" multipart>
                                 <x-slot name="hidden">
                                     <input type="hidden" name="_edit_id" value="{{ $employee->id }}">
                                 </x-slot>
@@ -197,7 +197,7 @@
 
     @can('create', \App\Models\Employee::class)
     <x-ui.form-modal name="create-employee" :title="__('Nuevo empleado')" :subtitle="__('Agrega un miembro al equipo')"
-        :action="route('employees.store')" submit-label="{{ __('Crear empleado') }}">
+        :action="route('employees.store')" submit-label="{{ __('Crear empleado') }}" multipart>
         <x-slot name="hidden">
             <input type="hidden" name="_form" value="create">
         </x-slot>
