@@ -14,8 +14,7 @@ use App\Http\Controllers\Web\RagDocumentController;
 use App\Http\Controllers\Web\RagQueryController;
 use App\Http\Controllers\Web\SecurityPolicyController;
 use App\Http\Controllers\Web\TaskController;
-use App\Http\Controllers\Web\TaskDependencyController;
-use App\Http\Controllers\Web\TaskProgressController;
+use App\Http\Controllers\Web\TaskEvidenceController;
 use App\Http\Controllers\Web\TaskStatusController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
@@ -74,9 +73,11 @@ Route::middleware(['auth', 'throttle:web'])->group(function () {
     Route::get('tasks/{task}/live-status', [TaskController::class, 'liveStatusOne'])->name('tasks.live-status.one');
     Route::patch('tasks/{task}/status', [TaskController::class, 'updateStatus'])->name('tasks.status.update');
     Route::resource('tasks', TaskController::class)->except(['create', 'edit']);
-    Route::post('tasks/{task}/dependencies', [TaskDependencyController::class, 'store'])->name('tasks.dependencies.store');
-    Route::delete('tasks/{task}/dependencies/{dependency}', [TaskDependencyController::class, 'destroy'])->name('tasks.dependencies.destroy');
-    Route::post('tasks/{task}/progress', [TaskProgressController::class, 'store'])->name('tasks.progress.store');
+    Route::post('tasks/{task}/tasks', [TaskController::class, 'storeChild'])->name('tasks.children.store');
+    Route::post('tasks/{task}/evidence', [TaskEvidenceController::class, 'store'])->name('tasks.evidence.store')->middleware('throttle:rag-upload');
+    Route::post('tasks/{task}/evidence/approve', [TaskEvidenceController::class, 'approve'])->name('tasks.evidence.approve');
+    Route::post('tasks/{task}/evidence/reject', [TaskEvidenceController::class, 'reject'])->name('tasks.evidence.reject');
+    Route::get('tasks/{task}/evidence/{evidence}/download', [TaskEvidenceController::class, 'download'])->name('tasks.evidence.download');
 
     Route::get('activity', [ActivityLogController::class, 'index'])->name('activity.index');
     Route::get('alerts', [AlertController::class, 'index'])->name('alerts.index');

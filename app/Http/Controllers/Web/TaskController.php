@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers\Web;
 
-use App\Actions\RecordTaskProgressAction;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Task\StoreActivityTaskRequest;
 use App\Http\Requests\Task\StoreTaskRequest;
 use App\Http\Requests\Task\UpdateTaskRequest;
 use App\Models\Area;
@@ -15,6 +15,7 @@ use App\Models\TaskStatusHistory;
 use App\Support\ActivityLogger;
 use App\Support\Enums\Priority;
 use App\Support\Enums\RoleName;
+use App\Support\Enums\TaskStatus;
 use App\Support\ProjectScope;
 use App\Support\TaskProgressRollup;
 use Illuminate\Database\Eloquent\Builder;
@@ -22,12 +23,16 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class TaskController extends Controller
 {
+    /** Estado que solo se alcanza por el flujo de evidencia y aprobación del líder. */
+    private const DERIVED_STATE_SLUGS = ['completada'];
+
     public function index(Request $request): View
     {
         $this->authorize('viewAny', Task::class);
@@ -137,8 +142,6 @@ class TaskController extends Controller
             'priority_label' => $task->prioridad->label(),
             'priority_color' => $task->prioridad->color(),
             'progress' => $task->porcentaje_progreso,
-            'estimated_hours' => $task->horas_estimadas,
-            'actual_hours' => $task->horas_reales,
             'due' => $this->dueData($task),
             'overdue' => $task->isOverdue(),
             'blocking' => $task->isBlockingState(),
@@ -210,7 +213,7 @@ class TaskController extends Controller
 
         return response()->streamDownload(function () use ($tasks) {
             $handle = fopen('php://output', 'w');
-            fputcsv($handle, ['Código', 'Título', 'Proyecto', 'Asignado a', 'Estado', 'Prioridad', 'Vence', 'Avance %', 'Horas estimadas', 'Horas reales']);
+            fputcsv($handle, ['Código', 'Título', 'Proyecto', 'Asignado a', 'Estado', 'Prioridad', 'Vence', 'Avance %']);
 
             foreach ($tasks as $task) {
                 fputcsv($handle, [
@@ -222,8 +225,6 @@ class TaskController extends Controller
                     $task->prioridad->label(),
                     $task->fecha_vencimiento?->toDateString() ?? '—',
                     $task->porcentaje_progreso,
-                    $task->horas_estimadas ?? '—',
-                    $task->horas_reales ?? '—',
                 ]);
             }
 
@@ -288,18 +289,73 @@ class TaskController extends Controller
     public function store(StoreTaskRequest $request): RedirectResponse
     {
         $data = $request->validated();
-        $dependencyIds = $data['dependency_ids'] ?? [];
-        unset($data['dependency_ids'], $data['area_id']);
+        $childRows = $data['tareas'];
+        unset($data['tareas']);
 
         $state = TaskState::findOrFail($data['estado_id']);
 
+        $task = DB::transaction(function () use ($data, $childRows, $state) {
+            $task = $this->createTask($data, $state);
+
+            foreach ($childRows as $row) {
+                $this->createChildTask($task, $row, $state);
+            }
+
+            return $task;
+        });
+
+        ActivityLogger::record($task, 'created', "Creó la actividad \"{$task->titulo}\" con ".count($childRows).' tareas.');
+
+        return redirect()
+            ->route('tasks.show', $task)
+            ->with('status', 'Actividad creada correctamente.');
+    }
+
+    public function storeChild(StoreActivityTaskRequest $request, Task $task): RedirectResponse
+    {
+        $state = TaskState::resolveForStatus($task->proyecto_id, TaskStatus::Pending)
+            ?? TaskState::findOrFail($task->estado_id);
+
+        $child = $this->createChildTask($task, $request->validated(), $state);
+
+        ActivityLogger::record($child, 'created', "Agregó la tarea \"{$child->titulo}\" a la actividad \"{$task->titulo}\".");
+
+        TaskProgressRollup::recalculate($task->fresh(), $request->user());
+
+        return redirect()->route('tasks.show', $task)->with('status', 'Tarea agregada. El avance se recalculó.');
+    }
+
+    /**
+     * Las tareas heredan proyecto, responsable, prioridad y fechas de su actividad
+     * y siempre nacen pendientes: solo se completan con evidencia.
+     *
+     * @param  array{titulo: string, descripcion?: ?string}  $row
+     */
+    private function createChildTask(Task $activity, array $row, TaskState $state): Task
+    {
+        $pending = TaskState::resolveForStatus($activity->proyecto_id, TaskStatus::Pending) ?? $state;
+
+        return $this->createTask([
+            'proyecto_id' => $activity->proyecto_id,
+            'tarea_padre_id' => $activity->id,
+            'titulo' => $row['titulo'],
+            'descripcion' => $row['descripcion'] ?? null,
+            'asignado_a' => $activity->asignado_a,
+            'prioridad' => $activity->prioridad->value,
+            'fecha_inicio' => $activity->fecha_inicio,
+            'fecha_vencimiento' => $activity->fecha_vencimiento,
+            'estado_id' => $pending->id,
+        ], $pending);
+    }
+
+    private function createTask(array $data, TaskState $state): Task
+    {
         $data['creado_por'] = Auth::id();
         $data['estado'] = TaskState::enumForSlug($state->slug)?->value ?? 'pending';
-        $data['completado_en'] = $state->slug === 'completada' ? now() : null;
-        $data['porcentaje_progreso'] = $state->slug === 'completada' ? 100 : 0;
+        $data['completado_en'] = null;
+        $data['porcentaje_progreso'] = 0;
 
         $task = Task::create($data);
-        $task->dependencies()->attach($dependencyIds);
 
         TaskStatusHistory::create([
             'tarea_id' => $task->id,
@@ -309,66 +365,49 @@ class TaskController extends Controller
             'comentario' => 'Tarea creada.',
         ]);
 
-        ActivityLogger::record($task, 'created', "Creó la tarea \"{$task->titulo}\".");
-
-        if ($task->tarea_padre_id !== null) {
-            TaskProgressRollup::recalculateAncestors($task, Auth::user());
-
-            return redirect()
-                ->route('tasks.show', $task->tarea_padre_id)
-                ->with('status', 'Subtarea creada correctamente.');
-        }
-
-        return redirect()
-            ->route('tasks.index', ['project_id' => $task->proyecto_id])
-            ->with('status', 'Tarea creada correctamente.');
+        return $task;
     }
 
-    public function show(Task $task): View
+    public function show(Task $task): View|RedirectResponse
     {
         $this->authorize('view', $task);
 
-        $task->load([
-            'project', 'assignee.area', 'state', 'dependencies.state', 'dependents.state',
-            'progressUpdates.user', 'statusHistory.user', 'tareaPadre',
-            'subtareas' => fn ($query) => $query->orderBy('titulo'),
-            'subtareas.state', 'subtareas.assignee',
-        ]);
+        if ($task->tarea_padre_id !== null) {
+            return redirect()->route('tasks.show', $task->tarea_padre_id);
+        }
 
-        $availableForDependency = Task::where('proyecto_id', $task->proyecto_id)
-            ->where('id', '!=', $task->id)
-            ->whereNotIn('id', $task->dependencies->pluck('id'))
-            ->orderBy('titulo')
-            ->get();
+        $task->load([
+            'project', 'assignee.area', 'state',
+            'progressUpdates.user', 'statusHistory.user',
+            'subtareas' => fn ($query) => $query->orderBy('id'),
+            'subtareas.state', 'subtareas.evidencias.user',
+        ]);
 
         $projectStates = TaskState::where(function ($query) use ($task) {
             $query->whereNull('proyecto_id')->orWhere('proyecto_id', $task->proyecto_id);
         })->where('activo', true)->orderBy('posicion')->get();
 
-        $availableAsParent = Task::where('proyecto_id', $task->proyecto_id)
-            ->where('id', '!=', $task->id)
-            ->whereNotIn('id', $task->subtareas->pluck('id'))
-            ->orderBy('titulo')
-            ->get()
-            ->reject(fn (Task $candidate) => $candidate->esDescendienteDe($task));
-
         return view('tasks.html.show', [
             'task' => $task,
-            'availableForDependency' => $availableForDependency,
             'projectStates' => $projectStates,
-            'availableAsParent' => $availableAsParent,
         ] + $this->formOptions());
     }
 
-    public function update(UpdateTaskRequest $request, Task $task, RecordTaskProgressAction $recordProgress): RedirectResponse
+    public function update(UpdateTaskRequest $request, Task $task): RedirectResponse
     {
         $data = $request->validated();
 
         $before = $task->getAttributes();
-        $previousParentId = $task->tarea_padre_id;
 
         if (array_key_exists('estado_id', $data) && (int) $data['estado_id'] !== (int) $task->estado_id) {
             $state = TaskState::findOrFail($data['estado_id']);
+
+            if (in_array($state->slug, self::DERIVED_STATE_SLUGS, true)) {
+                return redirect()
+                    ->back()
+                    ->withErrors(['estado_id' => 'Este estado se asigna automáticamente: las tareas se completan con evidencia y la actividad la aprueba el líder.'])
+                    ->withInput();
+            }
 
             $task->estado_id = $state->id;
 
@@ -376,12 +415,7 @@ class TaskController extends Controller
                 $task->estado = $enum;
             }
 
-            if ($state->slug === 'completada') {
-                $task->porcentaje_progreso = 100;
-                $task->completado_en ??= now();
-            } else {
-                $task->completado_en = null;
-            }
+            $task->completado_en = null;
 
             unset($data['estado_id']);
 
@@ -396,23 +430,11 @@ class TaskController extends Controller
         $task->fill($data);
         $task->save();
 
+        if ($task->tarea_padre_id === null && $task->wasChanged('asignado_a')) {
+            $task->subtareas()->update(['asignado_a' => $task->asignado_a]);
+        }
+
         ActivityLogger::recordUpdate($task, $before, "la tarea \"{$task->titulo}\"");
-
-        if ($task->state?->slug === 'completada' && $task->porcentaje_progreso < 100) {
-            $recordProgress->execute($task, 100, 'Marcada como completada.', $request->user());
-        }
-
-        if ($previousParentId !== $task->tarea_padre_id) {
-            if ($previousParentId !== null) {
-                $previousParent = Task::find($previousParentId);
-
-                if ($previousParent !== null) {
-                    TaskProgressRollup::recalculate($previousParent, $request->user());
-                }
-            }
-
-            TaskProgressRollup::recalculateAncestors($task, $request->user());
-        }
 
         return redirect()
             ->route($task->tarea_padre_id !== null ? 'tasks.show' : 'tasks.index', $task->tarea_padre_id ?? [])
@@ -454,6 +476,13 @@ class TaskController extends Controller
 
         $this->authorize('transitionTo', [$task, $state]);
 
+        if (in_array($state->slug, self::DERIVED_STATE_SLUGS, true)) {
+            return response()->json([
+                'message' => 'Este estado se asigna automáticamente.',
+                'errors' => ['status' => ['Las tareas se completan subiendo evidencia y la actividad pasa a revisión al llegar a 100 %; solo el líder la aprueba.']],
+            ], 422);
+        }
+
         if ($state->es_bloqueante && blank($validated['blocked_reason'] ?? null) && blank($task->motivo_bloqueo)) {
             return response()->json([
                 'message' => 'Mover a un estado de bloqueo requiere indicar el motivo.',
@@ -470,12 +499,7 @@ class TaskController extends Controller
             $task->estado = $enum;
         }
 
-        if ($state->slug === 'completada') {
-            $task->porcentaje_progreso = 100;
-            $task->completado_en ??= now();
-        } else {
-            $task->completado_en = null;
-        }
+        $task->completado_en = null;
 
         if (filled($validated['blocked_reason'] ?? null)) {
             $task->motivo_bloqueo = $validated['blocked_reason'];
@@ -492,8 +516,6 @@ class TaskController extends Controller
         ]);
 
         ActivityLogger::recordUpdate($task, $before, "la tarea \"{$task->titulo}\"");
-
-        TaskProgressRollup::recalculateAncestors($task, $request->user());
 
         return response()->json([
             'id' => $task->id,
@@ -514,30 +536,36 @@ class TaskController extends Controller
         if ($task->tieneSubtareas()) {
             return redirect()
                 ->back()
-                ->with('toast_error', 'No puedes eliminar una tarea con subtareas. Elimínalas o quítalas primero.');
+                ->with('toast_error', 'No puedes eliminar una actividad con tareas. Elimina primero sus tareas.');
         }
 
-        $parentId = $task->tarea_padre_id;
+        $parent = $task->tareaPadre;
+
+        if ($parent !== null) {
+            if (! $parent->admiteCambiosDeTareas()) {
+                return redirect()->back()->with('toast_error', 'No se pueden quitar tareas de una actividad en revisión o aprobada.');
+            }
+
+            if ($parent->subtareas()->count() <= 1) {
+                return redirect()->back()->with('toast_error', 'Una actividad debe conservar al menos una tarea.');
+            }
+        }
 
         ActivityLogger::record($task, 'deleted', "Eliminó la tarea \"{$task->titulo}\".");
 
         $task->delete();
 
-        if ($parentId !== null) {
-            $parent = Task::find($parentId);
-
-            if ($parent !== null) {
-                TaskProgressRollup::recalculate($parent, Auth::user());
-            }
+        if ($parent !== null) {
+            TaskProgressRollup::recalculate($parent->fresh(), Auth::user());
 
             return redirect()
-                ->route('tasks.show', $parentId)
-                ->with('status', 'Subtarea eliminada correctamente.');
+                ->route('tasks.show', $parent)
+                ->with('status', 'Tarea eliminada. El avance se recalculó.');
         }
 
         return redirect()
             ->route('tasks.index')
-            ->with('status', 'Tarea eliminada correctamente.');
+            ->with('status', 'Actividad eliminada correctamente.');
     }
 
     private function formOptions(): array

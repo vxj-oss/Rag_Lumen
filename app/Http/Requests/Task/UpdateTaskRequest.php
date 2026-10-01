@@ -3,7 +3,6 @@
 namespace App\Http\Requests\Task;
 
 use App\Models\ProjectMember;
-use App\Models\Task;
 use App\Models\TaskState;
 use App\Support\Enums\Priority;
 use Illuminate\Foundation\Http\FormRequest;
@@ -22,32 +21,6 @@ class UpdateTaskRequest extends FormRequest
         $task = $this->route('task');
 
         $rules = [
-            'tarea_padre_id' => [
-                'sometimes', 'nullable', 'integer', 'exists:tareas,id',
-                function (string $attribute, mixed $value, \Closure $fail) use ($task) {
-                    if ($value === null) {
-                        return;
-                    }
-
-                    if ((int) $value === $task->id) {
-                        $fail('Una tarea no puede ser su propia tarea padre.');
-
-                        return;
-                    }
-
-                    $parent = Task::find($value);
-
-                    if ($parent === null || (int) $parent->proyecto_id !== (int) $task->proyecto_id) {
-                        $fail('La tarea padre debe pertenecer al mismo proyecto.');
-
-                        return;
-                    }
-
-                    if ($parent->esDescendienteDe($task)) {
-                        $fail('No puedes crear una relación circular entre tarea y subtarea.');
-                    }
-                },
-            ],
             'asignado_a' => [
                 'nullable', 'integer', 'exists:empleados,id',
                 function (string $attribute, mixed $value, \Closure $fail) use ($task) {
@@ -64,8 +37,6 @@ class UpdateTaskRequest extends FormRequest
             'prioridad' => ['required', Rule::enum(Priority::class)],
             'fecha_inicio' => ['nullable', 'date'],
             'fecha_vencimiento' => ['nullable', 'date', 'after_or_equal:fecha_inicio'],
-            'horas_estimadas' => ['nullable', 'numeric', 'min:0'],
-            'horas_reales' => ['nullable', 'numeric', 'min:0'],
         ];
 
         if (! $this->user()->isPlainEmployee()) {

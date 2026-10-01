@@ -63,6 +63,32 @@ class TaskPolicy
         return true;
     }
 
+    /**
+     * Quién puede completar una tarea subiendo evidencia: el trabajador
+     * asignado (o el líder/admin/gerente con acceso a la tarea).
+     */
+    public function submitEvidence(User $user, Task $task): bool
+    {
+        return $task->tarea_padre_id !== null && $this->update($user, $task);
+    }
+
+    /**
+     * Quién puede aprobar o rechazar una actividad completa: solo el líder del
+     * proyecto o un administrador (no el gerente ni el trabajador asignado).
+     */
+    public function reviewEvidence(User $user, Task $task): bool
+    {
+        return $task->tarea_padre_id === null
+            && ($user->isAdmin() || $this->leadsProject($user, $task));
+    }
+
+    /** Agregar o quitar tareas de una actividad: líder/admin, mientras no esté en revisión ni aprobada. */
+    public function manageActivityTasks(User $user, Task $task): bool
+    {
+        return $task->admiteCambiosDeTareas()
+            && ($user->isAdmin() || $this->leadsProject($user, $task));
+    }
+
     public function delete(User $user, Task $task): bool
     {
         return $user->hasRole(RoleName::Administrator->value) || $this->leadsProject($user, $task);

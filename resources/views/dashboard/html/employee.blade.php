@@ -1,6 +1,6 @@
 <x-app-layout>
     <x-slot name="header">
-        <x-ui.page-header :title="__('Mis tareas')" :subtitle="__('Tu trabajo de hoy, en un vistazo')" :eyebrow="__('Mi día')">
+        <x-ui.page-header :title="__('Mis actividades')" :subtitle="__('Tu trabajo de hoy, en un vistazo')" :eyebrow="__('Mi día')">
             <x-slot name="actions">
                 <a href="{{ route('tasks.index', ['mine' => 1]) }}" class="inline-flex items-center gap-2 px-3 py-2 min-h-[44px] rounded-lg text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 transition">
                     {{ __('Ver en tablero') }}
@@ -55,7 +55,7 @@
                         </ul>
                     </div>
                 @empty
-                    <p class="text-sm text-gray-500 text-center py-8">{{ __('No tienes tareas asignadas.') }}</p>
+                    <p class="text-sm text-gray-500 text-center py-8">{{ __('No tienes actividades asignadas.') }}</p>
                 @endforelse
             </x-ui.card>
 
@@ -78,4 +78,34 @@
             </x-ui.card>
         </div>
     </div>
+
+    <script>
+        (function () {
+            let lastSignature = null;
+
+            async function poll() {
+                if (document.hidden) return;
+
+                try {
+                    const response = await fetch(@js(route('tasks.live-status')), {
+                        headers: { 'Accept': 'application/json' },
+                    });
+                    if (!response.ok) return;
+
+                    const data = await response.json();
+
+                    if (lastSignature === null) {
+                        lastSignature = data.signature;
+                        return;
+                    }
+
+                    if (data.signature !== lastSignature) {
+                        window.location.reload();
+                    }
+                } catch (e) {}
+            }
+
+            window.setInterval(poll, 15000);
+        })();
+    </script>
 </x-app-layout>

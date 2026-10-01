@@ -1,6 +1,6 @@
 <x-app-layout>
     <x-slot name="header">
-        <x-ui.page-header :title="__('Dashboard ejecutivo')" :subtitle="__('Panorama general de proyectos, tareas y equipo')">
+        <x-ui.page-header :title="__('Dashboard ejecutivo')" :subtitle="__('Panorama general de proyectos, actividades y equipo')">
             <x-slot name="actions">
                 <a href="{{ route('dashboard.export') }}" class="inline-flex items-center gap-2 px-3 py-2 min-h-[44px] rounded-lg text-sm font-medium text-gray-600 bg-white ring-1 ring-gray-300 hover:bg-gray-50 transition">
                     <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" /></svg>
@@ -25,11 +25,11 @@
             </div>
 
             <div>
-                <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">{{ __('Tareas y equipo') }}</h3>
+                <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">{{ __('Actividades y equipo') }}</h3>
                 <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-                    <x-ui.stat-card :label="__('Tareas pendientes')" :value="$summary['pending_tasks']" color="gray" />
-                    <x-ui.stat-card :label="__('Tareas atrasadas')" :value="$summary['overdue_tasks']" color="yellow" />
-                    <x-ui.stat-card :label="__('Tareas completadas')" :value="$summary['completed_tasks']" color="emerald" />
+                    <x-ui.stat-card :label="__('Actividades pendientes')" :value="$summary['pending_tasks']" color="gray" />
+                    <x-ui.stat-card :label="__('Actividades atrasadas')" :value="$summary['overdue_tasks']" color="yellow" />
+                    <x-ui.stat-card :label="__('Actividades completadas')" :value="$summary['completed_tasks']" color="emerald" />
                     <x-ui.stat-card :label="__('Empleados sobrecargados')" :value="$summary['overloaded_employees']" color="red" />
                     <x-ui.stat-card :label="__('Requieren atención')" :value="$summary['attention_projects']" color="blue" />
                 </div>
@@ -41,7 +41,7 @@
                     <div class="h-64"><canvas id="chart-projects-by-status"></canvas></div>
                 </x-ui.card>
                 <x-ui.card>
-                    <h3 class="font-semibold text-gray-800 mb-4">{{ __('Tareas por estado') }}</h3>
+                    <h3 class="font-semibold text-gray-800 mb-4">{{ __('Actividades por estado') }}</h3>
                     <div class="h-64"><canvas id="chart-tasks-by-status"></canvas></div>
                 </x-ui.card>
                 <x-ui.card>
@@ -53,7 +53,7 @@
                     <div class="h-64"><canvas id="chart-progress-by-project"></canvas></div>
                 </x-ui.card>
                 <x-ui.card>
-                    <h3 class="font-semibold text-gray-800 mb-4">{{ __('Rendimiento de empleados (tareas completadas)') }}</h3>
+                    <h3 class="font-semibold text-gray-800 mb-4">{{ __('Rendimiento de empleados (actividades completadas)') }}</h3>
                     <div class="h-64"><canvas id="chart-employee-performance"></canvas></div>
                 </x-ui.card>
                 <x-ui.card>

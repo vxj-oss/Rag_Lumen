@@ -124,16 +124,20 @@ class TaskBoardTest extends TestCase
         $project = Project::factory()->create(['codigo' => 'PRJ-9']);
         TaskState::seedDefaults($project->id);
         $initial = TaskState::where('proyecto_id', $project->id)->where('es_inicial', true)->firstOrFail();
+        $worker = Employee::factory()->create();
+        \App\Models\ProjectMember::create(['proyecto_id' => $project->id, 'empleado_id' => $worker->id, 'estado' => 'active']);
 
         $this->actingAs($admin)->post(route('tasks.store'), [
             'proyecto_id' => $project->id,
-            'titulo' => 'Tarea con código',
+            'titulo' => 'Actividad con código',
+            'asignado_a' => $worker->id,
             'estado_id' => $initial->id,
             'prioridad' => 'medium',
+            'tareas' => [['titulo' => 'Primera tarea']],
         ])->assertRedirect();
 
         $this->assertDatabaseHas('tareas', ['codigo' => 'PRJ-9-T1', 'proyecto_id' => $project->id]);
-        $this->assertSame(1, $project->refresh()->contador_tareas);
+        $this->assertSame(2, $project->refresh()->contador_tareas);
     }
 
     public function test_store_rejects_assignee_outside_project(): void
@@ -150,6 +154,7 @@ class TaskBoardTest extends TestCase
             'asignado_a' => $outsider->id,
             'estado_id' => $initial->id,
             'prioridad' => 'medium',
+            'tareas' => [['titulo' => 'Una tarea']],
         ]);
 
         $response->assertSessionHasErrors('asignado_a');
@@ -201,22 +206,6 @@ class TaskBoardTest extends TestCase
             'name' => 'X',
             'color' => 'gray',
         ])->assertForbidden();
-    }
-
-    public function test_dependency_must_belong_to_same_project(): void
-    {
-        $lead = $this->makeUser(RoleName::ProjectLead);
-        $project = Project::factory()->create(['empleado_responsable_id' => $lead->employee->id]);
-        TaskState::seedDefaults($project->id);
-        $other = Project::factory()->create();
-        TaskState::seedDefaults($other->id);
-
-        $task = Task::factory()->create(['proyecto_id' => $project->id]);
-        $foreign = Task::factory()->create(['proyecto_id' => $other->id]);
-
-        $this->actingAs($lead)
-            ->post(route('tasks.dependencies.store', $task), ['depends_on_task_id' => $foreign->id])
-            ->assertSessionHasErrors('depends_on_task_id');
     }
 
     public function test_board_columns_are_unique_by_slug(): void

@@ -9,17 +9,13 @@ use App\Models\User;
 use App\Support\Enums\TaskStatus;
 
 /**
- * Cuando una tarea tiene subtareas, su avance deja de registrarse a mano:
- * se calcula como el promedio (ponderado por horas estimadas) del avance
- * de sus subtareas directas, igual que el avance de un proyecto se calcula
- * a partir de sus tareas (ver ProjectMetricsService::realProgress).
+ * El avance de una actividad se calcula a partir de sus tareas: todas pesan
+ * lo mismo (100 / N; con 5 tareas, 20 % cada una). Al llegar a 100 % la
+ * actividad pasa a "En revisión"; solo el líder puede aprobarla
+ * (ver ReviewTaskEvidenceAction).
  */
 class TaskProgressRollup
 {
-    /**
-     * Recalcula la tarea padre de $task (si tiene una) y sigue subiendo
-     * por la cadena de ancestros mientras el porcentaje siga cambiando.
-     */
     public static function recalculateAncestors(Task $task, ?User $actor = null): void
     {
         $parent = $task->tareaPadre;
@@ -29,62 +25,51 @@ class TaskProgressRollup
         }
     }
 
-    /**
-     * Recalcula $node a partir de sus subtareas directas. Si el porcentaje
-     * cambió, sigue subiendo hacia su propio padre.
-     */
-    public static function recalculate(Task $node, ?User $actor = null): void
+    public static function recalculate(Task $activity, ?User $actor = null): void
     {
-        $children = $node->subtareas()->get();
+        if ($activity->estado === TaskStatus::Completed) {
+            return;
+        }
+
+        $children = $activity->subtareas()->get();
 
         if ($children->isEmpty()) {
             return;
         }
 
-        $totalWeight = $children->sum(fn (Task $t) => (float) ($t->horas_estimadas ?? 1));
+        $completed = $children->filter(fn (Task $t) => $t->estado === TaskStatus::Completed)->count();
+        $newPercentage = (int) round($completed / $children->count() * 100);
+        $previousPercentage = $activity->porcentaje_progreso;
 
-        $newPercentage = $totalWeight > 0
-            ? (int) round($children->sum(fn (Task $t) => $t->porcentaje_progreso * (float) ($t->horas_estimadas ?? 1)) / $totalWeight)
-            : (int) round((float) $children->avg('porcentaje_progreso'));
+        $newStatus = match (true) {
+            $newPercentage >= 100 => TaskStatus::Review,
+            $newPercentage > 0 => TaskStatus::InProgress,
+            default => TaskStatus::Pending,
+        };
 
-        $previousPercentage = $node->porcentaje_progreso;
-
-        if ($previousPercentage === $newPercentage) {
+        if ($previousPercentage === $newPercentage && $activity->estado === $newStatus) {
             return;
         }
 
-        TaskProgressUpdate::create([
-            'tarea_id' => $node->id,
-            'usuario_id' => $actor?->id,
-            'porcentaje_anterior' => $previousPercentage,
-            'porcentaje_nuevo' => $newPercentage,
-            'comentario' => 'Calculado automáticamente a partir del avance de sus subtareas.',
-        ]);
-
-        $node->porcentaje_progreso = $newPercentage;
-
-        $newStatus = null;
-
-        if ($newPercentage >= 100) {
-            $newStatus = TaskStatus::Completed;
-        } elseif (! in_array($node->estado, [TaskStatus::Review, TaskStatus::Blocked, TaskStatus::Cancelled], true)) {
-            $newStatus = $newPercentage > 0 ? TaskStatus::InProgress : TaskStatus::Pending;
+        if ($previousPercentage !== $newPercentage) {
+            TaskProgressUpdate::create([
+                'tarea_id' => $activity->id,
+                'usuario_id' => $actor?->id,
+                'porcentaje_anterior' => $previousPercentage,
+                'porcentaje_nuevo' => $newPercentage,
+                'comentario' => "Calculado automáticamente: {$completed} de {$children->count()} tareas completadas.",
+            ]);
         }
 
-        if ($newStatus !== null) {
-            $node->estado = $newStatus;
+        $activity->porcentaje_progreso = $newPercentage;
+        $activity->estado = $newStatus;
 
-            if ($state = TaskState::resolveForStatus($node->proyecto_id, $newStatus)) {
-                $node->estado_id = $state->id;
-            }
+        if ($state = TaskState::resolveForStatus($activity->proyecto_id, $newStatus)) {
+            $activity->estado_id = $state->id;
         }
 
-        $node->completado_en = $newPercentage >= 100 ? ($node->completado_en ?? now()) : null;
+        $activity->save();
 
-        $node->save();
-
-        ActivityLogger::record($node, 'progress_recorded', "Avance recalculado automáticamente a {$newPercentage}% a partir de sus subtareas.");
-
-        self::recalculateAncestors($node, $actor);
+        ActivityLogger::record($activity, 'progress_recorded', "Avance de la actividad: {$newPercentage}%.");
     }
 }

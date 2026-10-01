@@ -1,11 +1,11 @@
 <x-app-layout>
     <x-slot name="header">
-        <x-ui.page-header :title="__('Tablero de tareas')" :subtitle="__('Arrastra una tarjeta a una columna para cambiar su estado')" :eyebrow="__('Vista operativa')">
+        <x-ui.page-header :title="__('Tablero de actividades')" :subtitle="__('Arrastra una tarjeta a una columna para cambiar su estado')" :eyebrow="__('Vista operativa')">
             @can('create', \App\Models\Task::class)
                 <x-slot name="actions">
                     <x-ui.primary-button x-data @click="$dispatch('open-modal', 'create-task')" class="min-h-[44px]">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15" /></svg>
-                        {{ __('Nueva tarea') }}
+                        {{ __('Nueva actividad') }}
                     </x-ui.primary-button>
                 </x-slot>
             @endcan
@@ -19,14 +19,14 @@
                     <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-blue-400 to-blue-600"></div>
                     <div class="min-w-0 relative">
                         <p class="text-2xl font-extrabold text-gray-900 tabular-nums" x-text="kpis.open ?? '…'">…</p>
-                        <p class="text-xs text-gray-500">{{ __('Tareas abiertas') }}</p>
+                        <p class="text-xs text-gray-500">{{ __('Actividades abiertas') }}</p>
                     </div>
                 </div>
                 <div class="relative bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-3 flex items-center gap-3 overflow-hidden">
                     <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-yellow-400 to-yellow-500"></div>
                     <div class="min-w-0 relative">
                         <p class="text-2xl font-extrabold text-gray-900 tabular-nums" x-text="kpis.overdue ?? '…'">…</p>
-                        <p class="text-xs text-gray-500">{{ __('Tareas atrasadas') }}</p>
+                        <p class="text-xs text-gray-500">{{ __('Actividades atrasadas') }}</p>
                     </div>
                 </div>
                 <div class="relative bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-3 flex items-center gap-3 overflow-hidden">
@@ -89,7 +89,7 @@
                         <label class="inline-flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
                             <input type="checkbox" x-model="filters.mine" @change="fetchBoard()"
                                    class="rounded border-gray-300 text-emerald-600 shadow-sm focus:ring-emerald-500">
-                            {{ __('Solo mis tareas') }}
+                            {{ __('Solo mis actividades') }}
                         </label>
                     </div>
                 </div>
@@ -176,7 +176,7 @@
                                                 <div class="bg-emerald-500 h-1.5 rounded-full" :style="'width: ' + card.progress + '%'"></div>
                                             </div>
                                             <span class="text-[11px] text-gray-500 shrink-0 whitespace-nowrap"
-                                                  x-text="card.progress + '% · ' + (card.actual_hours ?? '—') + '/' + (card.estimated_hours ?? '—') + 'h'"></span>
+                                                  x-text="card.progress + '%'"></span>
                                         </div>
 
                                         <div x-show="card.blocking" class="text-[11px] font-bold text-red-700 bg-red-50 border border-red-200 rounded-lg px-2 py-1">
@@ -188,7 +188,7 @@
                                     </article>
                                 </template>
 
-                                <p x-show="cardsIn(col.slug, col.id).length === 0" class="flex-1 flex items-center justify-center text-xs text-gray-400">{{ __('Sin tareas') }}</p>
+                                <p x-show="cardsIn(col.slug, col.id).length === 0" class="flex-1 flex items-center justify-center text-xs text-gray-400">{{ __('Sin actividades') }}</p>
                             </div>
 
                             <div x-show="totalPages(col) > 1" class="flex items-center justify-between gap-2 px-3 py-2 border-t border-gray-200 bg-white rounded-b-xl shrink-0">
@@ -226,9 +226,11 @@
         </div>
 
         @can('create', \App\Models\Task::class)
-            <x-ui.form-modal name="create-task" :title="__('Nueva tarea')" :subtitle="__('Registra una nueva tarea en un proyecto')"
-                :action="route('tasks.store')" max-width="3xl" submit-label="{{ __('Crear tarea') }}">
-                <div class="space-y-3" x-data="taskCreateForm()" x-init="initCreateForm()">
+            <x-ui.form-modal name="create-task" :title="__('Nueva actividad')" :subtitle="__('Define la actividad, asígnala a un trabajador y detalla sus tareas')"
+                :action="route('tasks.store')" max-width="3xl" submit-label="{{ __('Crear actividad') }}">
+                <div class="space-y-4" x-data="taskCreateForm()" x-init="initCreateForm()">
+                    <input type="hidden" name="estado_id" x-model="estadoId">
+
                     <div>
                         <x-forms.input-label for="cf_project" :value="__('Proyecto')" />
                         <select id="cf_project" name="proyecto_id" x-model="projectId" @change="loadScope()" required
@@ -240,57 +242,35 @@
                         </select>
                         <x-forms.input-error :messages="$errors->get('proyecto_id')" class="mt-2" />
                     </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div>
-                            <x-forms.input-label for="cf_area" :value="__('Área')" />
-                            <select id="cf_area" name="area_id" x-model="areaId" @change="areaId = $event.target.value"
-                                class="mt-1 block w-full border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-md shadow-sm">
-                                <option value="">{{ __('Todas las del proyecto') }}</option>
-                                <template x-for="a in areas" :key="a.id"><option :value="a.id" x-text="a.name"></option></template>
-                            </select>
-                        </div>
-                        <div>
-                            <x-forms.input-label for="cf_assigned" :value="__('Empleado responsable')" />
-                            <select id="cf_assigned" name="asignado_a"
-                                class="mt-1 block w-full border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-md shadow-sm">
-                                <option value="">{{ __('— Sin asignar —') }}</option>
-                                <template x-for="e in filteredEmployees()" :key="e.id"><option :value="e.id" x-text="e.name"></option></template>
-                            </select>
-                            <x-forms.input-error :messages="$errors->get('asignado_a')" class="mt-2" />
-                        </div>
-                    </div>
                     <div>
                         <x-forms.input-label for="cf_title" :value="__('Título')" />
                         <x-forms.text-input id="cf_title" name="titulo" type="text" class="mt-1 block w-full" required />
                         <x-forms.input-error :messages="$errors->get('titulo')" class="mt-2" />
                     </div>
                     <div>
-                        <x-forms.input-label for="cf_description" :value="__('Descripción')" />
+                        <x-forms.input-label for="cf_description" :value="__('Descripción (opcional)')" />
                         <textarea id="cf_description" name="descripcion" rows="2"
                             class="mt-1 block w-full border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-md shadow-sm"></textarea>
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div>
+                            <x-forms.input-label for="cf_assigned" :value="__('Asignado a')" />
+                            <select id="cf_assigned" name="asignado_a" required
+                                class="mt-1 block w-full border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-md shadow-sm">
+                                <option value="">{{ __('— Selecciona un trabajador —') }}</option>
+                                <template x-for="e in employees" :key="e.id"><option :value="e.id" x-text="e.name"></option></template>
+                            </select>
+                            <x-forms.input-error :messages="$errors->get('asignado_a')" class="mt-2" />
+                        </div>
+                        <div>
                             <x-forms.input-label for="cf_priority" :value="__('Prioridad')" />
                             <select id="cf_priority" name="prioridad" class="mt-1 block w-full border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-md shadow-sm">
                                 @foreach ($priorities as $priority)
-                                    <option value="{{ $priority->value }}">{{ $priority->label() }}</option>
+                                    <option value="{{ $priority->value }}" {{ $priority === \App\Support\Enums\Priority::Medium ? 'selected' : '' }}>{{ $priority->label() }}</option>
                                 @endforeach
                             </select>
                         </div>
-                        <div>
-                            <x-forms.input-label for="cf_state" :value="__('Estado inicial')" />
-                            <select id="cf_state" name="estado_id" x-model="estadoId" :disabled="!projectId"
-                                class="mt-1 block w-full border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-md shadow-sm disabled:bg-gray-50 disabled:text-gray-400">
-                                <template x-if="!projectId"><option value="">{{ __('Selecciona un proyecto primero') }}</option></template>
-                                <template x-for="s in initialStates()" :key="s.id"><option :value="s.id" x-text="s.name"></option></template>
-                            </select>
-                            <x-forms.input-error :messages="$errors->get('estado_id')" class="mt-2" />
-                        </div>
-                        <div>
-                            <x-forms.input-label for="cf_estimated" :value="__('Horas estimadas')" />
-                            <x-forms.text-input id="cf_estimated" name="horas_estimadas" type="number" step="0.01" min="0" class="mt-1 block w-full" />
-                        </div>
+                        <div></div>
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
@@ -302,14 +282,30 @@
                             <x-forms.text-input id="cf_due" name="fecha_vencimiento" type="date" class="mt-1 block w-full" />
                         </div>
                     </div>
-                    <div>
-                        <x-forms.input-label for="cf_deps" :value="__('Dependencias (mismo proyecto)')" />
-                        <select id="cf_deps" name="dependency_ids[]" multiple size="3"
-                            class="mt-1 block w-full border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-md shadow-sm text-sm">
-                            <template x-for="t in projectTasks" :key="t.id"><option :value="t.id" x-text="t.code + ' · ' + t.title"></option></template>
-                        </select>
+
+                    <div class="pt-3 border-t border-gray-100 space-y-2">
+                        <div class="flex items-center justify-between">
+                            <x-forms.input-label :value="__('Tareas de la actividad')" />
+                            <button type="button" @click="tareas.push({ titulo: '', descripcion: '' })"
+                                class="text-xs font-medium text-emerald-600 hover:underline">{{ __('+ Agregar tarea') }}</button>
+                        </div>
+                        <p class="text-xs text-gray-400" x-text="tareas.length > 0 ? 'Cada tarea completada con evidencia suma ' + (Math.round(1000 / tareas.length) / 10) + ' % de avance.' : ''"></p>
+
+                        <template x-for="(fila, index) in tareas" :key="index">
+                            <div class="flex items-start gap-2 bg-gray-50 rounded-lg p-2">
+                                <div class="flex-1 space-y-2">
+                                    <input type="text" :name="'tareas[' + index + '][titulo]'" x-model="fila.titulo" required
+                                        placeholder="{{ __('Título de la tarea') }}"
+                                        class="block w-full border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-md shadow-sm text-sm">
+                                    <textarea :name="'tareas[' + index + '][descripcion]'" x-model="fila.descripcion" rows="2"
+                                        placeholder="{{ __('Descripción de lo que debe hacer el trabajador') }}"
+                                        class="block w-full border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-md shadow-sm text-sm"></textarea>
+                                </div>
+                                <button type="button" @click="tareas.splice(index, 1)" x-show="tareas.length > 1" class="text-gray-400 hover:text-red-600 shrink-0 p-2">{{ __('Quitar') }}</button>
+                            </div>
+                        </template>
+                        <x-forms.input-error :messages="$errors->get('tareas')" class="mt-2" />
                     </div>
-                    <p class="text-xs text-gray-400">{{ __('Las observaciones se registran como avances desde el detalle de la tarea.') }}</p>
                 </div>
             </x-ui.form-modal>
         @endcan
@@ -719,7 +715,7 @@
                         }
                     },
                     async deleteCard(card) {
-                        if (!confirm(@js(__('¿Eliminar esta tarea?')))) return;
+                        if (!confirm(@js(__('¿Eliminar esta actividad?')))) return;
                         try {
                             const token = document.querySelector('meta[name="csrf-token"]')?.content;
                             const res = await fetch(@js(route('tasks.destroy', ['task' => '__ID__'])).replace('__ID__', card.id), {
@@ -746,35 +742,24 @@
             function taskCreateForm() {
                 return {
                     projectId: '',
-                    areaId: '',
                     estadoId: '',
-                    areas: [],
                     employees: [],
                     states: [],
-                    projectTasks: [],
+                    tareas: [{ titulo: '', descripcion: '' }],
                     async initCreateForm() {},
                     async loadScope() {
-                        this.areaId = '';
                         this.estadoId = '';
-                        this.areas = [];
                         this.employees = [];
                         this.states = [];
-                        this.projectTasks = [];
                         if (!this.projectId) return;
                         try {
                             const res = await fetch(@js(route('projects.scope-data', ['project' => '__ID__'])).replace('__ID__', this.projectId), { headers: { 'Accept': 'application/json' } });
                             if (!res.ok) return;
                             const data = await res.json();
-                            this.areas = data.areas;
                             this.employees = data.employees;
                             this.states = data.states;
-                            this.projectTasks = data.tasks || [];
                             this.estadoId = this.initialStates()[0]?.id ?? '';
                         } catch (e) {}
-                    },
-                    filteredEmployees() {
-                        if (!this.areaId) return this.employees;
-                        return this.employees.filter((e) => String(e.area_id) === String(this.areaId));
                     },
                     initialStates() {
                         const initials = this.states.filter((s) => s.is_initial);

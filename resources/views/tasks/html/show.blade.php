@@ -21,6 +21,7 @@
 
             <div class="bg-white p-6 shadow-sm sm:rounded-lg space-y-4">
                 <div class="flex flex-wrap gap-2">
+                    <x-ui.badge color="gray">{{ __('Actividad') }}</x-ui.badge>
                     <x-ui.badge :color="$task->state?->color ?? $task->estado->color()">{{ $task->state?->nombre ?? $task->estado->label() }}</x-ui.badge>
                     <span class="text-xs text-gray-400 self-center font-mono">{{ $task->codigo ?? '#'.$task->id }}</span>
                     <x-ui.badge :color="$task->prioridad->color()">{{ __('Prioridad') }}: {{ $task->prioridad->label() }}</x-ui.badge>
@@ -61,10 +62,6 @@
                                 <dt class="text-gray-500">{{ __('Fecha límite') }}</dt>
                                 <dd class="text-gray-900 text-right">{{ $task->fecha_vencimiento?->format('d/m/Y') ?? '—' }}</dd>
                             </div>
-                            <div class="flex items-center justify-between gap-3">
-                                <dt class="text-gray-500">{{ __('Horas (estimadas / reales)') }}</dt>
-                                <dd class="text-gray-900 text-right">{{ $task->horas_estimadas ?? '—' }} / {{ $task->horas_reales ?? '—' }}</dd>
-                            </div>
                             <div class="pt-3 border-t border-gray-100">
                                 <dt class="text-gray-500 mb-1">{{ __('Avance') }}</dt>
                                 <dd class="text-gray-900">
@@ -79,185 +76,152 @@
                                 <dd class="text-sm text-red-700">{{ $task->motivo_bloqueo }}</dd>
                             </div>
                         @endif
-
-                        <div class="pt-3 border-t border-gray-100">
-                            @if ($task->tareaPadre)
-                                <p class="text-sm text-gray-500 mb-2">
-                                    {{ __('Tarea padre') }}:
-                                    <a href="{{ route('tasks.show', $task->tareaPadre) }}" class="text-emerald-600 hover:underline">{{ $task->tareaPadre->titulo }}</a>
-                                </p>
-                                @can('update', $task)
-                                    <form action="{{ route('tasks.update', $task) }}" method="POST">
-                                        @csrf
-                                        @method('PUT')
-                                        <input type="hidden" name="titulo" value="{{ $task->titulo }}">
-                                        <input type="hidden" name="prioridad" value="{{ $task->prioridad->value }}">
-                                        <input type="hidden" name="tarea_padre_id" value="">
-                                        <button type="submit" class="text-sm text-red-600 hover:underline">{{ __('Quitar de tarea padre') }}</button>
-                                    </form>
-                                @endcan
-                            @elseif ($task->tieneSubtareas())
-                                <p class="text-xs text-gray-400">{{ __('Esta tarea agrupa subtareas, así que no puede tener su propia tarea padre.') }}</p>
-                            @elseif ($availableAsParent->isNotEmpty())
-                                @can('update', $task)
-                                    <form action="{{ route('tasks.update', $task) }}" method="POST" class="space-y-2">
-                                        @csrf
-                                        @method('PUT')
-                                        <input type="hidden" name="titulo" value="{{ $task->titulo }}">
-                                        <input type="hidden" name="prioridad" value="{{ $task->prioridad->value }}">
-                                        <x-forms.input-label for="tarea_padre_id" :value="__('Convertir en subtarea de')" />
-                                        <div class="flex gap-2">
-                                            <x-forms.select id="tarea_padre_id" name="tarea_padre_id" class="mt-1 block w-full text-sm"
-                                                :options="['' => __('— Ninguna —')] + $availableAsParent->mapWithKeys(fn ($t) => [$t->id => $t->titulo])->toArray()" />
-                                            <x-ui.secondary-button type="submit" class="mt-1 shrink-0">{{ __('Guardar') }}</x-ui.secondary-button>
-                                        </div>
-                                        <x-forms.input-error :messages="$errors->get('tarea_padre_id')" class="mt-1" />
-                                    </form>
-                                @endcan
-                            @endif
-                        </div>
-                    </div>
-
-                    <div class="bg-white p-6 shadow-sm sm:rounded-lg space-y-4">
-                        <h3 class="font-semibold text-gray-800">{{ __('Depende de') }}</h3>
-
-                        <ul class="divide-y divide-gray-100">
-                            @forelse ($task->dependencies as $dependency)
-                                <li class="py-2 flex items-center justify-between text-sm gap-2">
-                                    <a href="{{ route('tasks.show', $dependency) }}" class="text-emerald-600 hover:underline truncate">{{ $dependency->titulo }}</a>
-                                    <div class="flex items-center gap-2 shrink-0">
-                                        <x-ui.badge :color="$dependency->state?->color ?? $dependency->estado->color()">{{ $dependency->state?->nombre ?? $dependency->estado->label() }}</x-ui.badge>
-                                        @can('update', $task)
-                                            <form action="{{ route('tasks.dependencies.destroy', [$task, $dependency]) }}" method="POST">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="text-red-600 hover:underline">{{ __('Quitar') }}</button>
-                                            </form>
-                                        @endcan
-                                    </div>
-                                </li>
-                            @empty
-                                <li class="py-2 text-sm text-gray-500">{{ __('Esta tarea no depende de ninguna otra.') }}</li>
-                            @endforelse
-                        </ul>
-
-                        @can('update', $task)
-                            @if ($availableForDependency->isNotEmpty())
-                                <form action="{{ route('tasks.dependencies.store', $task) }}" method="POST" class="space-y-3 pt-4 border-t border-gray-100">
-                                    @csrf
-                                    <div>
-                                        <x-forms.input-label for="depends_on_task_id" :value="__('Agregar dependencia')" />
-                                        <x-forms.select id="depends_on_task_id" name="depends_on_task_id" class="mt-1 block w-full"
-                                            :options="$availableForDependency->mapWithKeys(fn ($t) => [$t->id => $t->titulo])" />
-                                    </div>
-                                    <x-ui.primary-button type="submit">{{ __('Agregar') }}</x-ui.primary-button>
-                                </form>
-                                @error('depends_on_task_id') <p class="text-sm text-red-600">{{ $message }}</p> @enderror
-                            @endif
-                        @endcan
-
-                        @if ($task->dependents->isNotEmpty())
-                            <div class="pt-4 border-t border-gray-100">
-                                <h4 class="text-sm font-medium text-gray-500 mb-2">{{ __('Tareas que dependen de esta') }}</h4>
-                                <ul class="divide-y divide-gray-100">
-                                    @foreach ($task->dependents as $dependent)
-                                        <li class="py-2 flex items-center justify-between text-sm gap-2">
-                                            <a href="{{ route('tasks.show', $dependent) }}" class="text-emerald-600 hover:underline truncate">{{ $dependent->titulo }}</a>
-                                            <x-ui.badge :color="$dependent->state?->color ?? $dependent->estado->color()">{{ $dependent->state?->nombre ?? $dependent->estado->label() }}</x-ui.badge>
-                                        </li>
-                                    @endforeach
-                                </ul>
-                            </div>
-                        @endif
                     </div>
                 </div>
 
                 <div class="lg:col-span-2 space-y-6">
+                    @if ($task->motivo_rechazo && ! $task->enRevision() && ! $task->estaAprobada())
+                        <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                            <p class="text-sm font-semibold text-red-800">{{ __('Actividad rechazada: requiere corrección') }}</p>
+                            <p class="text-sm text-red-700 mt-1">{{ $task->motivo_rechazo }}</p>
+                            <p class="text-xs text-red-600 mt-2">{{ __('Corrige el trabajo y vuelve a completar cada tarea con su evidencia.') }}</p>
+                        </div>
+                    @endif
+
+                    @if ($task->enRevision())
+                        <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 space-y-3">
+                            <p class="text-sm text-amber-800">{{ __('Todas las tareas están completadas (100 %). La actividad está pendiente de revisión: revisa la evidencia de cada tarea y aprueba o rechaza.') }}</p>
+                            @can('reviewEvidence', $task)
+                                <div class="flex flex-wrap items-center gap-3">
+                                    <form action="{{ route('tasks.evidence.approve', $task) }}" method="POST">
+                                        @csrf
+                                        <x-ui.primary-button type="submit">{{ __('Aprobar actividad') }}</x-ui.primary-button>
+                                    </form>
+                                    <button type="button" x-data @click="$dispatch('open-modal', 'reject-evidence')" class="text-sm text-red-600 hover:underline font-medium">
+                                        {{ __('Rechazar actividad') }}
+                                    </button>
+                                </div>
+                            @endcan
+                        </div>
+                    @elseif ($task->estaAprobada())
+                        <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-4 text-sm text-emerald-800">
+                            {{ __('Actividad aprobada por el líder el :date.', ['date' => $task->completado_en?->format('d/m/Y H:i')]) }}
+                        </div>
+                    @endif
+
                     <div class="bg-white p-6 shadow-sm sm:rounded-lg space-y-4">
                         <div class="flex items-center justify-between">
-                            <h3 class="font-semibold text-gray-800">{{ __('Subtareas') }}</h3>
+                            <h3 class="font-semibold text-gray-800">{{ __('Tareas') }}</h3>
                             @if ($task->subtareas->isNotEmpty())
-                                <span class="text-xs text-gray-400">{{ __(':count subtareas · :percent% completado', ['count' => $task->subtareas->count(), 'percent' => $task->porcentaje_progreso]) }}</span>
+                                <span class="text-xs text-gray-400">{{ __(':done de :count completadas · :percent %', ['done' => $task->subtareas->where('estado', \App\Support\Enums\TaskStatus::Completed)->count(), 'count' => $task->subtareas->count(), 'percent' => $task->porcentaje_progreso]) }}</span>
                             @endif
                         </div>
 
-                        <ul class="divide-y divide-gray-100">
+                        @if ($task->subtareas->isNotEmpty())
+                            <p class="text-xs text-gray-500">{{ __('Cada tarea vale :each % de la actividad.', ['each' => round(100 / $task->subtareas->count(), 1)]) }}</p>
+                        @endif
+
+                        <ul class="space-y-4">
                             @forelse ($task->subtareas as $subtarea)
-                                <li class="py-3 text-sm">
-                                    <div class="flex items-center justify-between gap-3">
-                                        <a href="{{ route('tasks.show', $subtarea) }}" class="text-emerald-600 hover:underline truncate font-medium">{{ $subtarea->titulo }}</a>
-                                        <x-ui.badge :color="$subtarea->state?->color ?? $subtarea->estado->color()">{{ $subtarea->state?->nombre ?? $subtarea->estado->label() }}</x-ui.badge>
+                                @php $hecha = $subtarea->estado === \App\Support\Enums\TaskStatus::Completed; @endphp
+                                <li id="tarea-{{ $subtarea->id }}" class="border border-gray-100 rounded-lg p-4 text-sm space-y-3">
+                                    <div class="flex items-start justify-between gap-3">
+                                        <div class="min-w-0">
+                                            <p class="font-medium text-gray-900">{{ $subtarea->titulo }}</p>
+                                            @if ($subtarea->descripcion)
+                                                <p class="text-gray-600 mt-1">{{ $subtarea->descripcion }}</p>
+                                            @endif
+                                        </div>
+                                        <div class="flex items-center gap-2 shrink-0">
+                                            <x-ui.badge :color="$hecha ? 'green' : 'gray'">{{ $hecha ? __('Completada') : __('Pendiente') }}</x-ui.badge>
+                                            @can('manageActivityTasks', $task)
+                                                @if ($task->subtareas->count() > 1)
+                                                    <form action="{{ route('tasks.destroy', $subtarea) }}" method="POST" onsubmit="return confirm('{{ __('¿Quitar esta tarea?') }}')">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="text-xs text-gray-400 hover:text-red-600">{{ __('Quitar') }}</button>
+                                                    </form>
+                                                @endif
+                                            @endcan
+                                        </div>
                                     </div>
-                                    <div class="flex items-center gap-3 mt-1.5">
-                                        <div class="flex-1"><x-ui.progress-bar :value="$subtarea->porcentaje_progreso" /></div>
-                                        <span class="text-xs text-gray-400 shrink-0">{{ $subtarea->assignee?->fullName() ?? __('Sin asignar') }}</span>
-                                    </div>
+
+                                    @if ($subtarea->evidencias->isNotEmpty())
+                                        <ul class="divide-y divide-gray-100 border border-gray-100 rounded-lg">
+                                            @foreach ($subtarea->evidencias as $evidencia)
+                                                <li class="p-3 flex items-start justify-between gap-3">
+                                                    <div class="min-w-0">
+                                                        <span class="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">{{ $evidencia->esArchivo() ? __('Archivo / imagen') : __('Enlace') }}</span>
+                                                        @if ($evidencia->esArchivo())
+                                                            <a href="{{ route('tasks.evidence.download', [$subtarea, $evidencia]) }}" class="text-emerald-600 hover:underline font-medium truncate block">{{ $evidencia->nombre_archivo }}</a>
+                                                        @else
+                                                            <a href="{{ $evidencia->url }}" target="_blank" rel="noopener" class="text-emerald-600 hover:underline font-medium truncate block">{{ $evidencia->url }}</a>
+                                                        @endif
+                                                        @if ($evidencia->comentario)
+                                                            <p class="text-gray-600 mt-1">{{ $evidencia->comentario }}</p>
+                                                        @endif
+                                                    </div>
+                                                    <span class="text-xs text-gray-400 shrink-0 text-right">
+                                                        {{ $evidencia->user?->name ?? __('Sistema') }}<br>
+                                                        {{ $evidencia->created_at->format('d/m/Y H:i') }}
+                                                    </span>
+                                                </li>
+                                            @endforeach
+                                        </ul>
+                                    @endif
+
+                                    @if ($subtarea->puedeRecibirEvidencia())
+                                        @can('submitEvidence', $subtarea)
+                                            <form action="{{ route('tasks.evidence.store', $subtarea) }}" method="POST" enctype="multipart/form-data"
+                                                  class="space-y-3 pt-3 border-t border-gray-100" x-data="{ links: [''] }">
+                                                @csrf
+                                                <div>
+                                                    <x-forms.input-label :value="__('Archivos o imágenes')" />
+                                                    <input name="archivos[]" type="file" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.webp"
+                                                           class="mt-1 block w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:bg-emerald-50 file:text-emerald-700 file:text-sm file:font-medium hover:file:bg-emerald-100">
+                                                </div>
+                                                <div>
+                                                    <x-forms.input-label :value="__('Enlaces')" />
+                                                    <template x-for="(link, index) in links" :key="index">
+                                                        <div class="flex gap-2 mt-1">
+                                                            <input type="url" :name="'enlaces[' + index + ']'" x-model="links[index]" placeholder="https://drive.google.com/..."
+                                                                   class="block w-full border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-md shadow-sm text-sm">
+                                                            <button type="button" @click="links.splice(index, 1)" x-show="links.length > 1" class="text-gray-400 hover:text-red-600 shrink-0 px-2">{{ __('Quitar') }}</button>
+                                                        </div>
+                                                    </template>
+                                                    <button type="button" @click="links.push('')" class="text-xs text-emerald-600 hover:underline mt-2">{{ __('+ Agregar otro enlace') }}</button>
+                                                </div>
+                                                <div>
+                                                    <x-forms.input-label :value="__('Comentario (opcional)')" />
+                                                    <textarea name="comentario" rows="2" class="mt-1 block w-full border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-md shadow-sm text-sm"></textarea>
+                                                </div>
+                                                @if ((int) old('_evidence_task') === $subtarea->id)
+                                                    <x-forms.input-error :messages="array_merge($errors->get('archivos'), $errors->get('archivos.*'), $errors->get('enlaces.*'))" />
+                                                @endif
+                                                <input type="hidden" name="_evidence_task" value="{{ $subtarea->id }}">
+                                                <x-ui.primary-button type="submit">{{ __('Completar tarea con evidencia') }}</x-ui.primary-button>
+                                            </form>
+                                        @endcan
+                                    @endif
                                 </li>
                             @empty
-                                <li class="py-2 text-sm text-gray-500">{{ __('Esta tarea todavía no tiene subtareas.') }}</li>
+                                <li class="py-2 text-sm text-gray-500">{{ __('Esta actividad todavía no tiene tareas.') }}</li>
                             @endforelse
                         </ul>
 
-                        @can('create', \App\Models\Task::class)
-                            <form action="{{ route('tasks.store') }}" method="POST" class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4 border-t border-gray-100">
+                        @can('manageActivityTasks', $task)
+                            <form action="{{ route('tasks.children.store', $task) }}" method="POST" class="space-y-3 pt-4 border-t border-gray-100">
                                 @csrf
-                                <input type="hidden" name="proyecto_id" value="{{ $task->proyecto_id }}">
-                                <input type="hidden" name="tarea_padre_id" value="{{ $task->id }}">
-                                <div class="sm:col-span-2">
-                                    <x-forms.input-label for="sub_titulo" :value="__('Agregar subtarea')" />
-                                    <x-forms.text-input id="sub_titulo" name="titulo" type="text" class="mt-1 block w-full" required
-                                        placeholder="{{ __('Título de la subtarea') }}" />
-                                    <x-forms.input-error :messages="$errors->get('titulo')" class="mt-1" />
-                                </div>
-                                <div>
-                                    <x-forms.input-label for="sub_asignado" :value="__('Asignado a')" />
-                                    <x-forms.select id="sub_asignado" name="asignado_a" class="mt-1 block w-full"
-                                        :options="['' => __('— Sin asignar —')] + $employees->mapWithKeys(fn ($e) => [$e->id => $e->fullName()])->toArray()" />
-                                </div>
-                                <div>
-                                    <x-forms.input-label for="sub_prioridad" :value="__('Prioridad')" />
-                                    <x-forms.select id="sub_prioridad" name="prioridad" class="mt-1 block w-full"
-                                        :options="collect($priorities)->mapWithKeys(fn ($case) => [$case->value => $case->label()])"
-                                        :selected="\App\Support\Enums\Priority::Medium->value" />
-                                </div>
-                                <input type="hidden" name="estado_id" value="{{ $projectStates->firstWhere('es_inicial', true)?->id ?? $projectStates->first()?->id }}">
-                                <div class="sm:col-span-2">
-                                    <x-ui.primary-button type="submit">{{ __('Agregar subtarea') }}</x-ui.primary-button>
-                                </div>
+                                <x-forms.input-label for="sub_titulo" :value="__('Agregar tarea')" />
+                                <x-forms.text-input id="sub_titulo" name="titulo" type="text" class="block w-full" required
+                                    placeholder="{{ __('Título de la tarea') }}" />
+                                <x-forms.input-error :messages="$errors->get('titulo')" class="mt-1" />
+                                <textarea name="descripcion" rows="2" placeholder="{{ __('Descripción de lo que debe hacer el trabajador') }}"
+                                    class="block w-full border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-md shadow-sm text-sm"></textarea>
+                                <x-ui.primary-button type="submit">{{ __('Agregar tarea') }}</x-ui.primary-button>
                             </form>
                         @endcan
                     </div>
-
-                    @can('update', $task)
-                        @if ($task->tieneSubtareas())
-                            <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-4 text-sm text-emerald-800">
-                                {{ __('El avance de esta tarea se calcula automáticamente a partir de sus :count subtareas.', ['count' => $task->subtareas->count()]) }}
-                            </div>
-                        @else
-                            <div class="bg-white p-6 shadow-sm sm:rounded-lg space-y-4">
-                                <h3 class="font-semibold text-gray-800">{{ __('Registrar avance') }}</h3>
-
-                                <form action="{{ route('tasks.progress.store', $task) }}" method="POST" class="space-y-4">
-                                    @csrf
-                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                        <div>
-                                            <x-forms.input-label for="new_percentage" :value="__('Nuevo porcentaje de avance')" />
-                                            <x-forms.text-input id="new_percentage" name="new_percentage" type="number" min="0" max="100" class="mt-1 block w-full"
-                                                value="{{ $task->porcentaje_progreso }}" required />
-                                            <x-forms.input-error :messages="$errors->get('new_percentage')" class="mt-2" />
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <x-forms.input-label for="comment" :value="__('Comentario')" />
-                                        <textarea id="comment" name="comment" rows="2" placeholder="{{ __('ej. Se terminó desktop y tablet. Falta adaptación mobile.') }}"
-                                            class="mt-1 block w-full border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-md shadow-sm"></textarea>
-                                        <x-forms.input-error :messages="$errors->get('comment')" class="mt-2" />
-                                    </div>
-                                    <x-ui.primary-button type="submit">{{ __('Registrar') }}</x-ui.primary-button>
-                                </form>
-                            </div>
-                        @endif
-                    @endcan
 
                     <div class="bg-white p-6 shadow-sm sm:rounded-lg space-y-4">
                         <h3 class="font-semibold text-gray-800">{{ __('Historial de avances') }}</h3>
@@ -306,13 +270,29 @@
     </div>
 
     @can('update', $task)
-        <x-ui.form-modal name="edit-task" :title="__('Editar tarea')" :subtitle="$task->project?->nombre ?? __('Proyecto archivado')"
+        <x-ui.form-modal name="edit-task" :title="$task->esActividad() ? __('Editar actividad') : __('Editar tarea')" :subtitle="$task->project?->nombre ?? __('Proyecto archivado')"
             :action="route('tasks.update', $task)" method="PUT" max-width="3xl">
             @include('tasks.html.partials.form')
         </x-ui.form-modal>
 
-        @if ($errors->any())
+        @if ($errors->any() && ! $errors->has('motivo'))
             <div x-data x-init="$dispatch('open-modal', 'edit-task')"></div>
+        @endif
+    @endcan
+
+    @can('reviewEvidence', $task)
+        <x-ui.form-modal name="reject-evidence" :title="__('Rechazar actividad')" :subtitle="$task->titulo"
+            :action="route('tasks.evidence.reject', $task)" submit-label="{{ __('Rechazar') }}">
+            <div>
+                <x-forms.input-label for="motivo" :value="__('Motivo del rechazo (el trabajador deberá corregir y volver a presentar)')" />
+                <textarea id="motivo" name="motivo" rows="3" required
+                    class="mt-1 block w-full border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-md shadow-sm">{{ old('motivo') }}</textarea>
+                <x-forms.input-error :messages="$errors->get('motivo')" class="mt-2" />
+            </div>
+        </x-ui.form-modal>
+
+        @if ($errors->has('motivo'))
+            <div x-data x-init="$dispatch('open-modal', 'reject-evidence')"></div>
         @endif
     @endcan
 

@@ -46,11 +46,11 @@
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $document->uploader?->name ?? '—' }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
                                         <div class="flex items-center justify-end gap-3">
-                                            @if ($document->estado->value === 'failed')
+                                            @if (in_array($document->estado->value, ['failed', 'pending'], true))
                                                 @can('update', $document)
                                                     <form action="{{ route('rag-documents.retry', $document) }}" method="POST">
                                                         @csrf
-                                                        <button type="submit" class="text-emerald-600 hover:text-emerald-800 font-medium transition">{{ __('Reintentar') }}</button>
+                                                        <button type="submit" class="text-emerald-600 hover:text-emerald-800 font-medium transition">{{ $document->estado->value === 'pending' ? __('Procesar') : __('Reintentar') }}</button>
                                                     </form>
                                                 @endcan
                                             @endif
@@ -97,11 +97,11 @@
                                 </div>
                             </dl>
                             <div class="flex items-center gap-4 pt-1 text-sm border-t border-gray-100 mt-1 pt-3">
-                                @if ($document->estado->value === 'failed')
+                                @if (in_array($document->estado->value, ['failed', 'pending'], true))
                                     @can('update', $document)
                                         <form action="{{ route('rag-documents.retry', $document) }}" method="POST">
                                             @csrf
-                                            <button type="submit" class="text-emerald-600 hover:text-emerald-800 font-medium min-h-[44px]">{{ __('Reintentar') }}</button>
+                                            <button type="submit" class="text-emerald-600 hover:text-emerald-800 font-medium min-h-[44px]">{{ $document->estado->value === 'pending' ? __('Procesar') : __('Reintentar') }}</button>
                                         </form>
                                     @endcan
                                 @endif

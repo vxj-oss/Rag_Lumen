@@ -66,7 +66,7 @@
     </div>
 </div>
 
-<h4 class="text-xs font-semibold text-emerald-700 uppercase tracking-wider -mb-2 pt-1">{{ __('Fechas y horas') }}</h4>
+<h4 class="text-xs font-semibold text-emerald-700 uppercase tracking-wider -mb-2 pt-1">{{ __('Fechas') }}</h4>
 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
     <div>
         <x-forms.input-label for="fecha_inicio" :value="__('Fecha de inicio')" />
@@ -80,24 +80,12 @@
             :value="old('fecha_vencimiento', $task?->fecha_vencimiento?->format('Y-m-d'))" />
         <x-forms.input-error :messages="$errors->get('fecha_vencimiento')" class="mt-2" />
     </div>
-    <div>
-        <x-forms.input-label for="horas_estimadas" :value="__('Horas estimadas')" />
-        <x-forms.text-input id="horas_estimadas" name="horas_estimadas" type="number" step="0.01" min="0" class="mt-1 block w-full"
-            :value="old('horas_estimadas', $task?->horas_estimadas)" />
-        <x-forms.input-error :messages="$errors->get('horas_estimadas')" class="mt-2" />
-    </div>
-    <div>
-        <x-forms.input-label for="horas_reales" :value="__('Horas reales')" />
-        <x-forms.text-input id="horas_reales" name="horas_reales" type="number" step="0.01" min="0" class="mt-1 block w-full"
-            :value="old('horas_reales', $task?->horas_reales)" />
-        <x-forms.input-error :messages="$errors->get('horas_reales')" class="mt-2" />
-    </div>
 </div>
 
 @isset($task)
     <div class="flex items-center gap-2 bg-emerald-50 rounded-lg px-3 py-2">
         <x-ui.progress-bar :value="$task->porcentaje_progreso" />
-        <p class="text-xs text-emerald-700">{{ __('El avance se actualiza desde "Registrar avance" en el detalle de la tarea.') }}</p>
+        <p class="text-xs text-emerald-700">{{ __('El avance se calcula solo: cada tarea completada con evidencia suma su parte, y al llegar a 100 % el líder revisa la actividad.') }}</p>
     </div>
 @endisset
 

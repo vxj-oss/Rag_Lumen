@@ -70,7 +70,7 @@ class TaskTransitionTest extends TestCase
         $this->assertSame('en-revision', $task->refresh()->state->slug);
     }
 
-    public function test_lead_can_complete_task_of_own_project(): void
+    public function test_task_cannot_be_dragged_directly_to_completed_even_by_a_lead(): void
     {
         $lead = $this->makeUser(RoleName::ProjectLead);
         $project = $this->projectWithStates($lead->employee->id);
@@ -81,7 +81,32 @@ class TaskTransitionTest extends TestCase
 
         $this->actingAs($lead)
             ->patchJson(route('tasks.status.update', $task), ['status_id' => $this->stateId($project, 'completada')])
-            ->assertOk();
+            ->assertStatus(422);
+
+        $this->assertSame('en-revision', $task->refresh()->state->slug);
+    }
+
+    public function test_lead_can_complete_task_via_evidence_approval(): void
+    {
+        $lead = $this->makeUser(RoleName::ProjectLead);
+        $project = $this->projectWithStates($lead->employee->id);
+        $activity = Task::factory()->create([
+            'proyecto_id' => $project->id,
+            'asignado_a' => $lead->employee->id,
+            'estado_id' => $this->stateId($project, 'pendiente'),
+            'estado' => 'pending',
+        ]);
+        $task = Task::factory()->create([
+            'proyecto_id' => $project->id,
+            'tarea_padre_id' => $activity->id,
+            'asignado_a' => $lead->employee->id,
+            'estado_id' => $this->stateId($project, 'pendiente'),
+            'estado' => 'pending',
+        ]);
+
+        $this->actingAs($lead)
+            ->post(route('tasks.evidence.store', $task), ['enlaces' => ['https://drive.google.com/evidence']])
+            ->assertRedirect();
 
         $task->refresh();
         $this->assertSame('completada', $task->state->slug);
@@ -107,7 +132,7 @@ class TaskTransitionTest extends TestCase
         $this->assertSame('en-revision', $task->refresh()->state->slug);
     }
 
-    public function test_manager_can_complete_task_in_scope(): void
+    public function test_manager_cannot_approve_evidence_or_complete_task_directly(): void
     {
         $manager = $this->makeUser(RoleName::Manager);
         $area = Area::create(['nombre' => 'Estrategia']);
@@ -121,9 +146,13 @@ class TaskTransitionTest extends TestCase
 
         $this->actingAs($manager)
             ->patchJson(route('tasks.status.update', $task), ['status_id' => $this->stateId($project, 'completada')])
-            ->assertOk();
+            ->assertStatus(422);
 
-        $this->assertSame('completada', $task->refresh()->state->slug);
+        $this->actingAs($manager)
+            ->post(route('tasks.evidence.approve', $task))
+            ->assertForbidden();
+
+        $this->assertSame('en-revision', $task->refresh()->state->slug);
     }
 
     public function test_form_update_rejects_employee_completion(): void

@@ -5,7 +5,7 @@
         $navItems[] = ['label' => 'Proyectos', 'route' => 'projects.index', 'pattern' => 'projects.*', 'icon' => 'folder'];
     }
     if (auth()->user()->can('viewAny', \App\Models\Task::class)) {
-        $navItems[] = ['label' => 'Tareas', 'route' => 'tasks.index', 'pattern' => 'tasks.*', 'icon' => 'check'];
+        $navItems[] = ['label' => 'Actividades', 'route' => 'tasks.index', 'pattern' => 'tasks.*', 'icon' => 'check'];
     }
     if (auth()->user()->can('viewAny', \App\Models\Employee::class)) {
         $navItems[] = ['label' => 'Empleados', 'route' => 'employees.index', 'pattern' => 'employees.*', 'icon' => 'users'];

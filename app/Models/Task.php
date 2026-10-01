@@ -8,14 +8,13 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable([
     'proyecto_id', 'tarea_padre_id', 'asignado_a', 'creado_por', 'codigo', 'titulo', 'descripcion', 'estado', 'estado_id',
     'prioridad', 'fecha_inicio', 'fecha_vencimiento', 'completado_en', 'porcentaje_progreso', 'horas_estimadas',
-    'horas_reales', 'motivo_bloqueo',
+    'horas_reales', 'motivo_bloqueo', 'motivo_rechazo',
 ])]
 class Task extends Model
 {
@@ -128,16 +127,6 @@ class Task extends Model
         return ! $this->isFinalState();
     }
 
-    public function dependencies(): BelongsToMany
-    {
-        return $this->belongsToMany(Task::class, 'dependencias_tarea', 'tarea_id', 'depende_de_tarea_id');
-    }
-
-    public function dependents(): BelongsToMany
-    {
-        return $this->belongsToMany(Task::class, 'dependencias_tarea', 'depende_de_tarea_id', 'tarea_id');
-    }
-
     public function progressUpdates(): HasMany
     {
         return $this->hasMany(TaskProgressUpdate::class, 'tarea_id')->latest('created_at');
@@ -161,42 +150,47 @@ class Task extends Model
     }
 
     /**
-     * True si $other es ancestro de esta tarea (subiendo por tarea_padre_id),
-     * usado para evitar ciclos al asignar una tarea padre.
+     * En la terminología visible para el usuario, una tarea sin padre es una
+     * "Actividad" y una tarea con padre es una "Tarea" dentro de esa actividad.
+     * Esto es solo una distinción de presentación: la tabla y las relaciones
+     * siguen llamándose igual.
      */
-    public function esDescendienteDe(Task $other): bool
+    public function esActividad(): bool
     {
-        $current = $this->tareaPadre;
-
-        while ($current !== null) {
-            if ($current->id === $other->id) {
-                return true;
-            }
-
-            $current = $current->tareaPadre;
-        }
-
-        return false;
+        return $this->tarea_padre_id === null;
     }
 
-    public function dependsOnTransitively(Task $other, array $visited = []): bool
+    public function evidencias(): HasMany
     {
-        if (in_array($this->id, $visited, true)) {
+        return $this->hasMany(TaskEvidence::class, 'tarea_id')->latest('created_at');
+    }
+
+    /**
+     * Una tarea (hija de una actividad) se completa subiendo evidencia, siempre
+     * que no esté completada y su actividad no esté en revisión o aprobada.
+     */
+    public function puedeRecibirEvidencia(): bool
+    {
+        if ($this->tarea_padre_id === null || $this->estado === TaskStatus::Completed) {
             return false;
         }
 
-        $visited[] = $this->id;
+        $actividad = $this->tareaPadre;
 
-        foreach ($this->dependencies as $dependency) {
-            if ($dependency->id === $other->id) {
-                return true;
-            }
+        return $actividad !== null
+            && in_array($actividad->estado, [TaskStatus::Pending, TaskStatus::InProgress], true);
+    }
 
-            if ($dependency->dependsOnTransitively($other, $visited)) {
-                return true;
-            }
-        }
+    /** Actividad con todas sus tareas completadas, esperando al líder. */
+    public function enRevision(): bool
+    {
+        return $this->tarea_padre_id === null && $this->estado === TaskStatus::Review;
+    }
 
-        return false;
+    /** La lista de tareas solo se puede modificar mientras la actividad no está en revisión ni aprobada. */
+    public function admiteCambiosDeTareas(): bool
+    {
+        return $this->tarea_padre_id === null
+            && in_array($this->estado, [TaskStatus::Pending, TaskStatus::InProgress, TaskStatus::Blocked], true);
     }
 }

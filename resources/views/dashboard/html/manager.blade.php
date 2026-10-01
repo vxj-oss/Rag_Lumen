@@ -17,7 +17,7 @@
                 <x-ui.stat-card :label="__('En riesgo')" :value="$summary['at_risk_projects']" color="red" />
                 <x-ui.stat-card :label="__('Atrasados')" :value="$summary['delayed_projects']" color="yellow" />
                 <x-ui.stat-card :label="__('Requieren atención')" :value="$summary['attention_projects']" color="blue" />
-                <x-ui.stat-card :label="__('Tareas atrasadas')" :value="$summary['overdue_tasks']" color="yellow" />
+                <x-ui.stat-card :label="__('Actividades atrasadas')" :value="$summary['overdue_tasks']" color="yellow" />
                 <x-ui.stat-card :label="__('Presupuesto total')" :value="number_format($summary['total_budget'], 0)" color="emerald" />
             </div>
 
@@ -83,14 +83,14 @@
             <x-ui.card padding="p-0">
                 <div class="p-6 pb-0">
                     <h3 class="font-semibold text-gray-800">{{ __('Rendimiento por área') }}</h3>
-                    <p class="text-xs text-gray-500 mt-0.5">{{ __('Sobre tareas de proyectos en tu alcance.') }}</p>
+                    <p class="text-xs text-gray-500 mt-0.5">{{ __('Sobre actividades de proyectos en tu alcance.') }}</p>
                 </div>
                 <div class="overflow-x-auto mt-4">
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
                                 <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ __('Área') }}</th>
-                                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ __('Tareas') }}</th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ __('Actividades') }}</th>
                                 <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ __('Completadas') }}</th>
                                 <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ __('Activas') }}</th>
                                 <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ __('Atrasadas') }}</th>

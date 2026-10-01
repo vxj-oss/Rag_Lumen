@@ -8,7 +8,6 @@ use App\Models\Employee;
 use App\Models\Project;
 use App\Models\ProjectMember;
 use App\Models\Task;
-use App\Models\TaskDependency;
 use App\Models\TaskProgressUpdate;
 use App\Models\TaskState;
 use App\Models\User;
@@ -242,8 +241,6 @@ class DemoDataSeeder extends Seeder
             'start_date' => $now->copy()->addDays(5)->toDateString(), 'due_date' => $now->copy()->addDays(18)->toDateString(),
             'progress_percentage' => 0, 'estimated_hours' => 10,
         ]);
-        $this->dependsOn($t2, $t1);
-        $this->dependsOn($t4, $t2);
 
         // --- Tareas WEB-002 (proyecto en riesgo) ---
         $w1 = $this->task($website, 'Levantamiento de requerimientos y sitemap', $allEmployees['elena.vargas@example.com']->id, $admin->id, [
@@ -273,10 +270,6 @@ class DemoDataSeeder extends Seeder
             'start_date' => $now->copy()->toDateString(), 'due_date' => $now->copy()->addDays(4)->toDateString(),
             'progress_percentage' => 0, 'estimated_hours' => 12,
         ]);
-        $this->dependsOn($w2, $w1);
-        $this->dependsOn($w3, $w1);
-        $this->dependsOn($w4, $w2);
-        $this->dependsOn($w5, $w4);
 
         // --- Tareas SEO-003 (completado) ---
         $s1 = $this->task($seo, 'Auditoría técnica del sitio', $allEmployees['bruno.diaz@example.com']->id, $admin->id, [
@@ -297,7 +290,6 @@ class DemoDataSeeder extends Seeder
             'progress_percentage' => 100, 'estimated_hours' => 15, 'actual_hours' => 14,
             'completed_at' => $now->copy()->subDays(16),
         ]);
-        $this->dependsOn($s2, $s1);
 
         // --- Tareas BRD-004 (en revisión) ---
         $b1 = $this->task($branding, 'Propuestas de logotipo (3 rutas)', $allEmployees['carla.ruiz@example.com']->id, $admin->id, [
@@ -310,7 +302,6 @@ class DemoDataSeeder extends Seeder
             'start_date' => $now->copy()->subDays(8)->toDateString(), 'due_date' => $now->copy()->addDays(14)->toDateString(),
             'progress_percentage' => 35, 'estimated_hours' => 18,
         ]);
-        $this->dependsOn($b2, $b1);
 
         // --- Tareas ADV-005 (planificación) ---
         $this->task($ads, 'Brief y objetivos de campaña', $allEmployees['felipe.mora@example.com']->id, $admin->id, [
@@ -503,18 +494,6 @@ class DemoDataSeeder extends Seeder
             'cancelled' => 'cancelada',
             default => 'pendiente',
         };
-    }
-
-    private function dependsOn(Task $task, Task $dependsOn): void
-    {
-        if ($task->id === $dependsOn->id) {
-            return;
-        }
-
-        TaskDependency::firstOrCreate([
-            'tarea_id' => $task->id,
-            'depende_de_tarea_id' => $dependsOn->id,
-        ]);
     }
 
     /**
