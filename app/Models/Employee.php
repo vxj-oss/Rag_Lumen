@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Storage;
 #[Fillable([
     'usuario_id', 'nombres', 'apellidos', 'documento_identidad', 'correo', 'telefono',
     'cargo', 'especialidad', 'area_id', 'estado', 'fecha_contratacion', 'firma_path',
+    'normativa_version_aceptada', 'normativa_tdr_id', 'normativa_aceptada_en',
 ])]
 class Employee extends Model
 {
@@ -29,7 +30,27 @@ class Employee extends Model
             'especialidad' => EmployeeSpecialty::class,
             'estado' => EmployeeStatus::class,
             'fecha_contratacion' => 'date',
+            'normativa_aceptada_en' => 'datetime',
         ];
+    }
+
+    public function tdrAceptado(): BelongsTo
+    {
+        return $this->belongsTo(TerminosReferencia::class, 'normativa_tdr_id');
+    }
+
+    /** TDR que corresponde al perfil del colaborador según su especialidad (null si no hay uno único). */
+    public function tdrSugerido(): ?TerminosReferencia
+    {
+        $area = $this->especialidad?->tdrArea();
+
+        return $area === null ? null : TerminosReferencia::porArea($area);
+    }
+
+    /** ¿Aceptó la versión vigente de este TDR? */
+    public function aceptoTdr(TerminosReferencia $tdr): bool
+    {
+        return $this->normativa_tdr_id === $tdr->id && $this->normativa_version_aceptada === $tdr->version;
     }
 
     public function user(): BelongsTo

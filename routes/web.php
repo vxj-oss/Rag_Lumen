@@ -13,7 +13,9 @@ use App\Http\Controllers\Web\ProjectMemberController;
 use App\Http\Controllers\Web\RagDocumentController;
 use App\Http\Controllers\Web\RagQueryController;
 use App\Http\Controllers\Web\SecurityPolicyController;
+use App\Http\Controllers\Web\NormativaController;
 use App\Http\Controllers\Web\TaskController;
+use App\Http\Controllers\Web\WorkspaceController;
 use App\Http\Controllers\Web\TaskEvidenceController;
 use App\Http\Controllers\Web\TaskStatusController;
 use Illuminate\Support\Facades\Route;
@@ -44,10 +46,22 @@ Route::middleware(['auth', 'throttle:web'])->group(function () {
     Route::get('employees/export', [EmployeeController::class, 'exportCsv'])->name('employees.export')->middleware('throttle:exports');
     Route::resource('employees', EmployeeController::class)->except(['create', 'edit']);
     Route::get('employees/{employee}/firma', [EmployeeController::class, 'firma'])->name('employees.firma');
+    Route::get('employees/{employee}/normativa', [EmployeeController::class, 'normativa'])->name('employees.normativa')->middleware('throttle:exports');
+    Route::post('employees/{employee}/normativa/aceptar', [EmployeeController::class, 'aceptarNormativa'])->name('employees.normativa.aceptar');
     Route::get('employees/{employee}/contract', [EmployeeController::class, 'contract'])->name('employees.contract')->middleware('throttle:exports');
     Route::post('employees/{employee}/breach-notice', [EmployeeController::class, 'breachNotice'])->name('employees.breach-notice')->middleware('throttle:exports');
 
+    Route::get('espacios', [WorkspaceController::class, 'index'])->name('workspaces.index');
+    Route::get('espacios/{area}', [WorkspaceController::class, 'show'])->whereIn('area', ['software', 'web', 'marketing'])->name('workspaces.show');
+
+    Route::get('normativa', [NormativaController::class, 'index'])->name('normativa.index');
+
     Route::middleware('role:administrator')->group(function () {
+        Route::put('normativa/tdr/{tdr}', [NormativaController::class, 'updateTdr'])->name('normativa.tdr.update');
+        Route::post('normativa/faltas', [NormativaController::class, 'storeFalta'])->name('normativa.faltas.store');
+        Route::put('normativa/faltas/{falta}', [NormativaController::class, 'updateFalta'])->name('normativa.faltas.update');
+        Route::delete('normativa/faltas/{falta}', [NormativaController::class, 'destroyFalta'])->name('normativa.faltas.destroy');
+
         Route::get('configuracion/firma-empresa', [CompanySignatureController::class, 'edit'])->name('settings.company-signature.edit');
         Route::post('configuracion/firma-empresa', [CompanySignatureController::class, 'update'])->name('settings.company-signature.update');
         Route::delete('configuracion/firma-empresa', [CompanySignatureController::class, 'destroy'])->name('settings.company-signature.destroy');

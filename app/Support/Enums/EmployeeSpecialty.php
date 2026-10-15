@@ -15,6 +15,20 @@ enum EmployeeSpecialty: string
     case ProjectManager = 'project_manager';
     case Other = 'other';
 
+    /**
+     * Área del TDR que corresponde a la especialidad. Null = no hay un área
+     * única (p. ej. Project Manager u Otro): se elige el TDR al generarlo.
+     */
+    public function tdrArea(): ?string
+    {
+        return match ($this) {
+            self::Backend, self::FullStack => 'software',
+            self::Frontend, self::UxUi => 'web',
+            self::Marketing, self::Seo, self::Advertising, self::GraphicDesign => 'marketing',
+            self::ProjectManager, self::Other => null,
+        };
+    }
+
     public function label(): string
     {
         return match ($this) {

@@ -45,10 +45,11 @@ class CompanySignature
 
     public static function store(\Illuminate\Http\UploadedFile $file): void
     {
+        $limpia = SignatureCleaner::clean($file->get());
+
         self::delete();
 
-        $extension = strtolower($file->getClientOriginalExtension());
-        $file->storeAs(self::DIRECTORY, 'gerente-general.'.$extension, self::DISK);
+        Storage::disk(self::DISK)->put(self::DIRECTORY.'/gerente-general.png', $limpia);
     }
 
     public static function delete(): void

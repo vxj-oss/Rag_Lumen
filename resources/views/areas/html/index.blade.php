@@ -16,24 +16,24 @@
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
             <x-ui.card padding="p-0">
                 <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
+                    <table class="min-w-full divide-y divide-slate-200">
+                        <thead class="bg-slate-50">
                             <tr>
-                                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ __('Nombre') }}</th>
-                                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ __('Descripción') }}</th>
-                                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ __('Empleados') }}</th>
-                                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ __('Proyectos') }}</th>
-                                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ __('Estado') }}</th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{{ __('Nombre') }}</th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{{ __('Descripción') }}</th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{{ __('Empleados') }}</th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{{ __('Proyectos') }}</th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{{ __('Estado') }}</th>
                                 <th class="px-6 py-3"></th>
                             </tr>
                         </thead>
-                        <tbody class="bg-white divide-y divide-gray-100">
+                        <tbody class="bg-white divide-y divide-slate-100">
                             @forelse ($areas as $area)
                                 <tr class="hover:bg-emerald-50/40 transition">
-                                    <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ $area->nombre }}</td>
-                                    <td class="px-6 py-4 text-sm text-gray-500">{{ $area->descripcion ?? '—' }}</td>
-                                    <td class="px-6 py-4 text-sm text-gray-500">{{ $area->employees_count }}</td>
-                                    <td class="px-6 py-4 text-sm text-gray-500">{{ $area->projects_count }}</td>
+                                    <td class="px-6 py-4 text-sm font-medium text-slate-900">{{ $area->nombre }}</td>
+                                    <td class="px-6 py-4 text-sm text-slate-500">{{ $area->descripcion ?? '—' }}</td>
+                                    <td class="px-6 py-4 text-sm text-slate-500">{{ $area->employees_count }}</td>
+                                    <td class="px-6 py-4 text-sm text-slate-500">{{ $area->projects_count }}</td>
                                     <td class="px-6 py-4">
                                         <x-ui.badge :color="$area->activa ? 'green' : 'gray'">
                                             {{ $area->activa ? __('Activa') : __('Inactiva') }}
@@ -63,7 +63,7 @@
                                 @endcan
                             @empty
                                 <tr>
-                                    <td colspan="6" class="px-6 py-16 text-center text-sm text-gray-500">{{ __('Todavía no hay áreas registradas.') }}</td>
+                                    <td colspan="6" class="px-6 py-16 text-center text-sm text-slate-500">{{ __('Todavía no hay áreas registradas.') }}</td>
                                 </tr>
                             @endforelse
                         </tbody>

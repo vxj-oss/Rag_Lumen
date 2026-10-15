@@ -2,7 +2,7 @@
     <x-slot name="header">
         <x-ui.page-header :title="__('Clientes')" :subtitle="__('Empresas que contratan proyectos')">
             <x-slot name="actions">
-                <a href="{{ route('clients.export') }}" class="inline-flex items-center gap-2 px-3 py-2 min-h-[44px] rounded-lg text-sm font-medium text-gray-600 bg-white ring-1 ring-gray-300 hover:bg-gray-50 transition">
+                <a href="{{ route('clients.export') }}" class="inline-flex items-center gap-2 px-3 py-2 min-h-[44px] rounded-xl text-sm font-medium text-slate-600 bg-white ring-1 ring-slate-300 hover:bg-slate-50 transition">
                     <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" /></svg>
                     <span class="hidden sm:inline">{{ __('Exportar CSV') }}</span>
                 </a>
@@ -21,13 +21,13 @@
             <x-ui.card padding="p-4">
                 <form method="GET" action="{{ route('clients.index') }}" class="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
                     <div class="sm:col-span-2">
-                        <label class="block text-xs font-medium text-gray-500 mb-1">{{ __('Buscar') }}</label>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">{{ __('Buscar') }}</label>
                         <input type="text" name="search" value="{{ $filters['search'] ?? '' }}" placeholder="{{ __('Razón social, RUC o contacto...') }}"
-                               class="w-full border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-md shadow-sm text-sm">
+                               class="w-full border-slate-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/15 transition rounded-xl shadow-sm text-sm">
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-gray-500 mb-1">{{ __('Sector') }}</label>
-                        <select name="sector" class="w-full border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-md shadow-sm text-sm">
+                        <label class="block text-xs font-medium text-slate-500 mb-1">{{ __('Sector') }}</label>
+                        <select name="sector" class="w-full border-slate-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/15 transition rounded-xl shadow-sm text-sm">
                             <option value="">{{ __('Todos') }}</option>
                             @foreach ($sectors as $sector)
                                 <option value="{{ $sector }}" {{ ($filters['sector'] ?? '') === $sector ? 'selected' : '' }}>{{ $sector }}</option>
@@ -35,17 +35,17 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-gray-500 mb-1">{{ __('Estado') }}</label>
-                        <select name="status" class="w-full border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-md shadow-sm text-sm">
+                        <label class="block text-xs font-medium text-slate-500 mb-1">{{ __('Estado') }}</label>
+                        <select name="status" class="w-full border-slate-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/15 transition rounded-xl shadow-sm text-sm">
                             <option value="">{{ __('Todos') }}</option>
                             <option value="active" {{ ($filters['status'] ?? '') === 'active' ? 'selected' : '' }}>{{ __('Activo') }}</option>
                             <option value="inactive" {{ ($filters['status'] ?? '') === 'inactive' ? 'selected' : '' }}>{{ __('Inactivo') }}</option>
                         </select>
                     </div>
                     <div class="sm:col-span-4 flex items-center gap-3">
-                        <button type="submit" class="px-3 py-2 rounded-lg text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-700 transition">{{ __('Filtrar') }}</button>
+                        <button type="submit" class="px-3 py-2 rounded-xl text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-700 transition">{{ __('Filtrar') }}</button>
                         @if (array_filter($filters ?? []))
-                            <a href="{{ route('clients.index') }}" class="text-sm text-gray-500 hover:text-gray-700">{{ __('Limpiar filtros') }}</a>
+                            <a href="{{ route('clients.index') }}" class="text-sm text-slate-500 hover:text-slate-700">{{ __('Limpiar filtros') }}</a>
                         @endif
                     </div>
                 </form>
@@ -53,34 +53,34 @@
 
             <x-ui.card padding="p-0">
                 <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
+                    <table class="min-w-full divide-y divide-slate-200">
+                        <thead class="bg-slate-50">
                             <tr>
-                                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ __('Razón social') }}</th>
-                                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ __('Contacto') }}</th>
-                                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ __('Sector') }}</th>
-                                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ __('Proyectos') }}</th>
-                                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ __('Estado') }}</th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{{ __('Razón social') }}</th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{{ __('Contacto') }}</th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{{ __('Sector') }}</th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{{ __('Proyectos') }}</th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{{ __('Estado') }}</th>
                                 <th class="px-6 py-3"></th>
                             </tr>
                         </thead>
-                        <tbody class="bg-white divide-y divide-gray-100">
+                        <tbody class="bg-white divide-y divide-slate-100">
                             @forelse ($clients as $client)
                                 <tr class="hover:bg-emerald-50/40 transition">
                                     <td class="px-6 py-4">
                                         <a href="{{ route('clients.show', $client) }}" class="text-sm font-medium text-emerald-600 hover:underline">{{ $client->nombre }}</a>
                                         @if ($client->identificacion_fiscal)
-                                            <div class="text-xs text-gray-400">{{ $client->identificacion_fiscal }}</div>
+                                            <div class="text-xs text-slate-400">{{ $client->identificacion_fiscal }}</div>
                                         @endif
                                     </td>
-                                    <td class="px-6 py-4 text-sm text-gray-500">
+                                    <td class="px-6 py-4 text-sm text-slate-500">
                                         {{ $client->nombre_contacto ?? '—' }}
                                         @if ($client->correo)
-                                            <div class="text-xs text-gray-400">{{ $client->correo }}</div>
+                                            <div class="text-xs text-slate-400">{{ $client->correo }}</div>
                                         @endif
                                     </td>
-                                    <td class="px-6 py-4 text-sm text-gray-500">{{ $client->sector ?? '—' }}</td>
-                                    <td class="px-6 py-4 text-sm text-gray-500">{{ $client->projects_count }}</td>
+                                    <td class="px-6 py-4 text-sm text-slate-500">{{ $client->sector ?? '—' }}</td>
+                                    <td class="px-6 py-4 text-sm text-slate-500">{{ $client->projects_count }}</td>
                                     <td class="px-6 py-4">
                                         <x-ui.badge :color="$client->estado === 'active' ? 'green' : 'gray'">
                                             {{ $client->estado === 'active' ? __('Activo') : __('Inactivo') }}
@@ -110,7 +110,7 @@
                                 @endcan
                             @empty
                                 <tr>
-                                    <td colspan="6" class="px-6 py-16 text-center text-sm text-gray-500">{{ __('Todavía no hay clientes registrados.') }}</td>
+                                    <td colspan="6" class="px-6 py-16 text-center text-sm text-slate-500">{{ __('Todavía no hay clientes registrados.') }}</td>
                                 </tr>
                             @endforelse
                         </tbody>

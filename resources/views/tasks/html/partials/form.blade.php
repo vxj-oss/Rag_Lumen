@@ -16,7 +16,7 @@
 @else
     <div>
         <x-forms.input-label :value="__('Proyecto')" />
-        <p class="mt-1 text-sm text-gray-700">{{ $task->project?->nombre ?? __('Proyecto archivado') }}</p>
+        <p class="mt-1 text-sm text-slate-700">{{ $task->project?->nombre ?? __('Proyecto archivado') }}</p>
     </div>
 @endunless
 
@@ -30,7 +30,7 @@
 <div>
     <x-forms.input-label for="descripcion" :value="__('Descripción')" />
     <textarea id="descripcion" name="descripcion" rows="2"
-        class="mt-1 block w-full border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-md shadow-sm">{{ old('descripcion', $task?->descripcion) }}</textarea>
+        class="mt-1 block w-full border-slate-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/15 transition rounded-xl shadow-sm">{{ old('descripcion', $task?->descripcion) }}</textarea>
     <x-forms.input-error :messages="$errors->get('descripcion')" class="mt-2" />
 </div>
 
@@ -54,7 +54,7 @@
             <div class="mt-1">
                 <x-ui.badge :color="$task?->state?->color ?? 'gray'">{{ $task?->state?->nombre ?? '—' }}</x-ui.badge>
             </div>
-            <p class="text-xs text-gray-400 mt-1">{{ __('El estado avanza automáticamente según el avance registrado.') }}</p>
+            <p class="text-xs text-slate-400 mt-1">{{ __('El estado avanza automáticamente según el avance registrado.') }}</p>
         @endif
     </div>
     <div>
@@ -83,7 +83,7 @@
 </div>
 
 @isset($task)
-    <div class="flex items-center gap-2 bg-emerald-50 rounded-lg px-3 py-2">
+    <div class="flex items-center gap-2 bg-emerald-50 rounded-xl px-3 py-2">
         <x-ui.progress-bar :value="$task->porcentaje_progreso" />
         <p class="text-xs text-emerald-700">{{ __('El avance se calcula solo: cada tarea completada con evidencia suma su parte, y al llegar a 100 % el líder revisa la actividad.') }}</p>
     </div>
@@ -93,12 +93,12 @@
     <div>
         <x-forms.input-label for="motivo_bloqueo" :value="__('Motivo de bloqueo (si aplica)')" />
         <textarea id="motivo_bloqueo" name="motivo_bloqueo" rows="2"
-            class="mt-1 block w-full border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-md shadow-sm">{{ old('motivo_bloqueo', $task?->motivo_bloqueo) }}</textarea>
+            class="mt-1 block w-full border-slate-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/15 transition rounded-xl shadow-sm">{{ old('motivo_bloqueo', $task?->motivo_bloqueo) }}</textarea>
         <x-forms.input-error :messages="$errors->get('motivo_bloqueo')" class="mt-2" />
     </div>
 @elseif ($task?->motivo_bloqueo)
     <div>
         <x-forms.input-label :value="__('Motivo de bloqueo')" />
-        <p class="mt-1 text-sm text-gray-700">{{ $task->motivo_bloqueo }}</p>
+        <p class="mt-1 text-sm text-slate-700">{{ $task->motivo_bloqueo }}</p>
     </div>
 @endif

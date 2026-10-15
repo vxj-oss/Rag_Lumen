@@ -187,6 +187,12 @@ class Task extends Model
         return $this->tarea_padre_id === null && $this->estado === TaskStatus::Review;
     }
 
+    /** Actividad aprobada por el líder tras la revisión. */
+    public function estaAprobada(): bool
+    {
+        return $this->tarea_padre_id === null && $this->estado === TaskStatus::Completed;
+    }
+
     /** La lista de tareas solo se puede modificar mientras la actividad no está en revisión ni aprobada. */
     public function admiteCambiosDeTareas(): bool
     {

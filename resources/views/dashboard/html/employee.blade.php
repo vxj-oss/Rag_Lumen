@@ -2,10 +2,10 @@
     <x-slot name="header">
         <x-ui.page-header :title="__('Mis actividades')" :subtitle="__('Tu trabajo de hoy, en un vistazo')" :eyebrow="__('Mi día')">
             <x-slot name="actions">
-                <a href="{{ route('tasks.index', ['mine' => 1]) }}" class="inline-flex items-center gap-2 px-3 py-2 min-h-[44px] rounded-lg text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 transition">
+                <a href="{{ route('tasks.index', ['mine' => 1]) }}" class="inline-flex items-center gap-2 px-3 py-2 min-h-[44px] rounded-xl text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-500 hover:shadow-glow hover:-translate-y-0.5 transition">
                     {{ __('Ver en tablero') }}
                 </a>
-                <a href="{{ route('dashboard.export') }}" class="inline-flex items-center gap-2 px-3 py-2 min-h-[44px] rounded-lg text-sm font-medium text-gray-600 bg-white ring-1 ring-gray-300 hover:bg-gray-50 transition">
+                <a href="{{ route('dashboard.export') }}" class="inline-flex items-center gap-2 px-3 py-2 min-h-[44px] rounded-xl text-sm font-medium text-slate-600 bg-white ring-1 ring-slate-300 hover:bg-slate-50 transition">
                     <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" /></svg>
                     <span class="hidden sm:inline">{{ __('Exportar PDF') }}</span>
                 </a>
@@ -26,17 +26,17 @@
             <x-ui.card padding="p-6 space-y-6">
                 @forelse ($byState as $stateName => $tasks)
                     <div>
-                        <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                        <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
                             {{ $stateName }} ({{ $tasks->count() }})
                         </h3>
-                        <ul class="divide-y divide-gray-100 rounded-xl ring-1 ring-gray-100">
+                        <ul class="divide-y divide-slate-100 rounded-xl ring-1 ring-slate-100">
                             @foreach ($tasks as $task)
                                 <li class="px-4 py-3 flex items-center gap-3">
                                     <div class="flex-1 min-w-0">
-                                        <a href="{{ route('tasks.show', $task) }}" class="text-sm font-medium text-gray-900 hover:text-emerald-700 truncate block">
+                                        <a href="{{ route('tasks.show', $task) }}" class="text-sm font-medium text-slate-900 hover:text-emerald-700 truncate block">
                                             {{ $task->codigo }} · {{ $task->titulo }}
                                         </a>
-                                        <p class="text-xs text-gray-400">
+                                        <p class="text-xs text-slate-400">
                                             {{ $task->project?->nombre ?? __('Proyecto archivado') }}
                                             @if ($task->fecha_vencimiento)
                                                 · {{ __('vence') }} {{ $task->fecha_vencimiento->format('d/m/Y') }}
@@ -55,24 +55,24 @@
                         </ul>
                     </div>
                 @empty
-                    <p class="text-sm text-gray-500 text-center py-8">{{ __('No tienes actividades asignadas.') }}</p>
+                    <p class="text-sm text-slate-500 text-center py-8">{{ __('No tienes actividades asignadas.') }}</p>
                 @endforelse
             </x-ui.card>
 
             <x-ui.card padding="p-6 space-y-3">
-                <h3 class="font-semibold text-gray-800">{{ __('Próximos vencimientos') }}</h3>
-                <ul class="divide-y divide-gray-100">
+                <h3 class="font-semibold text-slate-800">{{ __('Próximos vencimientos') }}</h3>
+                <ul class="divide-y divide-slate-100">
                     @forelse ($upcoming as $task)
                         <li class="py-2 flex items-center justify-between text-sm">
-                            <a href="{{ route('tasks.show', $task) }}" class="text-gray-800 hover:text-emerald-700 font-medium truncate">
+                            <a href="{{ route('tasks.show', $task) }}" class="text-slate-800 hover:text-emerald-700 font-medium truncate">
                                 {{ $task->titulo }}
                             </a>
-                            <span class="{{ $task->isOverdue() ? 'text-red-600 font-semibold' : 'text-gray-500' }} text-xs whitespace-nowrap ml-3">
+                            <span class="{{ $task->isOverdue() ? 'text-red-600 font-semibold' : 'text-slate-500' }} text-xs whitespace-nowrap ml-3">
                                 {{ $task->fecha_vencimiento->format('d/m/Y') }}
                             </span>
                         </li>
                     @empty
-                        <li class="py-2 text-sm text-gray-500">{{ __('Nada por vencer.') }}</li>
+                        <li class="py-2 text-sm text-slate-500">{{ __('Nada por vencer.') }}</li>
                     @endforelse
                 </ul>
             </x-ui.card>

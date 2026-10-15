@@ -6,6 +6,24 @@
     display: none !important;
 }
 
+/* ---------- Base ---------- */
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    background-color: #f6f8fb;
+    background-image:
+        radial-gradient(60rem 30rem at 100% -10%, rgb(16 185 129 / 0.07), transparent 60%),
+        radial-gradient(50rem 28rem at -10% 110%, rgb(20 184 166 / 0.06), transparent 60%);
+    background-attachment: fixed;
+    -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+    background: rgb(16 185 129 / 0.2);
+}
+
 ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
@@ -34,6 +52,63 @@
  */
 main {
     animation: fade-in-up .35s ease-out;
+}
+
+/* ---------- Componentes de diseño reutilizables ---------- */
+@layer components {
+    /* Entrada escalonada: <div class="stagger"> con hijos que aparecen en cascada. */
+    .stagger > * {
+        animation: fade-in-up .45s cubic-bezier(.2, .8, .2, 1) both;
+    }
+    .stagger > *:nth-child(1) { animation-delay: .02s; }
+    .stagger > *:nth-child(2) { animation-delay: .07s; }
+    .stagger > *:nth-child(3) { animation-delay: .12s; }
+    .stagger > *:nth-child(4) { animation-delay: .17s; }
+    .stagger > *:nth-child(5) { animation-delay: .22s; }
+    .stagger > *:nth-child(6) { animation-delay: .27s; }
+    .stagger > *:nth-child(n+7) { animation-delay: .32s; }
+
+    /* Tarjeta interactiva: se eleva y resalta el borde al pasar el cursor. */
+    .lift {
+        transition: transform .25s cubic-bezier(.2, .8, .2, 1), box-shadow .25s ease, border-color .25s ease;
+    }
+    .lift:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 14px 30px -12px rgb(15 23 42 / 0.18);
+        border-color: rgb(16 185 129 / 0.35);
+    }
+
+    /* Subrayado deslizante para pestañas. */
+    .tab-pill {
+        position: relative;
+        transition: color .2s ease, background-color .2s ease, box-shadow .2s ease;
+    }
+
+    /* Brillo suave para elementos de carga. */
+    .shimmer {
+        background: linear-gradient(90deg, #eef2f7 25%, #f8fafc 37%, #eef2f7 63%);
+        background-size: 400% 100%;
+        animation: shimmer 1.4s ease infinite;
+    }
+
+    /* Anillo de progreso (SVG): el trazo se anima al cargar. */
+    .ring-progress circle.ring-value {
+        transition: stroke-dashoffset .9s cubic-bezier(.2, .8, .2, 1);
+    }
+}
+
+@keyframes shimmer {
+    0% { background-position: 100% 50%; }
+    100% { background-position: 0 50%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+        scroll-behavior: auto !important;
+    }
 }
 
 /* Evita el zoom automático de iOS al enfocar campos (mínimo 16px en móvil). */
@@ -66,5 +141,25 @@ main {
 
     .modal-compact-form p {
         font-size: 0.75rem;
+    }
+}
+
+/* ---------- Contenido fluido cuando el menú está oculto ---------- */
+main .max-w-7xl,
+main .max-w-6xl,
+header .max-w-7xl {
+    transition: max-width .45s cubic-bezier(.2, .8, .2, 1);
+}
+
+@media (min-width: 1024px) {
+    html.sidebar-collapsed main .max-w-7xl,
+    html.sidebar-collapsed main .max-w-6xl,
+    html.sidebar-collapsed header .max-w-7xl {
+        max-width: 112rem;
+    }
+
+    /* Evita el salto de ancho antes de que Alpine arranque. */
+    html.sidebar-collapsed aside.lg\:sticky {
+        width: 4.75rem;
     }
 }

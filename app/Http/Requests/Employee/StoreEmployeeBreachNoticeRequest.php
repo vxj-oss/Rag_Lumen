@@ -15,6 +15,7 @@ class StoreEmployeeBreachNoticeRequest extends FormRequest
     {
         return [
             'fecha_hechos' => ['required', 'date'],
+            'falta_id' => ['nullable', 'integer', 'exists:faltas,id'],
             'hechos' => ['required', 'string', 'max:3000'],
             'clausula_infringida' => ['nullable', 'string', 'max:255'],
             'monto' => ['nullable', 'numeric', 'min:0', 'max:999999.99'],

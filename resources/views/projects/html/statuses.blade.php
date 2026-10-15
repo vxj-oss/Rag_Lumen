@@ -20,21 +20,21 @@
             <x-ui.card padding="p-0">
                 @php
                     $dots = [
-                        'gray' => 'bg-gray-400', 'blue' => 'bg-blue-500', 'indigo' => 'bg-indigo-500',
+                        'gray' => 'bg-slate-400', 'blue' => 'bg-blue-500', 'indigo' => 'bg-indigo-500',
                         'green' => 'bg-emerald-500', 'yellow' => 'bg-yellow-400', 'red' => 'bg-red-500',
                         'orange' => 'bg-orange-500', 'amber' => 'bg-amber-400',
                     ];
                 @endphp
-                <ul class="divide-y divide-gray-100">
+                <ul class="divide-y divide-slate-100">
                     @forelse ($states as $index => $state)
                         <li class="p-4 flex items-center gap-3">
-                            <span class="w-3 h-3 rounded-full shrink-0 {{ $dots[$state->color] ?? 'bg-gray-400' }}"></span>
+                            <span class="w-3 h-3 rounded-full shrink-0 {{ $dots[$state->color] ?? 'bg-slate-400' }}"></span>
                             <div class="flex-1 min-w-0">
-                                <p class="text-sm font-medium text-gray-900">
+                                <p class="text-sm font-medium text-slate-900">
                                     {{ $index + 1 }}. {{ $state->nombre }}
-                                    <span class="text-xs text-gray-400 font-mono">{{ $state->slug }}</span>
+                                    <span class="text-xs text-slate-400 font-mono">{{ $state->slug }}</span>
                                 </p>
-                                <p class="text-xs text-gray-500 mt-0.5">
+                                <p class="text-xs text-slate-500 mt-0.5">
                                     @if ($state->es_inicial) {{ __('Inicial') }} · @endif
                                     @if ($state->es_final) {{ __('Final') }} · @endif
                                     @if ($state->es_bloqueante) {{ __('Bloqueo') }} · @endif
@@ -47,7 +47,7 @@
                                     <form action="{{ route('projects.statuses.reorder', $project) }}" method="POST" class="inline">
                                         @csrf
                                         <input type="hidden" name="ordered_ids" value="">
-                                        <button type="submit" class="move-up p-1.5 rounded-lg text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 transition" title="{{ __('Subir') }}"
+                                        <button type="submit" class="move-up p-1.5 rounded-xl text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition" title="{{ __('Subir') }}"
                                             data-order='@js($states->pluck("id"))' data-pos="{{ $index }}">↑</button>
                                     </form>
                                 @endif
@@ -76,27 +76,27 @@
                                         :selected="old('color', $state->color)" />
                                 </div>
                                 <div class="flex flex-wrap gap-4">
-                                    <label class="inline-flex items-center gap-2 text-sm text-gray-700">
-                                        <input type="checkbox" name="is_initial" value="1" {{ old('is_initial', $state->es_inicial) ? 'checked' : '' }} class="rounded border-gray-300 text-emerald-600 shadow-sm focus:ring-emerald-500">
+                                    <label class="inline-flex items-center gap-2 text-sm text-slate-700">
+                                        <input type="checkbox" name="is_initial" value="1" {{ old('is_initial', $state->es_inicial) ? 'checked' : '' }} class="rounded border-slate-300 text-emerald-600 shadow-sm focus:ring-emerald-500">
                                         {{ __('Es inicial') }}
                                     </label>
-                                    <label class="inline-flex items-center gap-2 text-sm text-gray-700">
-                                        <input type="checkbox" name="is_final" value="1" {{ old('is_final', $state->es_final) ? 'checked' : '' }} class="rounded border-gray-300 text-emerald-600 shadow-sm focus:ring-emerald-500">
+                                    <label class="inline-flex items-center gap-2 text-sm text-slate-700">
+                                        <input type="checkbox" name="is_final" value="1" {{ old('is_final', $state->es_final) ? 'checked' : '' }} class="rounded border-slate-300 text-emerald-600 shadow-sm focus:ring-emerald-500">
                                         {{ __('Es final') }}
                                     </label>
-                                    <label class="inline-flex items-center gap-2 text-sm text-gray-700">
-                                        <input type="checkbox" name="is_blocking" value="1" {{ old('is_blocking', $state->es_bloqueante) ? 'checked' : '' }} class="rounded border-gray-300 text-emerald-600 shadow-sm focus:ring-emerald-500">
+                                    <label class="inline-flex items-center gap-2 text-sm text-slate-700">
+                                        <input type="checkbox" name="is_blocking" value="1" {{ old('is_blocking', $state->es_bloqueante) ? 'checked' : '' }} class="rounded border-slate-300 text-emerald-600 shadow-sm focus:ring-emerald-500">
                                         {{ __('Es bloqueo') }}
                                     </label>
-                                    <label class="inline-flex items-center gap-2 text-sm text-gray-700">
-                                        <input type="checkbox" name="active" value="1" {{ old('active', $state->activo) ? 'checked' : '' }} class="rounded border-gray-300 text-emerald-600 shadow-sm focus:ring-emerald-500">
+                                    <label class="inline-flex items-center gap-2 text-sm text-slate-700">
+                                        <input type="checkbox" name="active" value="1" {{ old('active', $state->activo) ? 'checked' : '' }} class="rounded border-slate-300 text-emerald-600 shadow-sm focus:ring-emerald-500">
                                         {{ __('Activo') }}
                                     </label>
                                 </div>
                             </div>
                         </x-ui.form-modal>
                     @empty
-                        <li class="p-6 text-sm text-gray-500 text-center">{{ __('Sin estados personalizados.') }}</li>
+                        <li class="p-6 text-sm text-slate-500 text-center">{{ __('Sin estados personalizados.') }}</li>
                     @endforelse
                 </ul>
             </x-ui.card>
@@ -121,16 +121,16 @@
                     :selected="old('color', 'gray')" />
             </div>
             <div class="flex flex-wrap gap-4">
-                <label class="inline-flex items-center gap-2 text-sm text-gray-700">
-                    <input type="checkbox" name="is_initial" value="1" class="rounded border-gray-300 text-emerald-600 shadow-sm focus:ring-emerald-500">
+                <label class="inline-flex items-center gap-2 text-sm text-slate-700">
+                    <input type="checkbox" name="is_initial" value="1" class="rounded border-slate-300 text-emerald-600 shadow-sm focus:ring-emerald-500">
                     {{ __('Es inicial') }}
                 </label>
-                <label class="inline-flex items-center gap-2 text-sm text-gray-700">
-                    <input type="checkbox" name="is_final" value="1" class="rounded border-gray-300 text-emerald-600 shadow-sm focus:ring-emerald-500">
+                <label class="inline-flex items-center gap-2 text-sm text-slate-700">
+                    <input type="checkbox" name="is_final" value="1" class="rounded border-slate-300 text-emerald-600 shadow-sm focus:ring-emerald-500">
                     {{ __('Es final') }}
                 </label>
-                <label class="inline-flex items-center gap-2 text-sm text-gray-700">
-                    <input type="checkbox" name="is_blocking" value="1" class="rounded border-gray-300 text-emerald-600 shadow-sm focus:ring-emerald-500">
+                <label class="inline-flex items-center gap-2 text-sm text-slate-700">
+                    <input type="checkbox" name="is_blocking" value="1" class="rounded border-slate-300 text-emerald-600 shadow-sm focus:ring-emerald-500">
                     {{ __('Es bloqueo') }}
                 </label>
             </div>

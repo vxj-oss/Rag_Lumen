@@ -1,10 +1,10 @@
 <section>
     <header>
-        <h2 class="text-lg font-medium text-gray-900">
+        <h2 class="text-lg font-medium text-slate-900">
             {{ __('Profile Information') }}
         </h2>
 
-        <p class="mt-1 text-sm text-gray-600">
+        <p class="mt-1 text-sm text-slate-600">
             {{ __("Update your account's profile information and email address.") }}
         </p>
     </header>
@@ -30,10 +30,10 @@
 
             @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! $user->hasVerifiedEmail())
                 <div>
-                    <p class="text-sm mt-2 text-gray-800">
+                    <p class="text-sm mt-2 text-slate-800">
                         {{ __('Your email address is unverified.') }}
 
-                        <button form="send-verification" class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
+                        <button form="send-verification" class="underline text-sm text-slate-600 hover:text-slate-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
                             {{ __('Click here to re-send the verification email.') }}
                         </button>
                     </p>
@@ -50,10 +50,10 @@
         <div>
             <label class="inline-flex items-center gap-2">
                 <input type="checkbox" name="notify_by_email" value="1" {{ old('notify_by_email', $user->notify_by_email) ? 'checked' : '' }}
-                       class="rounded border-gray-300 text-emerald-600 shadow-sm focus:ring-emerald-500">
-                <span class="text-sm text-gray-700">{{ __('Recibir alertas también por correo electrónico') }}</span>
+                       class="rounded border-slate-300 text-emerald-600 shadow-sm focus:ring-emerald-500">
+                <span class="text-sm text-slate-700">{{ __('Recibir alertas también por correo electrónico') }}</span>
             </label>
-            <p class="text-xs text-gray-400 mt-1">{{ __('Las alertas siempre quedan registradas dentro del sistema; esto solo controla el correo adicional.') }}</p>
+            <p class="text-xs text-slate-400 mt-1">{{ __('Las alertas siempre quedan registradas dentro del sistema; esto solo controla el correo adicional.') }}</p>
         </div>
 
         <div class="flex items-center gap-4">
@@ -65,7 +65,7 @@
                     x-show="show"
                     x-transition
                     x-init="setTimeout(() => show = false, 2000)"
-                    class="text-sm text-gray-600"
+                    class="text-sm text-slate-600"
                 >{{ __('Saved.') }}</p>
             @endif
         </div>

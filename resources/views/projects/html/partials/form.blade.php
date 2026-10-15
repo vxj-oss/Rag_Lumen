@@ -26,7 +26,7 @@
 <div>
     <x-forms.input-label for="descripcion" :value="__('Descripción')" />
     <textarea id="descripcion" name="descripcion" rows="3"
-        class="mt-1 block w-full border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-md shadow-sm">{{ $old('descripcion', $project?->descripcion) }}</textarea>
+        class="mt-1 block w-full border-slate-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/15 transition rounded-xl shadow-sm">{{ $old('descripcion', $project?->descripcion) }}</textarea>
     <x-forms.input-error :messages="$errors->get('descripcion')" class="mt-2" />
 </div>
 
@@ -45,14 +45,14 @@
             <x-forms.select id="cliente_id" name="cliente_id" class="mt-1 block w-full"
                 :options="$clients->mapWithKeys(fn ($c) => [$c->id => $c->nombre])"
                 :selected="$old('cliente_id', $project?->cliente_id)" />
-            <button type="button" @click="quickOpen = !quickOpen" class="mt-1 px-2.5 py-2 rounded-lg text-sm font-medium text-emerald-700 bg-emerald-50 ring-1 ring-emerald-200 hover:bg-emerald-100 transition shrink-0" title="{{ __('Crear cliente rápido') }}">+</button>
+            <button type="button" @click="quickOpen = !quickOpen" class="mt-1 px-2.5 py-2 rounded-xl text-sm font-medium text-emerald-700 bg-emerald-50 ring-1 ring-emerald-200 hover:bg-emerald-100 transition shrink-0" title="{{ __('Crear cliente rápido') }}">+</button>
         </div>
         <x-forms.input-error :messages="$errors->get('cliente_id')" class="mt-2" />
-        <div x-show="quickOpen" x-cloak class="mt-2 p-3 rounded-lg bg-gray-50 ring-1 ring-gray-200 space-y-2">
+        <div x-show="quickOpen" x-cloak class="mt-2 p-3 rounded-xl bg-slate-50 ring-1 ring-slate-200 space-y-2">
             <x-forms.text-input type="text" x-model="quickName" placeholder="{{ __('Nombre del nuevo cliente') }}" class="block w-full" />
             <p x-show="quickError" x-text="quickError" class="text-xs text-red-600"></p>
             <p x-show="quickOk" x-text="quickOk" class="text-xs text-emerald-600"></p>
-            <button type="button" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-600 text-white hover:bg-emerald-700 transition"
+            <button type="button" class="px-3 py-1.5 rounded-xl text-xs font-medium bg-emerald-600 text-white hover:bg-emerald-700 transition"
                 @click="quickError = ''; quickOk = '';
                     if (!quickName.trim()) { quickError = @js(__('Escribe el nombre del cliente.')); return; }
                     fetch(@js(route('clients.quick')), {
@@ -144,11 +144,11 @@
 @endphp
 <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
     @foreach ($areas as $area)
-    <label class="flex items-center gap-2 px-3 py-2 rounded-lg ring-1 ring-gray-200 bg-white hover:ring-emerald-300 cursor-pointer transition text-sm">
+    <label class="flex items-center gap-2 px-3 py-2 rounded-xl ring-1 ring-slate-200 bg-white hover:ring-emerald-300 cursor-pointer transition text-sm">
         <input type="checkbox" name="area_ids[]" value="{{ $area->id }}"
             {{ in_array((string) $area->id, $selectedAreas, true) ? 'checked' : '' }}
-            class="rounded border-gray-300 text-emerald-600 shadow-sm focus:ring-emerald-500">
-        <span class="text-gray-700">{{ $area->nombre }}</span>
+            class="rounded border-slate-300 text-emerald-600 shadow-sm focus:ring-emerald-500">
+        <span class="text-slate-700">{{ $area->nombre }}</span>
     </label>
     @endforeach
 </div>
@@ -165,6 +165,6 @@
 <div>
     <x-forms.input-label for="observaciones" :value="__('Observaciones')" />
     <textarea id="observaciones" name="observaciones" rows="3"
-        class="mt-1 block w-full border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-md shadow-sm">{{ $old('observaciones', $project?->observaciones) }}</textarea>
+        class="mt-1 block w-full border-slate-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/15 transition rounded-xl shadow-sm">{{ $old('observaciones', $project?->observaciones) }}</textarea>
     <x-forms.input-error :messages="$errors->get('observaciones')" class="mt-2" />
 </div>

@@ -35,7 +35,7 @@
             </svg>
             <p class="flex-1 min-w-0 text-sm font-medium break-words" x-text="toast.message"></p>
             <button @click="dismiss(toast.id)" :aria-label="@js(__('Cerrar aviso'))"
-                class="shrink-0 -mr-1 p-1.5 min-w-[44px] min-h-[44px] -m-2 inline-flex items-center justify-center rounded-lg hover:bg-white/20 transition">
+                class="shrink-0 -mr-1 p-1.5 min-w-[44px] min-h-[44px] -m-2 inline-flex items-center justify-center rounded-xl hover:bg-white/20 transition">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>

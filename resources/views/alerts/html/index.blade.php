@@ -15,7 +15,7 @@
     <div class="py-8">
         <div class="max-w-4xl mx-auto sm:px-6 lg:px-8 space-y-4">
             <x-ui.card padding="p-0">
-                <ul class="divide-y divide-gray-100">
+                <ul class="divide-y divide-slate-100">
                     @forelse ($notifications as $notification)
                         @php
                             $link = match ($notification->data['type'] ?? null) {
@@ -26,16 +26,16 @@
                             };
                         @endphp
                         <li class="p-4 flex items-start gap-3 {{ $notification->read_at ? '' : 'bg-emerald-50/50' }}">
-                            <div class="w-2 h-2 rounded-full mt-2 shrink-0 {{ $notification->read_at ? 'bg-gray-300' : 'bg-emerald-500' }}"></div>
+                            <div class="w-2 h-2 rounded-full mt-2 shrink-0 {{ $notification->read_at ? 'bg-slate-300' : 'bg-emerald-500' }}"></div>
                             <div class="flex-1 min-w-0">
-                                <p class="text-sm text-gray-800">
+                                <p class="text-sm text-slate-800">
                                     @if ($link)
                                         <a href="{{ $link }}" class="hover:underline">{{ $notification->data['message'] ?? __('Notificación') }}</a>
                                     @else
                                         {{ $notification->data['message'] ?? __('Notificación') }}
                                     @endif
                                 </p>
-                                <p class="text-xs text-gray-400 mt-0.5">{{ $notification->created_at->diffForHumans() }}</p>
+                                <p class="text-xs text-slate-400 mt-0.5">{{ $notification->created_at->diffForHumans() }}</p>
                             </div>
                             @unless ($notification->read_at)
                                 <form action="{{ route('alerts.read', $notification->id) }}" method="POST">
@@ -45,7 +45,7 @@
                             @endunless
                         </li>
                     @empty
-                        <li class="p-10 text-center text-sm text-gray-500">{{ __('No tienes alertas por el momento.') }}</li>
+                        <li class="p-10 text-center text-sm text-slate-500">{{ __('No tienes alertas por el momento.') }}</li>
                     @endforelse
                 </ul>
             </x-ui.card>

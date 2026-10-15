@@ -8,6 +8,8 @@ use App\Http\Requests\Employee\StoreEmployeeRequest;
 use App\Http\Requests\Employee\UpdateEmployeeRequest;
 use App\Models\Area;
 use App\Models\Employee;
+use App\Models\Falta;
+use App\Models\TerminosReferencia;
 use App\Models\User;
 use App\Services\EmployeeMetricsService;
 use App\Support\ActivityLogger;
@@ -96,7 +98,7 @@ class EmployeeController extends Controller
 
         $employee = DB::transaction(function () use ($data, $createAccess, $password, $firma) {
             if ($firma !== null) {
-                $data['firma_path'] = $firma->store('firmas/colaboradores', 'local');
+                $data['firma_path'] = $this->guardarFirma($firma);
             }
 
             $employee = Employee::create($data);
@@ -162,7 +164,7 @@ class EmployeeController extends Controller
                 Storage::disk('local')->delete($employee->firma_path);
             }
 
-            $data['firma_path'] = $firma->store('firmas/colaboradores', 'local');
+            $data['firma_path'] = $this->guardarFirma($firma);
         }
 
         $employee->update($data);
@@ -180,6 +182,16 @@ class EmployeeController extends Controller
         return redirect()
             ->route('employees.index')
             ->with('status', 'Empleado actualizado correctamente.');
+    }
+
+    /** Guarda la firma subida como PNG con el fondo quitado y recortada. */
+    private function guardarFirma(\Illuminate\Http\UploadedFile $archivo): string
+    {
+        $ruta = 'firmas/colaboradores/'.Str::uuid().'.png';
+
+        Storage::disk('local')->put($ruta, \App\Support\SignatureCleaner::clean($archivo->get()));
+
+        return $ruta;
     }
 
     public function firma(Employee $employee): Response
@@ -207,9 +219,65 @@ class EmployeeController extends Controller
             ->download('convenio-'.Str::slug($employee->fullName()).'.pdf');
     }
 
+    /** PDF del TDR del área indicada (por defecto, la que corresponde a la especialidad del colaborador). */
+    public function normativa(Request $request, Employee $employee): Response
+    {
+        $this->authorize('view', $employee);
+
+        $tdr = $this->resolverTdr($request, $employee);
+
+        return Pdf::loadView('reports.employee-normativa', [
+            'employee' => $employee,
+            'tdr' => $tdr,
+            'faltas' => $tdr->faltasAplicables(),
+            'generatedAt' => now(),
+            'empresaFirma' => CompanySignature::base64(),
+        ])
+            ->setPaper('a4', 'portrait')
+            ->download('tdr-'.$tdr->area.'-'.Str::slug($employee->fullName()).'.pdf');
+    }
+
+    /** Registra que el colaborador aceptó y firmó la versión vigente de un TDR. */
+    public function aceptarNormativa(Request $request, Employee $employee): RedirectResponse
+    {
+        abort_unless($request->user()->isAdmin() || $request->user()->employee?->id === $employee->id, 403);
+
+        if (! $employee->tieneFirma()) {
+            return redirect()->back()->with('toast_error', 'Registra primero la firma del colaborador.');
+        }
+
+        $tdr = $this->resolverTdr($request, $employee);
+
+        $employee->update([
+            'normativa_tdr_id' => $tdr->id,
+            'normativa_version_aceptada' => $tdr->version,
+            'normativa_aceptada_en' => now(),
+        ]);
+
+        ActivityLogger::record($employee, 'updated', "Aceptó y firmó el TDR de {$tdr->areaLabel()} (versión {$tdr->version}).");
+
+        return redirect()->back()->with('status', 'Aceptación registrada.');
+    }
+
+    private function resolverTdr(Request $request, Employee $employee): TerminosReferencia
+    {
+        $area = $request->input('area') ?? $employee->especialidad?->tdrArea();
+
+        abort_unless(is_string($area) && array_key_exists($area, TerminosReferencia::AREAS), 422, 'Indica el área del TDR.');
+
+        return TerminosReferencia::porArea($area) ?? abort(404);
+    }
+
     public function breachNotice(StoreEmployeeBreachNoticeRequest $request, Employee $employee): Response
     {
         $data = $request->validated();
+
+        // Si se elige una falta del manual, su referencia y monto rellenan lo que no se escribió a mano.
+        if (! empty($data['falta_id'])) {
+            $falta = Falta::findOrFail($data['falta_id']);
+            $data['clausula_infringida'] = $data['clausula_infringida'] ?? $falta->referencia();
+            $data['monto'] = $data['monto'] ?? $falta->monto;
+        }
 
         ActivityLogger::record($employee, 'updated', "Generó un acta de incumplimiento para \"{$employee->fullName()}\".");
 

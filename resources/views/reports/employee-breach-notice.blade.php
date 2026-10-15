@@ -17,8 +17,9 @@
         .firmas { margin-top: 40px; width: 100%; }
         .firmas table { width: 100%; border-collapse: collapse; }
         .firmas td { width: 50%; text-align: center; vertical-align: bottom; padding: 0 10px; }
-        .firma-img { height: 55px; margin-bottom: 4px; }
-        .firma-linea { border-top: 1px solid #1f2937; margin-top: 45px; padding-top: 4px; }
+        .firma-caja { height: 74px; text-align: center; }
+        .firma-img { height: 68px; }
+        .firma-linea { border-top: 1px solid #1f2937; margin-top: 0; padding-top: 4px; }
         .footer { margin-top: 24px; font-size: 8.5px; color: #9ca3af; text-align: center; }
     </style>
 </head>
@@ -91,22 +92,14 @@
         <table>
             <tr>
                 <td>
-                    @if ($empresaFirma)
-                        <img src="{{ $empresaFirma }}" alt="Firma LA EMPRESA" class="firma-img">
-                    @else
-                        <div style="height:55px;"></div>
-                    @endif
+                    <div class="firma-caja">@if ($empresaFirma)<img src="{{ $empresaFirma }}" alt="Firma LA EMPRESA" class="firma-img">@endif</div>
                     <div class="firma-linea">
                         LUMEN STRATYX E.I.R.L.<br>
                         Gerente General
                     </div>
                 </td>
                 <td>
-                    @if ($employee->firmaBase64())
-                        <img src="{{ $employee->firmaBase64() }}" alt="Firma colaborador" class="firma-img">
-                    @else
-                        <div style="height:55px;"></div>
-                    @endif
+                    <div class="firma-caja">@if ($employee->firmaBase64())<img src="{{ $employee->firmaBase64() }}" alt="Firma colaborador" class="firma-img">@endif</div>
                     <div class="firma-linea">
                         {{ $employee->fullName() }}<br>
                         COLABORADOR(A)
