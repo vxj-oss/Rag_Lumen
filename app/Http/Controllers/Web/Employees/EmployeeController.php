@@ -26,7 +26,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class EmployeeController extends Controller
 {
@@ -61,31 +60,6 @@ class EmployeeController extends Controller
             'onLeaveCount' => \App\Support\WorkspaceScope::employees($request->user())->where('estado', EmployeeStatus::OnLeave->value)->count(),
             'filters' => $request->only(['search', 'status', 'specialty', 'area_id']),
         ]);
-    }
-
-    public function exportCsv(): StreamedResponse
-    {
-        $this->authorize('viewAny', Employee::class);
-
-        $employees = \App\Support\WorkspaceScope::employees(auth()->user())->orderBy('nombres')->get();
-
-        return response()->streamDownload(function () use ($employees) {
-            $handle = fopen('php://output', 'w');
-            fputcsv($handle, ['Nombre', 'Especialidad', 'Estado', 'Email', 'Teléfono', 'Fecha de contratación']);
-
-            foreach ($employees as $employee) {
-                fputcsv($handle, [
-                    $employee->fullName(),
-                    $employee->especialidad->label(),
-                    $employee->estado->label(),
-                    $employee->correo,
-                    $employee->telefono ?? '—',
-                    $employee->fecha_contratacion?->toDateString() ?? '—',
-                ]);
-            }
-
-            fclose($handle);
-        }, 'empleados-'.now()->format('Y-m-d').'.csv', ['Content-Type' => 'text/csv']);
     }
 
     public function store(StoreEmployeeRequest $request): RedirectResponse

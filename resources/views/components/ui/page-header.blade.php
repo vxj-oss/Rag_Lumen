@@ -1,6 +1,6 @@
 @props(['title', 'subtitle' => null, 'eyebrow' => null])
 
-<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+<div class="page-heading flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
     <div class="min-w-0">
         @if ($eyebrow)
             <p class="text-xs font-bold tracking-[0.2em] text-emerald-600 uppercase">{{ $eyebrow }}</p>

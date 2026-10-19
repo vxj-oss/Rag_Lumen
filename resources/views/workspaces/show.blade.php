@@ -2,10 +2,10 @@
     @php
         $tabs = [
             'resumen' => ['label' => 'Resumen', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5M9 11.25v1.5M12 9v3.75m3-6v6" />', 'count' => null],
-            'equipo' => ['label' => 'Equipo', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />', 'count' => $members->count()],
+            'equipo' => ['label' => 'Equipo', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />', 'count' => $members->total()],
             'actividades' => ['label' => 'Actividades', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />', 'count' => $totalActividades],
             'normativa' => ['label' => 'TDR y faltas', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />', 'count' => $faltas->count()],
-            'proyectos' => ['label' => 'Proyectos', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-19.5 0v6a2.25 2.25 0 002.25 2.25h15a2.25 2.25 0 002.25-2.25v-6m-19.5 0h19.5M4.5 9.75V6a2.25 2.25 0 012.25-2.25h4.94a2.25 2.25 0 011.591.659l1.06 1.06a.75.75 0 00.531.22H19.5A2.25 2.25 0 0121.75 8v1.75" />', 'count' => $proyectos->count()],
+            'proyectos' => ['label' => 'Proyectos', 'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-19.5 0v6a2.25 2.25 0 002.25 2.25h15a2.25 2.25 0 002.25-2.25v-6m-19.5 0h19.5M4.5 9.75V6a2.25 2.25 0 012.25-2.25h4.94a2.25 2.25 0 011.591.659l1.06 1.06a.75.75 0 00.531.22H19.5A2.25 2.25 0 0121.75 8v1.75" />', 'count' => $proyectos->total()],
         ];
         $areaLabel = $areas[$area];
         $gravedadColor = ['leve' => 'gray', 'grave' => 'yellow', 'muy_grave' => 'red'];
@@ -18,7 +18,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
 
             {{-- Cabecera del espacio --}}
-            <section class="relative overflow-hidden rounded-3xl bg-gradient-to-br {{ $tema['gradient'] }} text-white shadow-xl animate-scale-in">
+            <section class="workspace-area-hero relative overflow-hidden rounded-3xl bg-gradient-to-br {{ $tema['gradient'] }} text-white shadow-xl animate-scale-in">
                 <div aria-hidden="true" class="absolute -top-24 -right-16 w-72 h-72 rounded-full bg-white/15 blur-3xl animate-float"></div>
                 <div aria-hidden="true" class="absolute -bottom-28 left-1/4 w-80 h-80 rounded-full bg-black/10 blur-3xl"></div>
                 <div class="relative p-6 sm:p-8 space-y-6">
@@ -192,6 +192,9 @@
                         @endforeach
                     </div>
                 @endif
+                @if ($members->hasPages())
+                    <div class="mt-5">{{ $members->fragment('equipo')->links() }}</div>
+                @endif
             </section>
 
             {{-- ACTIVIDADES --}}
@@ -229,6 +232,9 @@
                         </div>
                     @endforeach
                 </div>
+                @if ($activityPage->hasPages())
+                    <div class="mt-5">{{ $activityPage->fragment('actividades')->links() }}</div>
+                @endif
             </section>
 
             {{-- TDR Y FALTAS --}}
@@ -350,7 +356,10 @@
                         @endforeach
                     </div>
                 @endif
+                @if ($proyectos->hasPages())
+                    <div class="mt-5">{{ $proyectos->fragment('proyectos')->links() }}</div>
+                @endif
             </section>
         </div>
     </div>
-<div class="mx-auto max-w-7xl space-y-4 p-4"><details open><summary class="text-xs font-semibold">Páginas de actividades</summary>{{ $activityPage->links() }}</details><details><summary class="text-xs font-semibold">Páginas de miembros</summary>{{ $members->links() }}</details><details><summary class="text-xs font-semibold">Páginas de proyectos</summary>{{ $proyectos->links() }}</details></div></x-app-layout>
+</x-app-layout>

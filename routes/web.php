@@ -73,7 +73,6 @@ Route::middleware(['auth', 'throttle:web'])->group(function () {
 });
 
 Route::middleware(['auth', 'throttle:web'])->group(function () {
-    Route::get('employees/export', [EmployeeController::class, 'exportCsv'])->name('employees.export')->middleware('throttle:exports');
     Route::resource('employees', EmployeeController::class)->except(['create', 'edit']);
     Route::get('employees/{employee}/firma', [EmployeeController::class, 'firma'])->name('employees.firma');
     Route::get('employees/{employee}/normativa', [EmployeeController::class, 'normativa'])->name('employees.normativa')->middleware('throttle:exports');
@@ -97,11 +96,9 @@ Route::put('normativa/tdr/{tdr}', [NormativaController::class, 'updateTdr'])->mi
         Route::post('configuracion/firma-empresa', [CompanySignatureController::class, 'update'])->name('settings.company-signature.update');
         Route::delete('configuracion/firma-empresa', [CompanySignatureController::class, 'destroy'])->name('settings.company-signature.destroy');
     });
-    Route::get('clients/export', [ClientController::class, 'exportCsv'])->name('clients.export')->middleware('throttle:exports');
     Route::post('clients/quick', [ClientController::class, 'quickStore'])->name('clients.quick');
     Route::resource('clients', ClientController::class)->except(['create', 'edit']);
     Route::resource('areas', AreaController::class)->except(['create', 'edit', 'show']);
-    Route::get('projects/export', [ProjectController::class, 'exportCsv'])->name('projects.export')->middleware('throttle:exports');
     Route::get('projects/{project}/export', [ProjectController::class, 'export'])->name('projects.export.one')->middleware('throttle:exports');
     Route::resource('projects', ProjectController::class)->except(['create', 'edit']);
     Route::post('projects/{project}/members', [ProjectMemberController::class, 'store'])->name('projects.members.store');
@@ -112,7 +109,6 @@ Route::put('normativa/tdr/{tdr}', [NormativaController::class, 'updateTdr'])->mi
     Route::put('projects/{project}/statuses/{status}', [TaskStatusController::class, 'update'])->name('projects.statuses.update');
     Route::delete('projects/{project}/statuses/{status}', [TaskStatusController::class, 'destroy'])->name('projects.statuses.destroy');
     Route::post('projects/{project}/statuses/reorder', [TaskStatusController::class, 'reorder'])->name('projects.statuses.reorder');
-    Route::get('tasks/export', [TaskController::class, 'exportCsv'])->name('tasks.export')->middleware('throttle:exports');
     Route::get('tasks/board', [TaskController::class, 'board'])->name('tasks.board');
     Route::get('tasks/live-status', [TaskController::class, 'liveStatus'])->name('tasks.live-status');
     Route::get('tasks/{task}/live-status', [TaskController::class, 'liveStatusOne'])->name('tasks.live-status.one');

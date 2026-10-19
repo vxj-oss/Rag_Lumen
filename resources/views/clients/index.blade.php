@@ -2,10 +2,6 @@
     <x-slot name="header">
         <x-ui.page-header :title="__('Clientes')" :subtitle="__('Empresas que contratan proyectos')">
             <x-slot name="actions">
-                <a href="{{ route('clients.export') }}" class="inline-flex items-center gap-2 px-3 py-2 min-h-[44px] rounded-xl text-sm font-medium text-slate-600 bg-white ring-1 ring-slate-300 hover:bg-slate-50 transition">
-                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" /></svg>
-                    <span class="hidden sm:inline">{{ __('Exportar CSV') }}</span>
-                </a>
                 @can('create', \App\Models\Client::class)
                     <x-ui.primary-button x-data @click="$dispatch('open-modal', 'create-client')" class="min-h-[44px]">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15" /></svg>

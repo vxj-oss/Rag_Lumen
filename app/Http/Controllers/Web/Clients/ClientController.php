@@ -11,7 +11,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ClientController extends Controller
 {
@@ -106,30 +105,4 @@ class ClientController extends Controller
             ->with('status', 'Cliente eliminado correctamente.');
     }
 
-    public function exportCsv(): StreamedResponse
-    {
-        $this->authorize('viewAny', Client::class);
-
-        $clients = Client::withCount('projects')->orderBy('nombre')->get();
-
-        return response()->streamDownload(function () use ($clients) {
-            $handle = fopen('php://output', 'w');
-            fputcsv($handle, ['Razón social', 'RUC/ID', 'Contacto', 'Email', 'Teléfono', 'Sector', 'Estado', 'Proyectos']);
-
-            foreach ($clients as $client) {
-                fputcsv($handle, [
-                    $client->nombre,
-                    $client->identificacion_fiscal ?? '—',
-                    $client->nombre_contacto ?? '—',
-                    $client->correo ?? '—',
-                    $client->telefono ?? '—',
-                    $client->sector ?? '—',
-                    $client->estado === 'active' ? 'Activo' : 'Inactivo',
-                    $client->projects_count,
-                ]);
-            }
-
-            fclose($handle);
-        }, 'clientes-'.now()->format('Y-m-d').'.csv', ['Content-Type' => 'text/csv']);
-    }
 }

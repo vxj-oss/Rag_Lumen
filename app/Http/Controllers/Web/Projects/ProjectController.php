@@ -25,7 +25,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\View\View;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ProjectController extends Controller
 {
@@ -145,35 +144,6 @@ class ProjectController extends Controller
         ])
             ->setPaper('a4', 'portrait')
             ->download('reporte-'.$project->codigo.'-'.now()->format('Y-m-d').'.pdf');
-    }
-
-    public function exportCsv(): StreamedResponse
-    {
-        $this->authorize('viewAny', Project::class);
-
-        $projects = Project::with('responsibleEmployee')->orderByDesc('created_at')->get();
-
-        return response()->streamDownload(function () use ($projects) {
-            $handle = fopen('php://output', 'w');
-            fputcsv($handle, ['Código', 'Nombre', 'Tipo', 'Estado', 'Prioridad', 'Responsable', 'Fecha inicio', 'Fecha fin estimada', 'Riesgo', 'Puntaje de riesgo']);
-
-            foreach ($projects as $project) {
-                fputcsv($handle, [
-                    $project->codigo,
-                    $project->nombre,
-                    $project->tipo->label(),
-                    $project->estado->label(),
-                    $project->prioridad->label(),
-                    $project->responsibleEmployee?->fullName() ?? '—',
-                    $project->fecha_inicio?->toDateString() ?? '—',
-                    $project->fecha_fin_estimada?->toDateString() ?? '—',
-                    $project->nivel_riesgo,
-                    $project->puntuacion_riesgo,
-                ]);
-            }
-
-            fclose($handle);
-        }, 'proyectos-'.now()->format('Y-m-d').'.csv', ['Content-Type' => 'text/csv']);
     }
 
     public function update(UpdateProjectRequest $request, Project $project): RedirectResponse

@@ -10,7 +10,7 @@
     <div x-show="collapsed || abierto('{{ $clave }}', {{ $porDefecto }})" x-transition:enter="transition duration-200 ease-out" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" class="space-y-0.5">
         @foreach ($items as $item)
             @php $activo = request()->routeIs($item['pattern']); @endphp
-            <a href="{{ route($item['route']) }}" @mouseenter="mostrarTip($event, @js(__($item['label'])))" @mouseleave="tip.show = false"
+            <a href="{{ route($item['route']) }}" @if($activo) aria-current="page" @endif @mouseenter="mostrarTip($event, @js(__($item['label'])))" @mouseleave="tip.show = false"
                class="group relative flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-semibold transition-all duration-200 {{ $claseItem($activo) }}"
                :class="collapsed && 'lg:justify-center lg:px-0'">
                 @if ($activo)<span class="absolute left-0 top-2 bottom-2 w-1 rounded-r-full bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,.8)]"></span>@endif

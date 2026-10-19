@@ -111,7 +111,7 @@
     @keydown.window="if ($event.key === '[' && !$event.ctrlKey && !$event.metaKey && !['INPUT','TEXTAREA','SELECT'].includes($event.target.tagName) && !$event.target.isContentEditable) toggle()">
 
     {{-- Barra superior en móvil --}}
-    <div class="lg:hidden flex items-center justify-between bg-slate-900 text-white px-4 py-3">
+    <div class="workspace-mobile-nav lg:hidden flex items-center justify-between bg-slate-900 text-white px-4 py-3">
         <a href="{{ route('dashboard') }}" class="font-semibold tracking-tight min-h-[44px] inline-flex items-center">{{ config('app.name') }}</a>
         <button @click="mobileOpen = true" class="p-2 -mr-2 min-w-[44px] min-h-[44px] inline-flex items-center justify-center" aria-label="{{ __('Abrir menú') }}">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
@@ -125,7 +125,7 @@
             mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
             collapsed ? 'lg:!w-[4.75rem]' : '',
         ]"
-        class="fixed inset-y-0 left-0 z-50 w-64 h-screen bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 text-slate-200 flex flex-col transition-[width,transform] duration-300 ease-[cubic-bezier(.2,.8,.2,1)] lg:translate-x-0 lg:static lg:sticky lg:top-0 lg:z-auto"
+        class="workspace-sidebar fixed inset-y-0 left-0 z-50 w-64 h-screen bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 text-slate-200 flex flex-col transition-[width,transform] duration-300 ease-[cubic-bezier(.2,.8,.2,1)] lg:translate-x-0 lg:static lg:sticky lg:top-0 lg:z-auto"
     >
         {{-- Franja en el borde: aparece al pasar el cursor y permite ocultar / mostrar con un clic (atajo: tecla "[") --}}
         <button type="button" @click="toggle()" tabindex="-1"
@@ -141,7 +141,7 @@
         <div class="shrink-0 border-b border-white/5 flex items-center gap-2 px-3 transition-all duration-300"
              :class="collapsed ? 'h-14 lg:h-auto lg:flex-col lg:py-3 lg:px-0 lg:gap-2' : 'h-14'">
             <a href="{{ route('dashboard') }}" class="group flex items-center gap-3 min-w-0 flex-1" :class="collapsed && 'lg:flex-none'">
-                <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center font-extrabold text-white shadow-lg shadow-emerald-900/40 transition-transform duration-300 group-hover:rotate-6 group-hover:scale-105 shrink-0">
+                <span class="workspace-brand w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center font-extrabold text-white shadow-lg shadow-emerald-900/40 transition-transform duration-300 group-hover:rotate-6 group-hover:scale-105 shrink-0">
                     {{ Str::of(config('app.name'))->substr(0, 1) }}
                 </span>
                 <span x-show="!collapsed" class="font-bold text-white tracking-tight truncate">{{ config('app.name') }}</span>
@@ -164,7 +164,7 @@
         <nav class="flex-1 min-h-0 px-2.5 py-2 space-y-0.5 overflow-y-auto overflow-x-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             @unless(auth()->user()->isEmployee())
             @php $dashActivo = request()->routeIs('dashboard'); @endphp
-            <a href="{{ route('dashboard') }}" @mouseenter="mostrarTip($event, @js(__('Dashboard')))" @mouseleave="tip.show = false"
+            <a href="{{ route('dashboard') }}" @if($dashActivo) aria-current="page" @endif @mouseenter="mostrarTip($event, @js(__('Dashboard')))" @mouseleave="tip.show = false"
                class="group relative flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-semibold transition-all duration-200 {{ $claseItem($dashActivo) }}"
                :class="collapsed && 'lg:justify-center lg:px-0'">
                 @if ($dashActivo)<span class="absolute left-0 top-2 bottom-2 w-1 rounded-r-full bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,.8)]"></span>@endif
@@ -190,7 +190,7 @@
                     <div x-show="collapsed || abierto('areas', true)" x-transition:enter="transition duration-200 ease-out" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" class="space-y-0.5">
                         @foreach ($espacios as $clave => $etiqueta)
                             @php $tema = \App\Support\WorkspaceAccess::tema($clave); $activo = request()->is('espacios/'.$clave); @endphp
-                            <a href="{{ route('workspaces.show', $clave) }}" @mouseenter="mostrarTip($event, @js($etiqueta))" @mouseleave="tip.show = false"
+                            <a href="{{ route('workspaces.show', $clave) }}" @if($activo) aria-current="page" @endif @mouseenter="mostrarTip($event, @js($etiqueta))" @mouseleave="tip.show = false"
                                class="group relative flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-semibold transition-all duration-200 {{ $claseItem($activo) }}"
                                :class="collapsed && 'lg:justify-center lg:px-0'">
                                 @if ($activo)<span class="absolute left-0 top-2 bottom-2 w-1 rounded-r-full {{ $tema['dot'] }}"></span>@endif
@@ -216,7 +216,7 @@
                 <div x-show="collapsed || abierto('sistema', true)" x-transition:enter="transition duration-200 ease-out" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" class="space-y-0.5">
                     @if ($puedeVerActividad)
                         @php $item = $porRuta['activity.index']; $activo = request()->routeIs($item['pattern']); @endphp
-                        <a href="{{ route($item['route']) }}" @mouseenter="mostrarTip($event, @js(__($item['label'])))" @mouseleave="tip.show = false"
+                        <a href="{{ route($item['route']) }}" @if($activo) aria-current="page" @endif @mouseenter="mostrarTip($event, @js(__($item['label'])))" @mouseleave="tip.show = false"
                            class="group relative flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-semibold transition-all duration-200 {{ $claseItem($activo) }}"
                            :class="collapsed && 'lg:justify-center lg:px-0'">
                             @if ($activo)<span class="absolute left-0 top-2 bottom-2 w-1 rounded-r-full bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,.8)]"></span>@endif
@@ -226,7 +226,7 @@
                     @endif
 
                     @php $alertasActivo = request()->routeIs('alerts.*'); @endphp
-                    <a href="{{ route('alerts.index') }}" @mouseenter="mostrarTip($event, @js(__('Alertas')))" @mouseleave="tip.show = false"
+                    <a href="{{ route('alerts.index') }}" @if($alertasActivo) aria-current="page" @endif @mouseenter="mostrarTip($event, @js(__('Alertas')))" @mouseleave="tip.show = false"
                        x-data="{ count: {{ $unreadAlerts }} }"
                        x-init="setInterval(() => {
                            fetch(@js(route('alerts.unread-count')), { headers: { 'Accept': 'application/json' } })
@@ -256,7 +256,7 @@
                 <x-slot name="trigger">
                     <button class="w-full flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-white/[0.06] transition-colors duration-200 text-left min-h-[44px]" :class="collapsed && 'lg:justify-center lg:px-0'" aria-label="{{ __('Cuenta de usuario') }}">
                         <span class="relative shrink-0">
-                            <span class="w-9 h-9 rounded-full bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center text-sm font-bold text-white">{{ Str::of(Auth::user()->name)->substr(0, 1) }}</span>
+                            <span class="workspace-avatar w-9 h-9 rounded-full bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center text-sm font-bold text-white">{{ Str::of(Auth::user()->name)->substr(0, 1) }}</span>
                             <span class="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-400 ring-2 ring-slate-900"></span>
                         </span>
                         <span x-show="!collapsed" class="min-w-0 flex-1">

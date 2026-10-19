@@ -13,16 +13,14 @@
         <script>try { if (localStorage.getItem('sidebar-collapsed') === '1') document.documentElement.classList.add('sidebar-collapsed'); } catch (e) {}</script>
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body data-responsive-list="{{ request()->routeIs('projects.index','employees.index','clients.index','areas.index','rag-documents.index','users.index','alerts.index','activity.index','normativa.index','archive.index','employees.record','employees.show','workspaces.show') ? '1' : '0' }}" class="font-sans antialiased text-slate-800 {{ request()->routeIs('rag-query.index') ? 'assistant-page' : '' }}">
+    <body data-responsive-list="{{ request()->routeIs('projects.index','employees.index','clients.index','areas.index','rag-documents.index','users.index','alerts.index','activity.index','normativa.index','archive.index','employees.record','employees.show','workspaces.show') ? '1' : '0' }}" class="workspace-theme font-sans antialiased text-slate-800 {{ request()->routeIs('rag-query.index') ? 'assistant-page' : '' }}">
         <div class="app-shell lg:flex">
             <x-layouts.sidebar />
 
             <div class="app-content flex-1 flex flex-col min-w-0">
                 <x-ui.workspace-toolbar />
                 @isset($header)
-                    <header class="relative bg-white/70 backdrop-blur-md border-b border-slate-200/70 overflow-hidden">
-                        <div aria-hidden="true" class="pointer-events-none absolute -top-16 -right-16 w-56 h-56 rounded-full bg-emerald-300/20 blur-3xl"></div>
-                        <div aria-hidden="true" class="pointer-events-none absolute -bottom-20 left-1/3 w-48 h-48 rounded-full bg-teal-300/10 blur-3xl"></div>
+                    <header class="workspace-page-header relative bg-white/70 backdrop-blur-md border-b border-slate-200/70 overflow-hidden">
                         <div class="relative max-w-7xl mx-auto py-5 px-4 sm:px-6 lg:px-8">
                             {{ $header }}
                         </div>

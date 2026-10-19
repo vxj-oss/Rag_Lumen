@@ -1,10 +1,16 @@
 import { Chart } from 'chart.js/auto';
 
 Chart.defaults.font.family = '"Plus Jakarta Sans", sans-serif';
-Chart.defaults.color = '#475569';
+Chart.defaults.color = '#626d7b';
+Chart.defaults.borderColor = 'rgba(62, 82, 105, 0.12)';
+Chart.defaults.plugins.tooltip.backgroundColor = '#1b1d1f';
+Chart.defaults.plugins.tooltip.titleColor = '#ffffff';
+Chart.defaults.plugins.tooltip.bodyColor = '#d9e7f5';
+Chart.defaults.datasets.doughnut.borderColor = '#ffffff';
+Chart.defaults.datasets.doughnut.borderWidth = 3;
 if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) Chart.defaults.animation = false;
 
-const palette = ['#059669', '#2563eb', '#d97706', '#dc2626', '#7c3aed', '#0891b2', '#65a30d', '#db2777'];
+const palette = ['#3c86be', '#68addd', '#d6a44d', '#cf747d', '#4d9c88', '#828cb7', '#7d9db8', '#52687b'];
 
 function toChartData(labelValueMap) {
     if (!labelValueMap || typeof labelValueMap !== 'object') {

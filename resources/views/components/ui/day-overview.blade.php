@@ -18,6 +18,6 @@
                 <a href="{{ route('rag-query.index') }}" class="workspace-button">{{ __('Consultar al asistente') }}</a>
             </div>
         </div>
-        <div class="shrink-0 rounded-2xl border border-emerald-200 bg-white/90 p-5 lg:max-w-[220px]"><p class="text-4xl font-extrabold tabular-nums text-emerald-800">{{ $focus[2] }}</p><p class="mt-1 text-sm font-medium text-slate-600">{{ trans_choice($focus[3], $focus[2]) }}</p><a href="{{ route('alerts.index') }}" class="mt-3 inline-flex min-h-[44px] items-center text-sm font-semibold text-emerald-800">{{ __('Revisar alertas') }} →</a></div>
+        <div class="workspace-attention shrink-0 rounded-2xl border border-emerald-200 bg-white/90 p-5 lg:max-w-[220px]"><p class="text-4xl font-extrabold tabular-nums text-emerald-800">{{ $focus[2] }}</p><p class="mt-1 text-sm font-medium text-slate-600">{{ trans_choice($focus[3], $focus[2]) }}</p><a href="{{ route('alerts.index') }}" class="mt-3 inline-flex min-h-[44px] items-center text-sm font-semibold text-emerald-800">{{ __('Revisar alertas') }} →</a></div>
     </div>
 </section>

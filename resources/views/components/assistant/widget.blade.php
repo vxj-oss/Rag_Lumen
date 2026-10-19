@@ -24,7 +24,7 @@
     @endunless
     <section id="{{ $embedded ? 'main' : 'floating' }}-assistant-panel" x-show="open" @if(!$embedded) x-cloak @endif class="assistant-panel {{ $embedded ? 'assistant-panel-embedded' : '' }}" aria-label="{{ __('Asistente del sistema') }}">
         <div class="assistant-header">
-            <div><h2 class="text-sm font-bold text-slate-900">{{ __('Tu asistente') }}</h2><p role="status" class="mt-0.5 text-xs text-emerald-800" x-text="status"></p></div>
+            <div class="assistant-identity"><span class="assistant-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="6" width="16" height="14" rx="5"/><path d="M12 3v3M8 15h8"/><circle cx="8.5" cy="11" r="1" fill="currentColor"/><circle cx="15.5" cy="11" r="1" fill="currentColor"/></svg></span><div><h2 class="text-sm font-bold text-slate-900">{{ __('Tu asistente') }}</h2><p role="status" class="mt-0.5 text-xs text-emerald-800" x-text="status"></p></div></div>
             <div class="flex items-center gap-1">
                 <button type="button" class="assistant-icon-button" @click="settingsOpen = !settingsOpen" :aria-expanded="settingsOpen" aria-label="Opciones del asistente" title="Opciones">⋯</button>
                 @unless($embedded)<a class="assistant-icon-button" :href="@js(route('rag-query.index')) + (conversationId ? '?conversation=' + conversationId : '')" aria-label="Abrir asistente completo" title="Ampliar">↗</a><button type="button" class="assistant-icon-button" @click="toggle(); $refs.launcher.focus()" aria-label="Minimizar asistente" title="Minimizar">−</button>@endunless
@@ -59,7 +59,7 @@
                             @foreach($suggestions as $suggestion)<button type="button" class="workspace-button justify-start text-left" @click="question = @js($suggestion); $refs.question.focus()">{{ __($suggestion) }} →</button>@endforeach
                         </div>
                     </div>
-                    <template x-for="(message,index) in messages" :key="index"><div class="mb-4 flex" :class="message.role === 'user' ? 'justify-end' : 'justify-start'"><div class="max-w-[92%] rounded-2xl px-4 py-3 text-sm leading-relaxed" :class="message.role === 'user' ? 'bg-emerald-700 text-white' : 'bg-slate-100 text-slate-800'">
+                    <template x-for="(message,index) in messages" :key="index"><div class="mb-4 flex" :class="message.role === 'user' ? 'justify-end' : 'justify-start'"><div class="max-w-[92%] rounded-2xl px-4 py-3 text-sm leading-relaxed" :class="message.role === 'user' ? 'assistant-message-user' : 'assistant-message-answer'">
                         <p class="whitespace-pre-wrap break-words" x-text="message.text"></p>
                         @include('components.assistant.activity-draft')
                         @include('components.assistant.project-draft')

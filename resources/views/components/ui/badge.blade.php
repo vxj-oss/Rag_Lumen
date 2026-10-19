@@ -24,7 +24,7 @@
     ];
 @endphp
 
-<span {{ $attributes->merge(['class' => 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ring-1 ring-inset whitespace-nowrap transition-colors duration-200 ' . ($colors[$color] ?? $colors['gray'])]) }}>
+<span {{ $attributes->merge(['class' => 'workspace-badge inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ring-1 ring-inset whitespace-nowrap transition-colors duration-200 ' . ($colors[$color] ?? $colors['gray'])]) }}>
     <span class="w-1.5 h-1.5 rounded-full shrink-0 {{ $dots[$color] ?? $dots['gray'] }}"></span>
     {{ $slot }}
 </span>

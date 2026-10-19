@@ -1,11 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
-        <x-ui.page-header :title="__('Proyectos')" :subtitle="__('Todos los proyectos de la empresa')">
+        <x-ui.page-header :title="__('Proyectos')" :subtitle="__('Avance, prioridades y próximas decisiones de tu portafolio')" :eyebrow="__('Centro de proyectos')">
             <x-slot name="actions">
-                <a href="{{ route('projects.export') }}" class="inline-flex items-center gap-2 px-3 py-2 min-h-[44px] rounded-xl text-sm font-medium text-slate-600 bg-white ring-1 ring-slate-300 hover:bg-slate-50 transition">
-                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" /></svg>
-                    <span class="hidden sm:inline">{{ __('Exportar CSV') }}</span>
-                </a>
                 @can('create', \App\Models\Project::class)
                     <x-ui.primary-button x-data @click="$dispatch('open-modal', 'create-project')" class="min-h-[44px]">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15" /></svg>
@@ -82,6 +78,13 @@
             </x-ui.card>
 
             <x-ui.card padding="p-0">
+                <div class="workspace-list-heading">
+                    <div>
+                        <p class="workspace-eyebrow">{{ __('Portafolio') }}</p>
+                        <h3 class="workspace-section-title">{{ __('Proyectos y seguimiento') }}</h3>
+                    </div>
+                    <p class="text-xs text-slate-500 tabular-nums">{{ $projects->firstItem() ?? 0 }}–{{ $projects->lastItem() ?? 0 }} {{ __('de') }} {{ $projects->total() }}</p>
+                </div>
                 <div class="hidden lg:block overflow-x-auto">
                     <table class="w-full divide-y divide-slate-200 table-fixed">
                         <thead class="bg-slate-50">
@@ -161,7 +164,7 @@
 
                 <div class="lg:hidden grid gap-3 bg-slate-50 p-2">
                     @forelse ($projects as $project)
-                        <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm space-y-3">
+                        <div class="workspace-record-card rounded-2xl border border-slate-200 bg-white p-4 shadow-sm space-y-3">
                             <div class="flex items-start justify-between gap-3">
                                 <div class="min-w-0">
                                     <p class="text-sm font-semibold text-slate-900 truncate">{{ $project->nombre }}</p>

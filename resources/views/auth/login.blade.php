@@ -5,7 +5,7 @@
         <div>
             <x-forms.input-label for="email" :value="__('Correo electrónico')" class="text-sm font-medium text-gray-700 mb-1" />
             <x-forms.text-input id="email" class="block w-full border-gray-300 rounded-lg shadow-sm focus:ring-emerald-500 focus:border-emerald-500 h-11 px-3 text-sm" 
-                type="email" name="email" :value="old('email')" required autofocus autocomplete="email" maxlength="255" />
+                type="email" name="email" :value="old('email')" required autofocus autocomplete="username" placeholder="nombre@empresa.com" maxlength="255" />
             <x-forms.input-error :messages="$errors->get('email')" class="mt-1.5 text-xs text-red-600" />
         </div>
 
@@ -37,7 +37,7 @@
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
                 </svg>
-                <span x-text="sending ? @js(__('Ingresando…')) : @js(__('Ingresar'))">{{ __('Ingresar') }}</span>
+                <span x-text="sending ? @js(__('Verificando acceso…')) : @js(__('Entrar a mi espacio'))">{{ __('Entrar a mi espacio') }}</span>
             </x-ui.primary-button>
         </div>
     </form>

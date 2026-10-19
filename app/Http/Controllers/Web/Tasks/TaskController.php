@@ -26,7 +26,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class TaskController extends Controller
 {
@@ -210,33 +209,6 @@ class TaskController extends Controller
             ->orWhereIn('id', Task::whereIn('proyecto_id', $projectIds)->select('asignado_a'))
             ->orderBy('nombres')
             ->get(['id', 'nombres', 'apellidos']);
-    }
-
-    public function exportCsv(): StreamedResponse
-    {
-        $this->authorize('viewAny', Task::class);
-
-        $tasks = $this->visibleTasksQuery()->with(['project', 'assignee', 'state'])->orderBy('fecha_vencimiento')->get();
-
-        return response()->streamDownload(function () use ($tasks) {
-            $handle = fopen('php://output', 'w');
-            fputcsv($handle, ['Código', 'Título', 'Proyecto', 'Asignado a', 'Estado', 'Prioridad', 'Vence', 'Avance %']);
-
-            foreach ($tasks as $task) {
-                fputcsv($handle, [
-                    $task->codigo ?? '#'.$task->id,
-                    $task->titulo,
-                    $task->project?->nombre ?? '—',
-                    $task->assignee?->fullName() ?? '—',
-                    $task->state?->nombre ?? $task->estado->label(),
-                    $task->prioridad->label(),
-                    $task->fecha_vencimiento?->toDateString() ?? '—',
-                    $task->porcentaje_progreso,
-                ]);
-            }
-
-            fclose($handle);
-        }, 'tareas-'.now()->format('Y-m-d').'.csv', ['Content-Type' => 'text/csv']);
     }
 
     public function liveStatus(): JsonResponse

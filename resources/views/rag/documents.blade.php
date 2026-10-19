@@ -1,6 +1,6 @@
 <x-app-layout>
     <x-slot name="header">
-        <x-ui.page-header :title="__('Documentos')" :subtitle="__('Base de conocimiento para el agente inteligente (RAG)')">
+        <x-ui.page-header :title="__('Documentos')" :subtitle="__('Las fuentes que respaldan las respuestas de tu asistente')" :eyebrow="__('Biblioteca de conocimiento')">
             @can('create', \App\Models\RagDocument::class)
                 <x-slot name="actions">
                     <x-ui.primary-button x-data @click="$dispatch('open-modal', 'upload-document')" class="min-h-[44px]">
@@ -19,6 +19,13 @@
             </div>
 
             <x-ui.card padding="p-0">
+                <div class="workspace-list-heading">
+                    <div>
+                        <p class="workspace-eyebrow">{{ __('Fuentes del asistente') }}</p>
+                        <h3 class="workspace-section-title">{{ __('Biblioteca documental') }}</h3>
+                    </div>
+                    <p class="text-xs text-slate-500 tabular-nums">{{ $documents->total() }} {{ __('documentos') }}</p>
+                </div>
                 <div class="hidden lg:block overflow-x-auto">
                     <table class="min-w-full divide-y divide-slate-200">
                         <thead class="bg-slate-50">
@@ -76,9 +83,9 @@
                     </table>
                 </div>
 
-                <div class="lg:hidden divide-y divide-slate-100">
+                <div class="workspace-document-cards lg:hidden grid gap-3 p-2">
                     @forelse ($documents as $document)
-                        <div class="p-4 space-y-2">
+                        <div class="workspace-record-card rounded-xl border border-slate-200 p-4 space-y-2">
                             <div class="flex items-start justify-between gap-3">
                                 <div class="min-w-0">
                                     <p class="text-sm font-medium text-slate-900 truncate">{{ $document->titulo }}</p>
