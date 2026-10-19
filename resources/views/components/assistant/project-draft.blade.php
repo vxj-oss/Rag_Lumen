@@ -1,0 +1,19 @@
+<template x-if="message.action?.type === 'create_project'">
+<div class="mt-3 border-t border-slate-200 pt-3">
+<template x-if="!message.action.created"><form @submit.prevent="createProject(message)" aria-label="Borrador de proyecto"><fieldset :disabled="message.action.submitting" class="space-y-3">
+<label class="block text-xs font-semibold">Nombre<input x-model="message.action.draft.name" required maxlength="150" class="mt-1 w-full rounded-lg border-slate-300 text-sm"></label>
+<label class="block text-xs font-semibold">Código<input x-model="message.action.draft.code" required maxlength="30" class="mt-1 w-full rounded-lg border-slate-300 text-sm"></label>
+<label class="block text-xs font-semibold">Tipo<select x-model="message.action.draft.type" required class="mt-1 w-full rounded-lg border-slate-300 text-sm"><template x-for="t in message.action.types" :key="t.value"><option :value="t.value" x-text="t.label"></option></template></select></label>
+<label class="block text-xs font-semibold">Cliente<select x-model="message.action.draft.client_id" class="mt-1 w-full rounded-lg border-slate-300 text-sm"><option value="">Sin cliente</option><template x-for="c in message.action.clients" :key="c.id"><option :value="c.id" x-text="c.nombre"></option></template></select></label>
+<label class="block text-xs font-semibold">Responsable<select x-model="message.action.draft.responsible_id" class="mt-1 w-full rounded-lg border-slate-300 text-sm"><option value="">Sin asignar</option><template x-for="e in message.action.employees" :key="e.id"><option :value="e.id" x-text="e.name"></option></template></select></label>
+<label class="block text-xs font-semibold">Gerente<select x-model="message.action.draft.manager_id" class="mt-1 w-full rounded-lg border-slate-300 text-sm"><option value="">Sin asignar</option><template x-for="e in message.action.employees" :key="e.id"><option :value="e.id" x-text="e.name"></option></template></select></label>
+<fieldset><legend class="text-xs font-semibold">Áreas</legend><template x-for="a in message.action.areas" :key="a.id"><label class="mr-3 inline-flex items-center gap-2 py-2 text-xs"><input type="checkbox" :value="String(a.id)" x-model="message.action.draft.area_ids" class="rounded border-slate-300"><span x-text="a.nombre"></span></label></template></fieldset>
+<div class="grid grid-cols-2 gap-2"><label class="text-xs">Inicio<input type="date" x-model="message.action.draft.start" required class="mt-1 w-full min-w-0 rounded-lg border-slate-300 text-sm"></label><label class="text-xs">Entrega estimada<input type="date" x-model="message.action.draft.end" :min="message.action.draft.start" required class="mt-1 w-full min-w-0 rounded-lg border-slate-300 text-sm"></label></div>
+<label class="block text-xs">Prioridad<select x-model="message.action.draft.priority" class="mt-1 w-full rounded-lg border-slate-300 text-sm"><option value="low">Baja</option><option value="medium">Media</option><option value="high">Alta</option><option value="critical">Crítica</option></select></label>
+<label class="block text-xs">Presupuesto<input type="number" min="0" step="0.01" x-model="message.action.draft.budget" class="mt-1 w-full rounded-lg border-slate-300 text-sm"></label>
+<label class="block text-xs">Descripción<textarea x-model="message.action.draft.description" maxlength="5000" class="mt-1 w-full rounded-lg border-slate-300 text-sm"></textarea></label>
+<p x-show="message.action.error" x-text="message.action.error" role="alert" class="text-xs text-rose-700"></p>
+<button type="submit" class="workspace-primary w-full" x-text="message.action.submitting ? 'Guardando…' : 'Crear proyecto'"></button><button type="button" @click="message.action = null" class="w-full text-xs">Descartar borrador</button>
+</fieldset></form></template>
+<template x-if="message.action.created"><a :href="message.action.createdUrl" class="workspace-button">Ver proyecto creado →</a></template>
+</div></template>

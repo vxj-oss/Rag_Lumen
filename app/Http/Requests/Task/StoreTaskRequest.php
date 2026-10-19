@@ -18,7 +18,7 @@ class StoreTaskRequest extends FormRequest
             return false;
         }
 
-        if ($this->user()->hasRole(RoleName::Administrator->value)) {
+        if ($this->user()->isAdmin() || $this->user()->isManager()) {
             return true;
         }
 

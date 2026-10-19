@@ -8,7 +8,7 @@ class StoreRagQueryRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return $this->user()->can('viewAny', \App\Models\RagDocument::class);
     }
 
     public function rules(): array

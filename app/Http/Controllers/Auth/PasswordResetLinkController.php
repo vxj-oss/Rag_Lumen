@@ -13,7 +13,7 @@ class PasswordResetLinkController extends Controller
 {
     public function create(): View
     {
-        return view('auth.html.forgot-password');
+        return view('auth.forgot-password');
     }
 
     
@@ -22,6 +22,7 @@ class PasswordResetLinkController extends Controller
         $request->validate([
             'email' => ['required', 'email'],
         ]);
+        if (\App\Models\User::where('email', $request->input('email'))->first()?->isEmployee()) return back()->with('status', 'Solicita el cambio de contraseña a tu gerente, líder o administrador.');
         $status = Password::sendResetLink(
             $request->only('email')
         );

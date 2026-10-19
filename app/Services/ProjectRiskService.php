@@ -139,9 +139,7 @@ class ProjectRiskService
         $activeStatuses = [TaskStatus::Pending->value, TaskStatus::InProgress->value, TaskStatus::Review->value, TaskStatus::Blocked->value];
 
         $ratios = $members->map(function ($employee) use ($maxRecommended) {
-            $activeTaskCount = Task::where('asignado_a', $employee->id)->whereDoesntHave('subtareas')->with('state')->get()
-                ->filter(fn (Task $task) => $task->isActiveState())
-                ->count();
+            $activeTaskCount = Task::where('asignado_a', $employee->id)->workItems()->activeState()->count();
 
             return $activeTaskCount / $maxRecommended;
         });

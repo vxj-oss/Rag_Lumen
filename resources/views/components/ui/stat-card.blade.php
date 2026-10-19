@@ -21,7 +21,7 @@
     ];
 @endphp
 
-<div class="group relative bg-white rounded-2xl border border-slate-200/70 shadow-soft p-5 flex items-center gap-4 overflow-hidden lift">
+<div class="workspace-stat group relative bg-white rounded-2xl border border-slate-200/70 shadow-soft p-5 flex items-center gap-4 overflow-hidden">
     <span class="absolute left-0 inset-y-4 w-1 rounded-r-full {{ $bars[$color] ?? $bars['emerald'] }} opacity-70 group-hover:opacity-100 transition-opacity"></span>
     @if ($icon)
         <div {{ $attributes->class(['w-12 h-12 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-300 ease-out group-hover:scale-110', $tiles[$color] ?? $tiles['emerald']]) }}>
@@ -30,9 +30,9 @@
     @endif
     <div class="min-w-0">
         <p class="text-3xl font-extrabold text-slate-900 leading-tight tracking-tight tabular-nums">{{ $value }}</p>
-        <p class="text-sm text-slate-500 truncate">{{ $label }}</p>
+        <p class="text-sm leading-snug text-slate-600">{{ $label }}</p>
         @if ($hint)
-            <p class="text-xs text-slate-400 truncate">{{ $hint }}</p>
+            <p class="text-xs text-slate-500 truncate">{{ $hint }}</p>
         @endif
     </div>
 </div>

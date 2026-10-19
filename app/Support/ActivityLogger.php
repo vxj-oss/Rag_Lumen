@@ -15,7 +15,7 @@ class ActivityLogger
             'sujeto_tipo' => $subject::class,
             'sujeto_id' => $subject->getKey(),
             'accion' => $action,
-            'descripcion' => $description,
+            'descripcion' => \Illuminate\Support\Str::limit($description, 500, ''),
         ]);
     }
 
@@ -23,7 +23,7 @@ class ActivityLogger
     public static function recordUpdate(Model $subject, array $rawAttributesBeforeUpdate, string $label): void
     {
         $changes = $subject->getChanges();
-        unset($changes['updated_at']);
+        unset($changes['updated_at'], $changes['password'], $changes['remember_token'], $changes['auth_version']);
 
         if ($changes === []) {
             return;

@@ -20,6 +20,13 @@ class Task extends Model
 {
     use HasFactory, SoftDeletes;
 
+    public function scopeWorkItems($query) { return $query->whereDoesntHave('subtareas'); }
+    public function scopeActivities($query) { return $query->whereNull('tarea_padre_id'); }
+    public function scopeActiveState($query)
+    {
+        return $query->where(fn ($q) => $q->whereHas('state',fn ($s) => $s->where('es_final',false))->orWhere(fn ($legacy) => $legacy->whereNull('estado_id')->whereNotIn('estado',['completed','cancelled'])));
+    }
+
     protected $table = 'tareas';
 
     protected static function booted(): void
@@ -72,7 +79,7 @@ class Task extends Model
     public function isOverdue(): bool
     {
         return $this->fecha_vencimiento !== null
-            && $this->fecha_vencimiento->isPast()
+            && $this->fecha_vencimiento->lt(now()->startOfDay())
             && $this->isActiveState();
     }
 

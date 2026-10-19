@@ -35,6 +35,7 @@ class GenerateAlertsCommand extends Command
         $created += $this->generateEmployeeOverloadAlerts($managers);
         $created += $this->generateTaskDueSoonAlerts();
 
+        \Illuminate\Support\Facades\Cache::put('workspace-alerts-last-run', now()->toIso8601String(), now()->addDays(2));
         $this->info("Alertas generadas: {$created}");
 
         return self::SUCCESS;
@@ -47,7 +48,7 @@ class GenerateAlertsCommand extends Command
         foreach (Project::with(['tasks', 'members', 'responsibleEmployee.user'])->get() as $project) {
             $decision = $decisionService->evaluate($project);
 
-            $recipients = $managers;
+            $recipients = collect($managers->all())->filter(fn ($user) => $user->is_active && $user->can('view', $project));
 
             if ($project->responsibleEmployee?->user) {
                 $recipients = $recipients->push($project->responsibleEmployee->user)->unique('id');
@@ -82,7 +83,7 @@ class GenerateAlertsCommand extends Command
         $created = 0;
         $maxRecommended = config('risk.employee_max_recommended_tasks');
 
-        $employees = Employee::with('tasks.state')->get()->filter(function ($e) use ($maxRecommended) {
+        $employees = Employee::with(['tasks' => fn ($q) => $q->workItems()->with('state')])->get()->filter(function ($e) use ($maxRecommended) {
             $e->setAttribute(
                 'active_tasks_count',
                 $e->tasks->filter(fn ($task) => $task->isActiveState())->count()
@@ -107,7 +108,7 @@ class GenerateAlertsCommand extends Command
     {
         $created = 0;
 
-        $tasks = Task::with(['assignee.user', 'state'])
+        $tasks = Task::activities()->with(['assignee.user', 'state'])
             ->where('porcentaje_progreso', '<', self::DUE_SOON_PROGRESS_CEILING)
             ->whereNotNull('fecha_vencimiento')
             ->whereBetween('fecha_vencimiento', [now()->startOfDay(), now()->addDays(self::DUE_SOON_DAYS)->endOfDay()])
@@ -139,6 +140,7 @@ class GenerateAlertsCommand extends Command
         $created = 0;
 
         foreach ($recipients as $user) {
+            if (! $user->is_active) continue;
             $exists = $user->notifications()
                 ->where('type', $notificationClass)
                 ->whereNull('read_at')

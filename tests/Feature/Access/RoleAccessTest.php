@@ -88,7 +88,7 @@ class RoleAccessTest extends TestCase
         $response->assertForbidden();
     }
 
-    public function test_employee_sees_only_member_projects(): void
+    public function test_employee_cannot_open_project_module_even_with_membership(): void
     {
         $employee = $this->makeUser(RoleName::Employee);
         $stranger = Employee::factory()->create();
@@ -103,9 +103,7 @@ class RoleAccessTest extends TestCase
 
         $response = $this->actingAs($employee)->get(route('projects.index'));
 
-        $response->assertOk();
-        $response->assertSee($visible->nombre);
-        $response->assertDontSee($hidden->nombre);
+        $response->assertForbidden();
     }
 
     public function test_employee_cannot_access_activity(): void
@@ -150,7 +148,7 @@ class RoleAccessTest extends TestCase
         $this->actingAs($otherLead)->put(route('projects.update', $project), $payload)->assertForbidden();
     }
 
-    public function test_employee_can_view_member_project_but_not_others(): void
+    public function test_employee_cannot_open_project_details(): void
     {
         $employee = $this->makeUser(RoleName::Employee);
         $stranger = Employee::factory()->create();
@@ -163,7 +161,7 @@ class RoleAccessTest extends TestCase
             'estado' => 'active',
         ]);
 
-        $this->actingAs($employee)->get(route('projects.show', $visible))->assertOk();
+        $this->actingAs($employee)->get(route('projects.show', $visible))->assertForbidden();
         $this->actingAs($employee)->get(route('projects.show', $hidden))->assertForbidden();
     }
 

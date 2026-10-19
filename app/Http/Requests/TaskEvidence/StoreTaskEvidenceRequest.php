@@ -22,9 +22,9 @@ class StoreTaskEvidenceRequest extends FormRequest
     {
         return [
             'comentario' => ['nullable', 'string', 'max:2000'],
-            'enlaces' => ['nullable', 'array'],
+            'enlaces' => ['nullable', 'array', 'max:10'],
             'enlaces.*' => ['nullable', 'url', 'max:500'],
-            'archivos' => ['nullable', 'array'],
+            'archivos' => ['nullable', 'array', 'max:10'],
             'archivos.*' => ['file', 'mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png,webp', 'max:10240'],
         ];
     }

@@ -12,3 +12,5 @@ Artisan::command('inspire', function () {
 
 
 Schedule::command('alerts:generate')->hourly()->withoutOverlapping();
+Schedule::call(fn () => \Illuminate\Support\Facades\Cache::put('workspace-scheduler-heartbeat', now()->toIso8601String(), now()->addDays(2)))->everyFiveMinutes()->name('workspace-heartbeat');
+Schedule::command('workspace:backup --verify')->dailyAt('02:00')->when(fn () => config('assistant.backup_enabled'))->withoutOverlapping();

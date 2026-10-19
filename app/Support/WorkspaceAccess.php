@@ -2,9 +2,11 @@
 
 namespace App\Support;
 
+use App\Models\Area;
 use App\Models\TerminosReferencia;
 use App\Models\User;
 use App\Support\Enums\EmployeeSpecialty;
+use Illuminate\Support\Str;
 
 class WorkspaceAccess
 {
@@ -18,8 +20,23 @@ class WorkspaceAccess
     {
         $todas = TerminosReferencia::AREAS;
 
-        if ($user->isAdmin() || $user->isManager() || $user->isLeader()) {
+        if ($user->isAdmin() || $user->isManager()) {
             return $todas;
+        }
+
+        if ($user->isLeader()) {
+            if (! $user->employee) {
+                return [];
+            }
+            $managed = Area::whereHas('projects', fn ($q) => $q->where('empleado_responsable_id', $user->employee->id)->orWhere('areas_proyecto.lider_area_id', $user->employee->id))->orWhere('id', $user->employee->area_id)->with('employees:id,area_id,especialidad')->get();
+            $names = $managed->pluck('nombre')->map(fn ($n) => Str::lower(Str::ascii($n)))
+                ->merge($managed->flatMap(fn ($area) => $area->employees->map(fn ($e) => $e->especialidad?->tdrArea())))->filter()->all();
+            if (array_intersect($names, ['diseno', 'contenido', 'redes sociales', 'seo/sem', 'audiovisual', 'estrategia'])) {
+                $names[] = 'marketing';
+            }
+            $own = $user->employee?->especialidad?->tdrArea();
+
+            return array_filter($todas, fn ($label, $key) => $key === $own || in_array($key, $names), ARRAY_FILTER_USE_BOTH);
         }
 
         $propia = $user->employee?->especialidad?->tdrArea();
@@ -35,6 +52,20 @@ class WorkspaceAccess
             ->map(fn (EmployeeSpecialty $e) => $e->value)
             ->values()
             ->all();
+    }
+
+    public static function areaIdsFor(User $user): ?array
+    {
+        if ($user->isAdmin() || $user->isManager()) {
+            return null;
+        }
+        $keys = array_keys(self::areasFor($user));
+        if ($user->isEmployee() && $user->employee?->area_id) return [$user->employee->area_id];
+        $led = $user->isLeader() && $user->employee ? Area::whereHas('projects', fn ($q) => $q->where('empleado_responsable_id', $user->employee->id)->orWhere('areas_proyecto.lider_area_id', $user->employee->id))->pluck('id')->all() : [];
+
+        $explicit = array_values(array_unique(array_filter([...$led, $user->employee?->area_id])));
+        if ($user->isLeader() && $explicit) return $explicit;
+        return Area::all()->filter(fn ($area) => in_array(Str::lower(Str::ascii($area->nombre)), $keys))->pluck('id')->all();
     }
 
     /** @return array<string, string> */

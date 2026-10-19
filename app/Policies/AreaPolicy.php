@@ -14,7 +14,7 @@ class AreaPolicy
 
     public function view(User $user, Area $area): bool
     {
-        return $this->viewAny($user);
+        return $user->isAdmin() || $user->isManager() || ($user->isLeader() && in_array($area->id, \App\Support\WorkspaceAccess::areaIdsFor($user) ?? [], true));
     }
 
     public function create(User $user): bool

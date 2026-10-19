@@ -13,6 +13,6 @@ class EmailVerificationPromptController extends Controller
     {
         return $request->user()->hasVerifiedEmail()
             ? redirect()->intended(route('dashboard', absolute: false))
-            : view('auth.html.verify-email');
+            : view('auth.verify-email');
     }
 }

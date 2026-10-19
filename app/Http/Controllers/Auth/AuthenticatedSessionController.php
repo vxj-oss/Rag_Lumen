@@ -14,7 +14,7 @@ class AuthenticatedSessionController extends Controller
 
     public function create(): View
     {
-        return view('auth.html.login');
+        return view('auth.login');
     }
 
     public function store(LoginRequest $request): RedirectResponse
@@ -22,6 +22,7 @@ class AuthenticatedSessionController extends Controller
         $request->authenticate();
 
         $request->session()->regenerate();
+        $request->session()->put('auth_version', $request->user()->auth_version);
 
         return redirect()->intended(route('dashboard', absolute: false));
     }

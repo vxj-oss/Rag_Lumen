@@ -46,7 +46,7 @@ class ClientAreaAccessTest extends TestCase
         ];
     }
 
-    public function test_admin_and_manager_can_crud_clients_lead_read_only_employee_denied(): void
+    public function test_admin_and_manager_can_crud_clients_lead_and_employee_denied(): void
     {
         $admin = $this->makeUser(RoleName::Administrator);
         $manager = $this->makeUser(RoleName::Manager);
@@ -60,7 +60,7 @@ class ClientAreaAccessTest extends TestCase
 
         $this->actingAs($lead)->post(route('clients.store'), $this->clientPayload())->assertForbidden();
         $this->actingAs($employee)->get(route('clients.index'))->assertForbidden();
-        $this->actingAs($lead)->get(route('clients.index'))->assertOk();
+        $this->actingAs($lead)->get(route('clients.index'))->assertForbidden();
     }
 
     public function test_client_show_includes_budget_and_projects(): void
@@ -140,7 +140,7 @@ class ClientAreaAccessTest extends TestCase
         $this->assertEqualsCanonicalizing($areaIds, $project->areas->pluck('id')->all());
     }
 
-    public function test_manager_scope_is_limited_to_own_areas_and_managed(): void
+    public function test_manager_has_global_project_access(): void
     {
         $manager = $this->makeUser(RoleName::Manager);
         $area = Area::where('nombre', 'Diseño')->first();
@@ -153,12 +153,12 @@ class ClientAreaAccessTest extends TestCase
 
         $this->actingAs($manager)->get(route('projects.show', $inScope))->assertOk();
         $this->actingAs($manager)->get(route('projects.show', $managed))->assertOk();
-        $this->actingAs($manager)->get(route('projects.show', $outside))->assertForbidden();
+        $this->actingAs($manager)->get(route('projects.show', $outside))->assertOk();
 
         $response = $this->actingAs($manager)->get(route('projects.index'));
         $response->assertSee($inScope->nombre);
         $response->assertSee($managed->nombre);
-        $response->assertDontSee($outside->nombre);
+        $response->assertSee($outside->nombre);
     }
 
     public function test_project_scope_data_returns_areas_and_employees(): void

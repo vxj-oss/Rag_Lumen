@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Project;
 use App\Models\Task;
 use App\Support\Enums\DecisionSignal;
+use App\Support\Enums\ProjectStatus;
 use App\Support\Enums\RiskLevel;
 
 class ProjectDecisionService
@@ -16,6 +17,10 @@ class ProjectDecisionService
 
     public function evaluate(Project $project): array
     {
+        if (in_array($project->estado, [ProjectStatus::Completed, ProjectStatus::Cancelled], true)) {
+            return ['project_id' => $project->id, 'risk_score' => 0, 'risk_level' => RiskLevel::Low,
+                'signals' => [DecisionSignal::Healthy], 'reasons' => ['Proyecto '.$project->estado->label().': no genera alertas operativas.'], 'recommended_actions' => []];
+        }
         $metrics = $this->metricsService->forProject($project);
         $risk = $this->riskService->calculate($project);
         $overloadedEmployees = $this->overloadedEmployees($project);
@@ -96,9 +101,7 @@ class ProjectDecisionService
         $overloadRatio = config('decisions.employee_overload_ratio');
 
         return $members->map(function ($employee) use ($maxRecommended) {
-            $activeTaskCount = Task::where('asignado_a', $employee->id)->with('state')->get()
-                ->filter(fn (Task $task) => $task->isActiveState())
-                ->count();
+            $activeTaskCount = Task::where('asignado_a', $employee->id)->workItems()->activeState()->count();
 
             return [
                 'name' => $employee->fullName(),

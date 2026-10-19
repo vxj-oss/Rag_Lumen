@@ -7,10 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['usuario_id', 'proyecto_id', 'tarea_id', 'titulo'])]
+#[Fillable(['usuario_id', 'proyecto_id', 'tarea_id', 'titulo', 'contexto'])]
 class RagConversation extends Model
 {
     protected $table = 'conversaciones_rag';
+    protected function casts(): array { return ['contexto' => 'array']; }
 
     public function user(): BelongsTo
     {

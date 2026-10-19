@@ -9,7 +9,7 @@ class ClientPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->isAdmin() || $user->isManager() || $user->isLeader();
+        return $user->isAdmin() || $user->isManager();
     }
 
     public function view(User $user, Client $client): bool

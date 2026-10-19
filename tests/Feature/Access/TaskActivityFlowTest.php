@@ -42,6 +42,8 @@ class TaskActivityFlowTest extends TestCase
         ProjectMember::create([
             'proyecto_id' => $this->project->id,
             'empleado_id' => $this->worker->employee->id,
+            'rol_en_proyecto' => 'developer',
+            'asignado_en' => now()->toDateString(),
             'estado' => 'active',
         ]);
     }

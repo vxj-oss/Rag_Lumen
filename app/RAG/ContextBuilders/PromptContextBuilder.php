@@ -32,6 +32,7 @@ class PromptContextBuilder implements ContextBuilderInterface
         return 'Eres un asistente de gestion de proyectos. Responde la pregunta del usuario '
             .'basandote EXCLUSIVAMENTE en la informacion proporcionada en las secciones siguientes. '
             .'Si la respuesta no se encuentra en el contexto, indica que no dispones de esa informacion '
+            .'Cada referencia numerada identifica un fragmento recuperado, no un documento diferente. Varios fragmentos pueden pertenecer al mismo documento. Nunca deduzcas el total de documentos del sistema a partir de esas referencias. '
             .'en lugar de inventarla. Cuando uses un documento, cita su referencia entre corchetes, por ejemplo [1].';
     }
 
@@ -77,7 +78,6 @@ class PromptContextBuilder implements ContextBuilderInterface
         return implode("\n", $lines);
     }
 
-    
     private function documentsSection(array $retrieved): string
     {
         if ($retrieved === []) {
@@ -101,7 +101,7 @@ class PromptContextBuilder implements ContextBuilderInterface
             $title = $chunk->document?->titulo ?? 'documento desconocido';
             $reference = $index + 1;
 
-            $entries[] = "[{$reference}] (Fuente: \"{$title}\", fragmento {$chunk->indice_fragmento})\n{$entryText}";
+            $entries[] = "[{$reference}] (Documento ID: {$chunk->documento_id}, fuente: \"{$title}\", fragmento {$chunk->indice_fragmento})\n{$entryText}";
         }
 
         return "## Documentos relevantes\n".implode("\n\n", $entries);

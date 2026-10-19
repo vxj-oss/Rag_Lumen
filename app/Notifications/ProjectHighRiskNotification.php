@@ -18,7 +18,7 @@ class ProjectHighRiskNotification extends Notification
 
     public function via(object $notifiable): array
     {
-        return $notifiable->notify_by_email ? ['database', 'mail'] : ['database'];
+        return $notifiable->notificationChannels();
     }
 
     public function toMail(object $notifiable): MailMessage

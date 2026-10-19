@@ -14,19 +14,22 @@ use App\RAG\VectorStores\VectorStoreInterface;
 use App\Support\Enums\RagDocumentStatus;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Throwable;
 
 class ProcessRagDocument implements ShouldQueue
 {
     use Queueable;
+
     public int $tries = 3;
 
-    public function __construct(private int $ragDocumentId)
-    {
-    }
+    public int $timeout = 120;
 
-    
+    public bool $failOnTimeout = true;
+
+    public function __construct(private int $ragDocumentId) {}
+
     public function backoff(): array
     {
         return [30, 60, 120];
@@ -37,8 +40,7 @@ class ProcessRagDocument implements ShouldQueue
         TextChunkerInterface $chunker,
         EmbeddingServiceInterface $embeddingService,
         VectorStoreInterface $vectorStore,
-    ): void
-    {
+    ): void {
         $document = RagDocument::find($this->ragDocumentId);
 
         if ($document === null) {
@@ -73,26 +75,30 @@ class ProcessRagDocument implements ShouldQueue
             return;
         }
 
-        $vectors = $embeddingService->embedMany($textChunks);
+        $vectors = config('rag.lexical_only') ? [] : $embeddingService->embedMany($textChunks);
 
-        $document->chunks()->delete();
+        DB::transaction(function () use ($document, $textChunks, $vectors, $vectorStore) {
+            $document->chunks()->delete();
 
-        foreach ($textChunks as $index => $content) {
-            $chunk = RagChunk::create([
-                'documento_id' => $document->id,
-                'contenido' => $content,
-                'indice_fragmento' => $index,
-                'metadatos' => null,
-                'referencia_vector' => null,
+            foreach ($textChunks as $index => $content) {
+                $chunk = RagChunk::create([
+                    'documento_id' => $document->id,
+                    'contenido' => $content,
+                    'indice_fragmento' => $index,
+                    'metadatos' => null,
+                    'referencia_vector' => null,
+                ]);
+
+                if (isset($vectors[$index])) {
+                    $vectorStore->store($chunk, $vectors[$index]);
+                }
+            }
+
+            $document->update([
+                'estado' => RagDocumentStatus::Processed->value,
+                'motivo_fallo' => null,
             ]);
-
-            $vectorStore->store($chunk, $vectors[$index]);
-        }
-
-        $document->update([
-            'estado' => RagDocumentStatus::Processed->value,
-            'motivo_fallo' => null,
-        ]);
+        });
     }
 
     public function failed(?Throwable $exception): void
@@ -106,7 +112,7 @@ class ProcessRagDocument implements ShouldQueue
 
     private function resolveLoader(string $mimeType)
     {
-        foreach ([new PdfDocumentLoader(), new DocxDocumentLoader(), new TxtDocumentLoader()] as $loader) {
+        foreach ([new PdfDocumentLoader, new DocxDocumentLoader, new TxtDocumentLoader] as $loader) {
             if ($loader->supports($mimeType)) {
                 return $loader;
             }

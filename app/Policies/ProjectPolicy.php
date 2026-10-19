@@ -14,7 +14,6 @@ class ProjectPolicy
             RoleName::Administrator->value,
             RoleName::Manager->value,
             RoleName::ProjectLead->value,
-            RoleName::Employee->value,
         ]);
     }
 
@@ -27,6 +26,7 @@ class ProjectPolicy
         if ($user->isManager()) {
             return $this->inScope($user, $project);
         }
+        if ($user->isLeader()) return $this->inScope($user, $project);
 
         if ($this->isResponsibleFor($user, $project)) {
             return true;

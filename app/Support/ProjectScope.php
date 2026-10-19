@@ -14,7 +14,7 @@ class ProjectScope
      */
     public static function accessibleProjectIds(User $user): ?array
     {
-        if ($user->isAdmin()) {
+        if ($user->isAdmin() || $user->isManager()) {
             return null;
         }
 
@@ -22,6 +22,10 @@ class ProjectScope
 
         if ($employeeId === null) {
             return [];
+        }
+        if ($user->isLeader()) {
+            return Project::where('empleado_responsable_id', $employeeId)
+                ->orWhereHas('areas', fn ($areas) => $areas->whereIn('areas.id', WorkspaceAccess::areaIdsFor($user) ?? []))->pluck('id')->all();
         }
 
         if ($user->isManager()) {
@@ -38,6 +42,8 @@ class ProjectScope
 
         return Project::query()
             ->where('empleado_responsable_id', $employeeId)
+            ->when($user->isLeader(), fn ($q) => $q->orWhereHas('areas', fn ($areas) => $areas->whereIn('areas.id', WorkspaceAccess::areaIdsFor($user) ?? [])))
+            ->orWhereHas('tasks', fn ($q) => $q->where('asignado_a', $employeeId))
             ->orWhereHas('members', function ($query) use ($employeeId) {
                 $query->where('empleado_id', $employeeId)
                     ->where('miembros_proyecto.estado', 'active');

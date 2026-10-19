@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'lexical_only' => true,
     'storage_disk' => 'local',
 
     'storage_path' => 'rag-documents',

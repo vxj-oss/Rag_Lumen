@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Models\Project;
+use App\Models\Task;
 use App\Policies\AlertPolicy;
 use App\RAG\Chunkers\FixedSizeTextChunker;
 use App\RAG\Chunkers\TextChunkerInterface;
@@ -17,6 +19,9 @@ use App\RAG\Retrievers\RetrieverInterface;
 use App\RAG\Retrievers\SemanticRetriever;
 use App\RAG\VectorStores\MySqlJsonVectorStore;
 use App\RAG\VectorStores\VectorStoreInterface;
+use App\Services\ProjectMetricsService;
+use App\Services\TaskWorkflowNotifier;
+use App\Support\Enums\TaskStatus;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Notifications\DatabaseNotification;
@@ -28,6 +33,7 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        $this->app->scoped(ProjectMetricsService::class);
         $this->app->bind(TextChunkerInterface::class, FixedSizeTextChunker::class);
 
         $this->app->bind(EmbeddingServiceInterface::class, fn () => match (config('rag.embedding.provider')) {
@@ -47,6 +53,27 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        \Illuminate\Pagination\Paginator::defaultView('components.ui.pagination');
+        \Illuminate\Validation\Rules\Password::defaults(fn () => \Illuminate\Validation\Rules\Password::min(12)->mixedCase()->numbers());
+        Task::saved(fn ($task) => app(ProjectMetricsService::class)->forget($task->proyecto_id));
+        Task::deleted(fn ($task) => app(ProjectMetricsService::class)->forget($task->proyecto_id));
+        Project::saved(fn ($project) => app(ProjectMetricsService::class)->forget($project->id));
+        Task::created(fn ($task) => app(TaskWorkflowNotifier::class)->schedule($task, 'assigned'));
+        Task::updated(function ($task) {
+            $notifier = app(TaskWorkflowNotifier::class);
+            if ($task->wasChanged('asignado_a')) {
+                $notifier->schedule($task, 'assigned');
+            }
+            if ($task->wasChanged('estado')) {
+                if ($task->estado === TaskStatus::Review) {
+                    $notifier->schedule($task, 'review');
+                } elseif ($task->estado === TaskStatus::Completed) {
+                    $notifier->schedule($task, 'approved');
+                } elseif ($task->motivo_rechazo && $task->wasChanged('motivo_rechazo')) {
+                    $notifier->schedule($task, 'returned');
+                }
+            }
+        });
         Gate::policy(DatabaseNotification::class, AlertPolicy::class);
         RateLimiter::for('web', function (Request $request) {
             return Limit::perMinute(120)->by($request->user()?->id ?: $request->ip());

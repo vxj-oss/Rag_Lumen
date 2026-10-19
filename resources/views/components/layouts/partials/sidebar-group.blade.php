@@ -1,7 +1,7 @@
 {{-- Apartado plegable del menú lateral. Se incluye desde sidebar.blade.php y comparte su scope de Alpine. --}}
 <div>
     <button type="button" x-show="!collapsed" @click="alternar('{{ $clave }}', {{ $porDefecto }})"
-            class="w-full flex items-center justify-between px-3 pt-3 pb-1 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500 hover:text-slate-300 transition">
+            class="w-full flex items-center justify-between px-3 pt-3 pb-1 text-xs font-bold uppercase tracking-[0.18em] text-slate-500 hover:text-slate-300 transition">
         {{ __($etiqueta) }}
         <svg class="w-3 h-3 transition-transform duration-300" :class="abierto('{{ $clave }}', {{ $porDefecto }}) ? 'rotate-0' : '-rotate-90'" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg>
     </button>

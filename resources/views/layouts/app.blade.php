@@ -13,11 +13,12 @@
         <script>try { if (localStorage.getItem('sidebar-collapsed') === '1') document.documentElement.classList.add('sidebar-collapsed'); } catch (e) {}</script>
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body class="font-sans antialiased text-slate-800 min-h-screen">
-        <div class="lg:flex min-h-screen">
+    <body data-responsive-list="{{ request()->routeIs('projects.index','employees.index','clients.index','areas.index','rag-documents.index','users.index','alerts.index','activity.index','normativa.index','archive.index','employees.record','employees.show','workspaces.show') ? '1' : '0' }}" class="font-sans antialiased text-slate-800 {{ request()->routeIs('rag-query.index') ? 'assistant-page' : '' }}">
+        <div class="app-shell lg:flex">
             <x-layouts.sidebar />
 
-            <div class="flex-1 flex flex-col min-w-0">
+            <div class="app-content flex-1 flex flex-col min-w-0">
+                <x-ui.workspace-toolbar />
                 @isset($header)
                     <header class="relative bg-white/70 backdrop-blur-md border-b border-slate-200/70 overflow-hidden">
                         <div aria-hidden="true" class="pointer-events-none absolute -top-16 -right-16 w-56 h-56 rounded-full bg-emerald-300/20 blur-3xl"></div>
@@ -28,11 +29,12 @@
                     </header>
                 @endisset
 
-                <main class="flex-1 min-w-0">
+                <main class="app-main flex-1 min-w-0">
                     {{ $slot }}
                 </main>
             </div>
         </div>
         <x-ui.toasts />
+        <x-assistant.widget />
     </body>
 </html>

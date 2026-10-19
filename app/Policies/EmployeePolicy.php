@@ -30,12 +30,12 @@ class EmployeePolicy
             return true;
         }
 
-        return $user->isLeader() && $this->sharesProject($user, $employee);
+        return $user->isLeader() && \App\Support\WorkspaceScope::employees($user)->whereKey($employee->id)->exists();
     }
 
     public function create(User $user): bool
     {
-        return $user->hasRole(RoleName::Administrator->value);
+        return $user->isAdmin() || $user->isManager() || $user->isLeader();
     }
 
     public function update(User $user, Employee $employee): bool
@@ -44,14 +44,9 @@ class EmployeePolicy
             return true;
         }
 
-        if ($user->isManager()) {
-            $managerAreaId = $user->employee?->area_id;
-
-            return $managerAreaId !== null && $employee->area_id === $managerAreaId;
-        }
-
-
-        return false;
+        return ($user->isManager() || $user->isLeader())
+            && (!$employee->user || $employee->user->hasExactRoles(['employee']))
+            && $this->view($user, $employee);
     }
 
     public function delete(User $user, Employee $employee): bool

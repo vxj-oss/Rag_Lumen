@@ -18,7 +18,7 @@ class NewPasswordController extends Controller
 {
     public function create(Request $request): View
     {
-        return view('auth.html.reset-password', ['request' => $request]);
+        return view('auth.reset-password', ['request' => $request]);
     }
 
     
@@ -30,12 +30,15 @@ class NewPasswordController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
+        abort_if(User::where('email', $request->input('email'))->first()?->isEmployee(), 403, 'Solicita el cambio a tu responsable.');
         $status = Password::reset(
             $request->only('email', 'password', 'password_confirmation', 'token'),
             function (User $user) use ($request) {
                 $user->forceFill([
                     'password' => Hash::make($request->password),
                     'remember_token' => Str::random(60),
+                    'force_password_change' => false,
+                    'auth_version' => $user->auth_version + 1,
                 ])->save();
 
                 event(new PasswordReset($user));

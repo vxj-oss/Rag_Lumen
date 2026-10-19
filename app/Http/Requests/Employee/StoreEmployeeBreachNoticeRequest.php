@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\Employee;
 
+use App\Support\WorkspaceAccess;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreEmployeeBreachNoticeRequest extends FormRequest
 {
@@ -15,7 +17,7 @@ class StoreEmployeeBreachNoticeRequest extends FormRequest
     {
         return [
             'fecha_hechos' => ['required', 'date'],
-            'falta_id' => ['nullable', 'integer', 'exists:faltas,id'],
+            'falta_id' => ['nullable', 'integer', Rule::exists('faltas', 'id')->where(fn ($q) => $q->where(fn ($area) => $area->whereNull('area')->orWhereIn('area', array_keys(WorkspaceAccess::areasFor($this->user())))))],
             'hechos' => ['required', 'string', 'max:3000'],
             'clausula_infringida' => ['nullable', 'string', 'max:255'],
             'monto' => ['nullable', 'numeric', 'min:0', 'max:999999.99'],

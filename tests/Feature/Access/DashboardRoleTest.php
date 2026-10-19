@@ -53,7 +53,7 @@ class DashboardRoleTest extends TestCase
             ->assertSee('Dashboard ejecutivo');
     }
 
-    public function test_manager_sees_only_scoped_projects(): void
+    public function test_manager_sees_global_projects(): void
     {
         $manager = $this->makeUser(RoleName::Manager);
         $area = Area::where('nombre', 'Diseño')->first();
@@ -67,7 +67,7 @@ class DashboardRoleTest extends TestCase
 
         $response->assertOk()->assertSee('Portafolio bajo mi alcance');
         $response->assertSee($inScope->nombre);
-        $response->assertDontSee($outside->nombre);
+        $response->assertSee($outside->nombre);
     }
 
     public function test_leader_sees_own_projects_and_team_load(): void
@@ -117,10 +117,8 @@ class DashboardRoleTest extends TestCase
 
         $response = $this->actingAs($employee)->get(route('dashboard'));
 
-        $response->assertOk()->assertSee('Mi día');
-        $response->assertSee($mine->titulo);
-        $response->assertDontSee($other->titulo);
-        $response->assertSee('5');
+        $response->assertRedirect(route('rag-query.index'));
+        $this->getJson(route('tasks.board'))->assertOk()->assertJsonFragment(['title' => $mine->titulo])->assertDontSee($other->titulo);
     }
 
     public function test_exports_respect_role_scope(): void
@@ -160,20 +158,6 @@ class DashboardRoleTest extends TestCase
 
         $response = $this->actingAs($employee)->get(route('dashboard.export'));
 
-        $response->assertOk();
-        $response->assertHeader('Content-Type', 'application/pdf');
-        $response->assertHeader('Content-Disposition', 'attachment; filename=reporte-mi-dia-'.now()->format('Y-m-d').'.pdf');
-
-        // El alcance del PDF se verifica renderizando el reporte con la misma
-        // consulta acotada que usa el controlador.
-        $scoped = Task::with(['state', 'project'])->where('asignado_a', $employee->employee->id)->get();
-        $html = view('reports.dashboard-employee', [
-            'summary' => ['pending' => 1, 'in_progress' => 0, 'due_soon' => 0, 'blocked' => 0, 'hours_recorded' => 0],
-            'byState' => $scoped->groupBy(fn (Task $task) => $task->state?->nombre ?? $task->estado->label()),
-            'generatedAt' => now(),
-        ])->render();
-
-        $this->assertStringContainsString($mine->titulo, $html);
-        $this->assertStringNotContainsString($other->titulo, $html);
+        $response->assertRedirect(route('rag-query.index'));
     }
 }

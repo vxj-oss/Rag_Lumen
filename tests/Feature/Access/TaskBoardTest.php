@@ -125,7 +125,7 @@ class TaskBoardTest extends TestCase
         TaskState::seedDefaults($project->id);
         $initial = TaskState::where('proyecto_id', $project->id)->where('es_inicial', true)->firstOrFail();
         $worker = Employee::factory()->create();
-        \App\Models\ProjectMember::create(['proyecto_id' => $project->id, 'empleado_id' => $worker->id, 'estado' => 'active']);
+        \App\Models\ProjectMember::create(['proyecto_id' => $project->id, 'empleado_id' => $worker->id, 'rol_en_proyecto' => 'developer', 'asignado_en' => now()->toDateString(), 'estado' => 'active']);
 
         $this->actingAs($admin)->post(route('tasks.store'), [
             'proyecto_id' => $project->id,

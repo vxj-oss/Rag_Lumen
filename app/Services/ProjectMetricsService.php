@@ -8,12 +8,15 @@ use Illuminate\Support\Carbon;
 
 class ProjectMetricsService
 {
+    private array $requestCache = [];
+    public function forget(?int $projectId): void { if ($projectId !== null) unset($this->requestCache[$projectId]); }
     private const DUE_SOON_DAYS = 3;
 
     private const TREND_WINDOW_DAYS = 7;
 
     public function forProject(Project $project): array
     {
+        if (isset($this->requestCache[$project->id])) return $this->requestCache[$project->id];
         // Solo tareas "hoja" (sin subtareas): si una tarea tiene subtareas, su
         // avance es un cálculo derivado de ellas (ver TaskProgressRollup), así
         // que incluir ambas duplicaría el mismo trabajo en el promedio.
@@ -33,7 +36,7 @@ class ProjectMetricsService
         });
         $pendingTasks = $tasks->filter(fn ($task) => $task->isActiveState());
 
-        return [
+        return $this->requestCache[$project->id] = [
             'real_progress' => $this->realProgress($tasks),
             'expected_progress' => $this->expectedProgress($project),
             'progress_gap' => round($this->expectedProgress($project) - $this->realProgress($tasks), 1),

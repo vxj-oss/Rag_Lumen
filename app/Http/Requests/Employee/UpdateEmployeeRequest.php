@@ -26,7 +26,7 @@ class UpdateEmployeeRequest extends FormRequest
         $creatingAccess = ! $hasAccess && $this->boolean('create_access');
 
         return [
-            'usuario_id' => ['nullable', 'integer', 'exists:users,id', Rule::unique('empleados', 'usuario_id')->ignore($employeeId)],
+            'usuario_id' => [Rule::prohibitedIf(! $this->user()->isAdmin()), 'nullable', 'integer', 'exists:users,id', Rule::unique('empleados', 'usuario_id')->ignore($employeeId)],
             'nombres' => ['required', 'string', 'max:100'],
             'apellidos' => ['required', 'string', 'max:100'],
             'documento_identidad' => ['nullable', 'string', 'max:20', Rule::unique('empleados', 'documento_identidad')->ignore($employeeId)],
@@ -37,14 +37,14 @@ class UpdateEmployeeRequest extends FormRequest
             ]),
             'telefono' => ['nullable', 'string', 'max:30'],
             'cargo' => ['nullable', 'string', 'max:100'],
-            'especialidad' => ['required', Rule::enum(EmployeeSpecialty::class)],
-            'area_id' => ['nullable', 'integer', 'exists:areas,id'],
+            'especialidad' => ['required', Rule::enum(EmployeeSpecialty::class), function ($attribute, $value, $fail) { if ($this->user()->isLeader() && !array_key_exists((EmployeeSpecialty::tryFrom($value)?->tdrArea() ?? ''), \App\Support\WorkspaceAccess::areasFor($this->user()))) $fail('Solo puedes gestionar trabajadores de tus áreas.'); }],
+            'area_id' => ['nullable', 'integer', 'exists:areas,id', function ($attribute, $value, $fail) { if ($this->user()->isLeader() && !in_array((int)$value, \App\Support\WorkspaceAccess::areaIdsFor($this->user()) ?? [], true)) $fail('No puedes asignar otra área.'); }],
             'estado' => ['required', Rule::enum(EmployeeStatus::class)],
             'fecha_contratacion' => ['nullable', 'date'],
-            'create_access' => ['sometimes', 'boolean'],
+            'create_access' => [Rule::prohibitedIf(! $this->user()->isAdmin()), 'sometimes', 'boolean'],
             'password' => $creatingAccess
                 ? ['required', 'string', Password::defaults(), 'confirmed']
-                : ['nullable', 'string', Password::defaults(), 'confirmed'],
+                : ['prohibited'],
         ];
     }
 }

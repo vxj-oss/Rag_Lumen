@@ -56,7 +56,7 @@
                 </ul>
             </div>
 
-            <p class="text-xs text-slate-400">
+            <p class="text-xs text-slate-500">
                 {{ __('Uso interno de la empresa.') }}
                 <a href="{{ route('legal.security-policy') }}" class="underline hover:text-slate-300">{{ __('Políticas de seguridad y cookies') }}</a>
             </p>

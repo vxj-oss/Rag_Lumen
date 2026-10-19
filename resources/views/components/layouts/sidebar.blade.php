@@ -1,5 +1,9 @@
 @php
     $navItems = [];
+    if (auth()->user()->isAdmin()) {
+        $navItems[] = ['label' => 'Usuarios y accesos', 'route' => 'users.index', 'pattern' => 'users.*', 'icon' => 'users'];
+        $navItems[] = ['label' => 'Estado del sistema', 'route' => 'system.index', 'pattern' => 'system.*', 'icon' => 'activity'];
+    }
 
     if (auth()->user()->can('viewAny', \App\Models\Project::class)) {
         $navItems[] = ['label' => 'Proyectos', 'route' => 'projects.index', 'pattern' => 'projects.*', 'icon' => 'folder'];
@@ -20,6 +24,7 @@
         $navItems[] = ['label' => 'Documentos', 'route' => 'rag-documents.index', 'pattern' => 'rag-documents.*', 'icon' => 'document'];
         $navItems[] = ['label' => 'Asistente', 'route' => 'rag-query.index', 'pattern' => 'rag-query.*', 'icon' => 'chat'];
     }
+    if (auth()->user()->employee) $navItems[] = ['label' => 'Mi expediente', 'route' => 'employees.record', 'pattern' => 'employees.record', 'icon' => 'document'];
     $navItems[] = ['label' => 'Normativa', 'route' => 'normativa.index', 'pattern' => 'normativa.*', 'icon' => 'book'];
     if (auth()->user()->hasRole([\App\Support\Enums\RoleName::Administrator->value, \App\Support\Enums\RoleName::Manager->value]) || auth()->user()->isLeader()) {
         $navItems[] = ['label' => 'Actividad', 'route' => 'activity.index', 'pattern' => 'activity.*', 'icon' => 'activity'];
@@ -49,8 +54,8 @@
     // Apartados del menú: cada uno se pliega y recuerda su estado.
     $apartados = [
         'trabajo' => ['label' => 'Trabajo', 'rutas' => ['projects.index', 'tasks.index', 'clients.index']],
-        'equipo' => ['label' => 'Equipo', 'rutas' => ['employees.index', 'areas.index']],
-        'conocimiento' => ['label' => 'Conocimiento', 'rutas' => ['rag-documents.index', 'rag-query.index', 'normativa.index']],
+        'equipo' => ['label' => 'Equipo', 'rutas' => ['employees.index', 'areas.index', 'users.index', 'system.index']],
+        'conocimiento' => ['label' => 'Conocimiento', 'rutas' => ['rag-documents.index', 'rag-query.index', 'normativa.index', 'employees.record']],
     ];
 
     $espacios = \App\Support\WorkspaceAccess::areasFor(auth()->user());
@@ -73,7 +78,7 @@
 
     $claseItem = fn (bool $activo) => $activo
         ? 'bg-white/10 text-white'
-        : 'text-slate-400 hover:bg-white/[0.06] hover:text-white';
+        : 'text-slate-300 hover:bg-white/[0.06] hover:text-white';
 @endphp
 
 <div x-data="{
@@ -142,7 +147,7 @@
                 <span x-show="!collapsed" class="font-bold text-white tracking-tight truncate">{{ config('app.name') }}</span>
             </a>
             <button type="button" @click="toggle()"
-                    class="hidden lg:inline-flex shrink-0 w-8 h-8 items-center justify-center rounded-lg text-slate-400 hover:text-white hover:bg-white/10 active:scale-90 transition"
+                    class="hidden lg:inline-flex shrink-0 w-8 h-8 items-center justify-center rounded-lg text-slate-300 hover:text-white hover:bg-white/10 active:scale-90 transition"
                     :aria-label="collapsed ? @js(__('Expandir menú')) : @js(__('Ocultar menú'))"
                     @mouseenter="mostrarTip($event, @js(__('Expandir menú')))" @mouseleave="tip.show = false"
                     :title="collapsed ? '' : @js(__('Ocultar menú  ( [ )'))">
@@ -157,6 +162,7 @@
 
         {{-- Navegación: compacta para que quepa sin scroll --}}
         <nav class="flex-1 min-h-0 px-2.5 py-2 space-y-0.5 overflow-y-auto overflow-x-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            @unless(auth()->user()->isEmployee())
             @php $dashActivo = request()->routeIs('dashboard'); @endphp
             <a href="{{ route('dashboard') }}" @mouseenter="mostrarTip($event, @js(__('Dashboard')))" @mouseleave="tip.show = false"
                class="group relative flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-semibold transition-all duration-200 {{ $claseItem($dashActivo) }}"
@@ -166,6 +172,7 @@
                 <span x-show="!collapsed" class="truncate">{{ __('Dashboard') }}</span>
             </a>
 
+            @endunless
             @foreach ($apartados as $clave => $ap)
                 @php $items = collect($ap['rutas'])->filter(fn ($r) => $porRuta->has($r))->map(fn ($r) => $porRuta[$r]); @endphp
                 @continue($items->isEmpty())
@@ -175,7 +182,7 @@
             @if ($espacios !== [])
                 <div x-data="{ clave: 'areas' }">
                     <button type="button" x-show="!collapsed" @click="alternar('areas', true)"
-                            class="w-full flex items-center justify-between px-3 pt-3 pb-1 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500 hover:text-slate-300 transition">
+                            class="w-full flex items-center justify-between px-3 pt-3 pb-1 text-xs font-bold uppercase tracking-[0.18em] text-slate-300 hover:text-slate-300 transition">
                         {{ __('Áreas de trabajo') }}
                         <svg class="w-3 h-3 transition-transform duration-300" :class="abierto('areas', true) ? 'rotate-0' : '-rotate-90'" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg>
                     </button>
@@ -197,10 +204,11 @@
                 </div>
             @endif
 
+            @unless(auth()->user()->isEmployee())
             {{-- Sistema: actividad y alertas --}}
             <div>
                 <button type="button" x-show="!collapsed" @click="alternar('sistema', true)"
-                        class="w-full flex items-center justify-between px-3 pt-3 pb-1 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500 hover:text-slate-300 transition">
+                        class="w-full flex items-center justify-between px-3 pt-3 pb-1 text-xs font-bold uppercase tracking-[0.18em] text-slate-300 hover:text-slate-300 transition">
                     {{ __('Sistema') }}
                     <svg class="w-3 h-3 transition-transform duration-300" :class="abierto('sistema', true) ? 'rotate-0' : '-rotate-90'" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg>
                 </button>
@@ -235,10 +243,11 @@
                         </span>
                         <span x-show="!collapsed" class="flex-1 truncate">{{ __('Alertas') }}</span>
                         <span x-show="count > 0 && !collapsed" x-cloak x-text="count > 99 ? '99+' : count"
-                              class="bg-rose-500 text-white text-[11px] font-bold rounded-full px-2 py-0.5 min-w-[1.25rem] text-center animate-pulse"></span>
+                              class="bg-rose-500 text-white text-xs font-bold rounded-full px-2 py-0.5 min-w-[1.25rem] text-center animate-pulse"></span>
                     </a>
                 </div>
             </div>
+            @endunless
         </nav>
 
         {{-- Usuario --}}
@@ -252,9 +261,9 @@
                         </span>
                         <span x-show="!collapsed" class="min-w-0 flex-1">
                             <span class="block text-[13px] font-semibold text-white truncate">{{ Auth::user()->name }}</span>
-                            <span class="block text-[11px] text-slate-400 truncate">{{ Auth::user()->email }}</span>
+                            <span class="block text-xs text-slate-300 truncate">{{ Auth::user()->email }}</span>
                         </span>
-                        <svg x-show="!collapsed" class="w-4 h-4 text-slate-500 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 9l4-4 4 4m0 6l-4 4-4-4" /></svg>
+                        <svg x-show="!collapsed" class="w-4 h-4 text-slate-300 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 9l4-4 4 4m0 6l-4 4-4-4" /></svg>
                     </button>
                 </x-slot>
 

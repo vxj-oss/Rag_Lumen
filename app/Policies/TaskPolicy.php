@@ -21,16 +21,17 @@ class TaskPolicy
 
     public function view(User $user, Task $task): bool
     {
-        if ($user->hasRole([RoleName::Administrator->value, RoleName::Manager->value])) {
+        if ($user->isAdmin()) {
             return true;
         }
+        if ($user->isManager()) return $task->project !== null && $user->can('view', $task->project);
 
         return $this->leadsProject($user, $task) || $this->isAssignee($user, $task);
     }
 
     public function create(User $user): bool
     {
-        return $user->hasRole([RoleName::Administrator->value, RoleName::ProjectLead->value]);
+        return $user->hasRole([RoleName::Administrator->value, RoleName::Manager->value, RoleName::ProjectLead->value]);
     }
 
     public function update(User $user, Task $task): bool
@@ -107,8 +108,7 @@ class TaskPolicy
     private function leadsProject(User $user, Task $task): bool
     {
         return $user->hasRole(RoleName::ProjectLead->value)
-            && $task->project?->empleado_responsable_id !== null
-            && $user->employee?->id === $task->project?->empleado_responsable_id;
+            && in_array($task->proyecto_id, \App\Support\ProjectScope::accessibleProjectIds($user) ?? [], true);
     }
 
     private function isAssignee(User $user, Task $task): bool
