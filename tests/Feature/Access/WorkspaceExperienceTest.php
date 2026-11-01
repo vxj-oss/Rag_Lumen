@@ -42,6 +42,7 @@ class WorkspaceExperienceTest extends TestCase
     public function test_search_finds_records_for_admin_without_exposing_private_fields(): void
     {
         $admin = $this->user(RoleName::Administrator);
+        $admin->employee->update(['nombres' => 'Admin']);
         $project = Project::factory()->create(['nombre' => 'Portal Aurora']);
         Task::factory()->create(['proyecto_id' => $project->id, 'titulo' => 'Auditar Aurora']);
         Employee::factory()->create(['nombres' => 'Aurora', 'documento_identidad' => '12345678']);
@@ -70,6 +71,11 @@ class WorkspaceExperienceTest extends TestCase
     public function test_leader_search_is_limited_to_their_projects_and_visible_people(): void
     {
         $leader = $this->user(RoleName::ProjectLead);
+        $leader->employee->update([
+            'nombres' => 'Lider',
+            'especialidad' => \App\Support\Enums\EmployeeSpecialty::Marketing,
+        ]);
+        $leader = $leader->refresh();
         $own = Project::factory()->create(['nombre' => 'Aurora equipo', 'empleado_responsable_id' => $leader->employee->id]);
         $other = Project::factory()->create(['nombre' => 'Aurora privado', 'empleado_responsable_id' => Employee::factory()->create()->id]);
         $worker = Employee::factory()->create(['nombres' => 'Aurora', 'especialidad' => $leader->employee->especialidad]);
