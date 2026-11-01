@@ -25,15 +25,25 @@ export function registerWorkspace(Alpine) {
 
     Alpine.data('projectWorkspace', () => ({
         tab: 'overview',
+        switching: false,
+        pendingTab: '',
+        _switchTimer: null,
         init() {
             const requested = new URLSearchParams(location.search).get('tab');
             if (['overview', 'tasks', 'team', 'documents', 'history'].includes(requested)) this.tab = requested;
         },
         select(tab) {
-            this.tab = tab;
-            const url = new URL(location.href);
-            url.searchParams.set('tab', tab);
-            history.replaceState(null, '', url);
+            if (!['overview', 'tasks', 'team', 'documents', 'history'].includes(tab) || tab === this.tab || this.switching) return;
+            this.switching = true;
+            this.pendingTab = tab;
+            clearTimeout(this._switchTimer);
+            this._switchTimer = setTimeout(() => {
+                this.tab = tab;
+                const url = new URL(location.href);
+                url.searchParams.set('tab', tab);
+                history.replaceState(null, '', url);
+                requestAnimationFrame(() => { this.switching = false; this.pendingTab = ''; });
+            }, 150);
         },
     }));
 

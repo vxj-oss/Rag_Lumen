@@ -1,4 +1,4 @@
-<section id="project-panel-tasks" role="tabpanel" aria-labelledby="project-tab-tasks" x-show="tab === 'tasks'" x-cloak class="space-y-4">
+<section id="project-panel-tasks" role="tabpanel" aria-labelledby="project-tab-tasks" x-show="tab === 'tasks' && !switching" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" x-cloak class="space-y-4">
     <div class="flex flex-wrap items-center justify-between gap-3"><h3 class="workspace-section-title">{{ __('Actividades del proyecto') }}</h3><a href="{{ route('tasks.index', ['project_id' => $project->id]) }}" class="workspace-primary">{{ __('Abrir tablero') }} →</a></div>
     @forelse ($workspaceTasks as $workspaceTask)
         <a href="{{ route('tasks.show', $workspaceTask) }}" class="block rounded-2xl border border-slate-200 bg-white p-5 transition-colors hover:border-emerald-400">
@@ -11,7 +11,7 @@
     @endforelse
 </section>
 
-<section id="project-panel-documents" role="tabpanel" aria-labelledby="project-tab-documents" x-show="tab === 'documents'" x-cloak class="space-y-4">
+<section id="project-panel-documents" role="tabpanel" aria-labelledby="project-tab-documents" x-show="tab === 'documents' && !switching" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" x-cloak class="space-y-4">
     <div class="flex flex-wrap items-center justify-between gap-3"><h3 class="workspace-section-title">{{ __('Documentos del proyecto') }}</h3><a href="{{ route('rag-documents.index') }}" class="workspace-button">{{ __('Gestionar documentos') }}</a></div>
     @forelse ($workspaceDocuments as $workspaceDocument)
         <a href="{{ route('rag-documents.source', $workspaceDocument) }}" class="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-5 hover:border-emerald-400"><div><h4 class="font-semibold text-slate-900">{{ $workspaceDocument->titulo }}</h4><p class="mt-1 text-sm text-slate-600">{{ $workspaceDocument->nombre_archivo }}</p></div><span class="text-sm font-semibold text-emerald-800">{{ __('Consultar fuente') }} →</span></a>
@@ -20,7 +20,7 @@
     @endforelse
 </section>
 
-<section id="project-panel-history" role="tabpanel" aria-labelledby="project-tab-history" x-show="tab === 'history'" x-cloak>
+<section id="project-panel-history" role="tabpanel" aria-labelledby="project-tab-history" x-show="tab === 'history' && !switching" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" x-cloak>
     <x-ui.card><h3 class="workspace-section-title mb-6">{{ __('Últimos movimientos del proyecto') }}</h3>
         <ol class="workspace-timeline">
             @forelse ($workspaceHistory as $event)

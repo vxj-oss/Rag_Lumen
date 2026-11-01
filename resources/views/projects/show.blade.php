@@ -40,11 +40,43 @@
 
             <nav class="flex gap-1 overflow-x-auto rounded-2xl border border-slate-200 bg-white p-2" role="tablist" aria-label="{{ __('Secciones del proyecto') }}">
                 @foreach (['overview' => 'Resumen', 'tasks' => 'Actividades', 'team' => 'Equipo', 'documents' => 'Documentos', 'history' => 'Historial'] as $tabKey => $tabLabel)
-                    <button type="button" id="project-tab-{{ $tabKey }}" class="workspace-tab" role="tab" :aria-selected="tab === '{{ $tabKey }}'" aria-controls="project-panel-{{ $tabKey }}" @click="select('{{ $tabKey }}')" @keydown.arrow-right.prevent="$el.nextElementSibling?.focus()" @keydown.arrow-left.prevent="$el.previousElementSibling?.focus()">{{ __($tabLabel) }}</button>
+                    <button type="button" id="project-tab-{{ $tabKey }}" class="workspace-tab inline-flex items-center gap-2" role="tab" :aria-selected="tab === '{{ $tabKey }}'" aria-controls="project-panel-{{ $tabKey }}" @click="select('{{ $tabKey }}')" @keydown.arrow-right.prevent="$el.nextElementSibling?.focus()" @keydown.arrow-left.prevent="$el.previousElementSibling?.focus()">
+                        @switch($tabKey)
+                            @case('overview')<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0h6"/></svg>@break
+                            @case('tasks')<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>@break
+                            @case('team')<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>@break
+                            @case('documents')<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>@break
+                            @case('history')<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>@break
+                        @endswitch
+                        <span>{{ __($tabLabel) }}</span>
+                    </button>
                 @endforeach
             </nav>
 
-            <div id="project-panel-overview" role="tabpanel" aria-labelledby="project-tab-overview" x-show="tab === 'overview'" class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+            <div x-show="switching" x-cloak x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" class="space-y-4" role="status" aria-live="polite" aria-label="{{ __('Cargando sección del proyecto') }}">
+                <x-ui.card padding="p-6 space-y-4">
+                    <div class="shimmer h-6 w-48 rounded-lg"></div>
+                    <div class="shimmer h-4 w-full rounded"></div>
+                    <div class="shimmer h-4 w-5/6 rounded"></div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-2">
+                        <div class="shimmer h-20 rounded-xl"></div>
+                        <div class="shimmer h-20 rounded-xl"></div>
+                        <div class="shimmer h-20 rounded-xl"></div>
+                        <div class="shimmer h-20 rounded-xl"></div>
+                    </div>
+                </x-ui.card>
+                <x-ui.card padding="p-0">
+                    <div class="shimmer h-10 w-full rounded-t-xl"></div>
+                    <div class="space-y-2 p-4">
+                        <div class="shimmer h-4 w-full rounded"></div>
+                        <div class="shimmer h-4 w-11/12 rounded"></div>
+                        <div class="shimmer h-4 w-10/12 rounded"></div>
+                        <div class="shimmer h-4 w-9/12 rounded"></div>
+                    </div>
+                </x-ui.card>
+            </div>
+
+            <div id="project-panel-overview" role="tabpanel" aria-labelledby="project-tab-overview" x-show="tab === 'overview' && !switching" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
                 <div class="lg:col-span-2 space-y-6">
                     <x-ui.card padding="p-6 space-y-4">
                         <h3 class="font-semibold text-slate-800">{{ __('Estado del proyecto') }}</h3>
@@ -245,7 +277,7 @@
 
             @include('projects.partials.workspace')
 
-            <x-ui.card id="project-panel-team" role="tabpanel" aria-labelledby="project-tab-team" x-show="tab === 'team'" x-cloak padding="p-6 space-y-4">
+            <x-ui.card id="project-panel-team" role="tabpanel" aria-labelledby="project-tab-team" x-show="tab === 'team' && !switching" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" x-cloak padding="p-6 space-y-4">
                 <h3 class="workspace-section-title">{{ __('Miembros del equipo') }}</h3>
 
                 <div class="overflow-x-auto -mx-1 px-1">

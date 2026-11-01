@@ -7,7 +7,7 @@
     </button>
     <div x-show="collapsed" x-cloak class="mx-3 my-2 border-t border-white/10"></div>
 
-    <div x-show="collapsed || abierto('{{ $clave }}', {{ $porDefecto }})" x-transition:enter="transition duration-200 ease-out" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" class="space-y-0.5">
+    <div x-show="collapsed || abierto('{{ $clave }}', {{ $porDefecto }})" x-cloak x-transition:enter="transition duration-200 ease-out" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" class="space-y-0.5">
         @foreach ($items as $item)
             @php $activo = request()->routeIs($item['pattern']); @endphp
             <a href="{{ route($item['route']) }}" @if($activo) aria-current="page" @endif @mouseenter="mostrarTip($event, @js(__($item['label'])))" @mouseleave="tip.show = false"
