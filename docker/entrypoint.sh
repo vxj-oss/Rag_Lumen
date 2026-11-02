@@ -21,6 +21,12 @@ php artisan view:cache
 # Se ejecuta como www-data para que los logs/cachés que genere no queden como root.
 su -s /bin/sh www-data -c "php artisan migrate --force" || echo "ADVERTENCIA: las migraciones fallaron; revisa la conexión a la base de datos."
 
+# En Railway reaparecen los enlaces mpm_event/mpm_worker de la imagen base aunque se hayan borrado al compilar,
+# y Apache aborta con "More than one MPM loaded". Se eliminan aquí, en tiempo de ejecución, y queda solo prefork.
+rm -f /etc/apache2/mods-enabled/mpm_event.* /etc/apache2/mods-enabled/mpm_worker.*
+ln -sf ../mods-available/mpm_prefork.load /etc/apache2/mods-enabled/mpm_prefork.load
+ln -sf ../mods-available/mpm_prefork.conf /etc/apache2/mods-enabled/mpm_prefork.conf
+
 # Diagnóstico de Apache (visible en los logs del despliegue).
 echo "== Apache: MPM en mods-enabled =="; ls -la /etc/apache2/mods-enabled | grep -i mpm || true
 echo "== Apache: apache2ctl -t =="; apache2ctl -t 2>&1 | head -5 || true
