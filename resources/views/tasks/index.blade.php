@@ -13,7 +13,7 @@
     </x-slot>
 
     <div class="py-6" x-data="kanbanBoard()">
-        <div class="max-w-[1500px] mx-auto sm:px-6 lg:px-8 space-y-3">
+        <div class="max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8 space-y-3">
             <div class="grid grid-cols-3 gap-2 sm:gap-3">
                 <div class="relative bg-white rounded-xl shadow-sm ring-1 ring-slate-900/5 p-3 flex items-center gap-3 overflow-hidden">
                     <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-blue-400 to-blue-600"></div>
@@ -135,6 +135,8 @@
                 <p class="mt-2 text-sm text-slate-600">{{ __('No hay actividades que coincidan con esta vista. Puedes cambiar los filtros para ver más resultados.') }}</p>
                 <button type="button" class="workspace-button mt-4" @click="resetFilters()">{{ __('Ver todas las actividades') }}</button>
             </div>
+
+            @include('tasks.partials.list')
 
             <div class="pb-6" x-show="viewMode === 'board' && !loading" x-cloak>
                 <div class="grid gap-3 items-start" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">

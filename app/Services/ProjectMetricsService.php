@@ -9,7 +9,30 @@ use Illuminate\Support\Carbon;
 class ProjectMetricsService
 {
     private array $requestCache = [];
-    public function forget(?int $projectId): void { if ($projectId !== null) unset($this->requestCache[$projectId]); }
+    private array $taskCache = [];
+    private array $activeTaskCountCache = [];
+    public function forget(?int $projectId): void
+    {
+        if ($projectId !== null) unset($this->requestCache[$projectId], $this->taskCache[$projectId]);
+        $this->activeTaskCountCache = [];
+    }
+
+    public function leafTasks(Project $project)
+    {
+        return $this->taskCache[$project->id] ??= $project->tasks()->workItems()->with('state')->get();
+    }
+
+    public function activeTaskCounts($employeeIds)
+    {
+        $ids = collect($employeeIds)->map(fn ($id) => (int) $id)->filter()->unique();
+        $missing = $ids->diff(array_keys($this->activeTaskCountCache));
+        if ($missing->isNotEmpty()) {
+            $counts = \App\Models\Task::whereIn('asignado_a', $missing)->workItems()->activeState()
+                ->selectRaw('asignado_a, COUNT(*) as total')->groupBy('asignado_a')->pluck('total', 'asignado_a');
+            foreach ($missing as $id) $this->activeTaskCountCache[$id] = (int) ($counts[$id] ?? 0);
+        }
+        return $ids->mapWithKeys(fn ($id) => [$id => $this->activeTaskCountCache[$id]]);
+    }
     private const DUE_SOON_DAYS = 3;
 
     private const TREND_WINDOW_DAYS = 7;
@@ -20,8 +43,7 @@ class ProjectMetricsService
         // Solo tareas "hoja" (sin subtareas): si una tarea tiene subtareas, su
         // avance es un cálculo derivado de ellas (ver TaskProgressRollup), así
         // que incluir ambas duplicaría el mismo trabajo en el promedio.
-        $tasks = $project->tasks()->whereDoesntHave('subtareas')->get();
-        $tasks->loadMissing('state');
+        $tasks = $this->leafTasks($project);
 
         $totalTasks = $tasks->count();
         $completedTasks = $tasks->filter(fn ($task) => $task->isCompletedState());

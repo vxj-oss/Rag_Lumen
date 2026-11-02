@@ -97,13 +97,7 @@
                                     </td>
                                 </tr>
 
-                                @can('update', $client)
-                                    <x-ui.form-modal :name="'edit-client-'.$client->id" :title="__('Editar cliente')"
-                                        :subtitle="$client->nombre" :action="route('clients.update', $client)" method="PUT" max-width="2xl">
-                                        <x-slot name="hidden"><input type="hidden" name="_edit_id" value="{{ $client->id }}"></x-slot>
-                                        @include('clients.partials.form')
-                                    </x-ui.form-modal>
-                                @endcan
+
                             @empty
                                 <tr>
                                     <td colspan="6" class="px-6 py-16 text-center text-sm text-slate-500">{{ __('Todavía no hay clientes registrados.') }}</td>
@@ -127,10 +121,22 @@
         </x-ui.form-modal>
     @endcan
 
+    @foreach ($clients as $client)
+                                @can('update', $client)
+                                    <x-ui.form-modal :name="'edit-client-'.$client->id" :title="__('Editar cliente')"
+                                        :subtitle="$client->nombre" :action="route('clients.update', $client)" method="PUT" max-width="2xl">
+                                        <x-slot name="hidden"><input type="hidden" name="_edit_id" value="{{ $client->id }}"></x-slot>
+                                        @include('clients.partials.form')
+                                    </x-ui.form-modal>
+                                @endcan
+    @endforeach
+
     @if ($errors->any())
         @php $modalToOpen = old('_edit_id') ? 'edit-client-'.old('_edit_id') : (old('_form') === 'create' ? 'create-client' : null); @endphp
         @if ($modalToOpen)
             <div x-data x-init="$dispatch('open-modal', @js($modalToOpen))"></div>
         @endif
     @endif
+
+
 </x-app-layout>

@@ -18,7 +18,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
 
             {{-- Cabecera del espacio --}}
-            <section class="workspace-area-hero relative overflow-hidden rounded-3xl bg-gradient-to-br {{ $tema['gradient'] }} text-white shadow-xl animate-scale-in">
+            <section class="workspace-area-hero relative overflow-hidden rounded-3xl bg-gradient-to-br {{ $tema['gradient'] }} text-white shadow-xl">
                 <div aria-hidden="true" class="absolute -top-24 -right-16 w-72 h-72 rounded-full bg-white/15 blur-3xl animate-float"></div>
                 <div aria-hidden="true" class="absolute -bottom-28 left-1/4 w-80 h-80 rounded-full bg-black/10 blur-3xl"></div>
                 <div class="relative p-6 sm:p-8 space-y-6">
@@ -44,7 +44,7 @@
                         @endif
                     </div>
 
-                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 stagger">
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
                         @foreach ([
                             [__('Colaboradores'), $kpis['miembros']],
                             [__('Actividades abiertas'), $kpis['abiertas']],
@@ -52,8 +52,7 @@
                             [__('Atrasadas'), $kpis['atrasadas']],
                         ] as [$etiqueta, $valor])
                             <div class="rounded-2xl bg-white/15 backdrop-blur ring-1 ring-white/25 px-4 py-3">
-                                <p class="text-3xl font-extrabold tabular-nums"
-                                   x-data="{ n: 0 }" x-init="let t = {{ (int) $valor }}; let i = 0; const s = Math.max(1, Math.ceil(t / 20)); const id = setInterval(() => { n = Math.min(t, n + s); if (n >= t) clearInterval(id); }, 30)" x-text="n">{{ $valor }}</p>
+                                <p class="text-3xl font-extrabold tabular-nums">{{ $valor }}</p>
                                 <p class="text-xs text-white/85">{{ $etiqueta }}</p>
                             </div>
                         @endforeach
@@ -62,8 +61,8 @@
             </section>
 
             {{-- Pestañas --}}
-            <div class="sticky top-0 z-20 -mx-4 px-4 sm:mx-0 sm:px-0 py-2 bg-slate-50/80 backdrop-blur" role="tablist">
-                <div class="flex gap-2 overflow-x-auto pb-1">
+            <div class="workspace-area-tabs sticky top-0 z-20" role="tablist" aria-label="Apartados del área">
+                <div class="flex flex-wrap gap-2 p-1">
                     @foreach ($tabs as $clave => $t)
                         <button type="button" role="tab" @click="go('{{ $clave }}')" :aria-selected="tab === '{{ $clave }}'"
                                 :class="tab === '{{ $clave }}' ? @js($tema['tab']) : 'bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50 hover:text-slate-900'"
@@ -92,15 +91,15 @@
                     @if ($totalActividades > 0)
                         <div class="flex h-3 rounded-full overflow-hidden bg-slate-100">
                             @foreach ($board as $clave => $col)
-                                @php $ancho = round($col['items']->count() / $totalActividades * 100, 1); @endphp
-                                <div class="h-full transition-all duration-700 {{ ['asignada' => 'bg-slate-300', 'progreso' => 'bg-sky-400', 'revision' => 'bg-amber-400', 'aprobada' => 'bg-emerald-500'][$clave] }}" style="width: {{ $ancho }}%" title="{{ $col['label'] }}: {{ $col['items']->count() }}"></div>
+                                @php $ancho = round($col['count'] / $totalActividades * 100, 1); @endphp
+                                <div class="h-full transition-all duration-700 {{ ['asignada' => 'bg-slate-300', 'progreso' => 'bg-sky-400', 'revision' => 'bg-amber-400', 'aprobada' => 'bg-emerald-500'][$clave] }}" style="width: {{ $ancho }}%" title="{{ $col['label'] }}: {{ $col['count'] }}"></div>
                             @endforeach
                         </div>
                         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                             @foreach ($board as $clave => $col)
                                 <button type="button" @click="go('actividades')" class="text-left rounded-xl p-3 border border-slate-100 hover:border-slate-300 hover:bg-slate-50 transition">
                                     <span class="inline-block w-2.5 h-2.5 rounded-full {{ ['asignada' => 'bg-slate-300', 'progreso' => 'bg-sky-400', 'revision' => 'bg-amber-400', 'aprobada' => 'bg-emerald-500'][$clave] }}"></span>
-                                    <p class="text-2xl font-extrabold text-slate-900 tabular-nums">{{ $col['items']->count() }}</p>
+                                    <p class="text-2xl font-extrabold text-slate-900 tabular-nums">{{ $col['count'] }}</p>
                                     <p class="text-xs text-slate-500">{{ __($col['label']) }}</p>
                                 </button>
                             @endforeach
@@ -205,7 +204,7 @@
                         <div class="rounded-2xl bg-slate-100/70 p-3 space-y-3 min-h-[8rem]">
                             <div class="flex items-center justify-between px-1">
                                 <h4 class="flex items-center gap-2 text-sm font-bold text-slate-700"><span class="w-2.5 h-2.5 rounded-full {{ $punto }}"></span>{{ __($col['label']) }}</h4>
-                                <span class="text-xs font-semibold text-slate-500 bg-white rounded-full px-2 py-0.5 tabular-nums">{{ $col['items']->count() }}</span>
+                                <span class="text-xs font-semibold text-slate-500 bg-white rounded-full px-2 py-0.5 tabular-nums">{{ $col['count'] }}</span>
                             </div>
                             <div class="space-y-3 stagger">
                                 @forelse ($col['items'] as $t)

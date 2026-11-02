@@ -1,13 +1,16 @@
 <div x-data @keydown.window="if (($event.ctrlKey || $event.metaKey) && $event.key.toLowerCase() === 'k') { $event.preventDefault(); $dispatch('open-modal', 'workspace-search'); }">
     <div class="workspace-toolbar">
-        <a href="{{ route('dashboard') }}" class="text-sm font-semibold text-slate-700 hover:text-emerald-800">{{ __('Mi espacio de trabajo') }}</a>
-        <div class="flex flex-wrap items-center gap-2">
+        <div class="flex min-w-0 items-center gap-3">
+            <a href="{{ route('dashboard') }}" class="inline-flex min-h-[44px] shrink-0 items-center text-sm font-medium text-slate-700 hover:text-emerald-800">{{ __('Mi espacio') }}</a>
+            @stack('workspace-record-context')
+        </div>
+        <div class="workspace-toolbar-actions flex flex-wrap items-center justify-end gap-2">
+            <x-ui.theme-switch />
             <button type="button" class="workspace-search-trigger" @click="$dispatch('open-modal', 'workspace-search')" aria-label="{{ __('Buscar proyectos, actividades y empleados') }}">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" stroke-width="2"/><path d="m16 16 4 4" stroke-width="2" stroke-linecap="round"/></svg>
-                <span>{{ __('Buscar') }}</span><kbd class="hidden sm:inline rounded border border-slate-200 bg-white px-1.5 text-xs">Ctrl K</kbd>
+                <span class="hidden sm:inline">{{ __('Buscar') }}</span><kbd class="hidden sm:inline rounded border border-slate-200 bg-white px-1.5 text-xs">Ctrl K</kbd>
             </button>
-            <a href="{{ route('tasks.index', ['mine' => 1]) }}" class="workspace-button hidden sm:inline-flex">{{ __('Mis actividades') }}</a>
-            @unless(auth()->user()->isEmployee()) <a href="{{ route('alerts.index') }}" class="workspace-button">{{ __('Alertas') }}</a> @endunless
+            @stack('workspace-page-actions')
         </div>
     </div>
     <x-ui.modal name="workspace-search" :label="__('Buscar en mi espacio')" max-width="2xl" focusable>

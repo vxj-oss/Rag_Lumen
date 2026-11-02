@@ -9,15 +9,23 @@
     };
     $focus[2] = count(app(\App\Services\WorkspaceAttentionService::class)->forUser($user));
 @endphp
-<section class="workspace-hero" aria-label="{{ __('Resumen de mi jornada') }}">
-    <div class="flex flex-col justify-between gap-6 lg:flex-row lg:items-center">
-        <div class="max-w-2xl"><p class="workspace-eyebrow">{{ __('Mi jornada') }} · {{ now()->format('d/m/Y') }}</p><p class="mb-1 text-sm font-medium text-slate-600">{{ __('Hola, :name', ['name' => Str::before($user->name, ' ')]) }}</p><h2 class="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">{{ __($focus[0]) }}</h2><p class="mt-2 text-sm leading-relaxed text-slate-600">{{ __($focus[1]) }}</p>
-            <div class="mt-5 flex flex-wrap gap-2">
-                <a href="{{ route('tasks.index', ['mine' => 1]) }}" class="workspace-primary">{{ __('Ver mis actividades') }} →</a>
+<section class="workspace-hero workspace-overview-compact" aria-label="{{ __('Resumen de mi jornada') }}">
+    <div class="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
+        <div class="min-w-0">
+            <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                <p class="text-base font-medium text-slate-900">{{ __('Hola, :name', ['name' => Str::before($user->name, ' ')]) }}</p>
+                <p class="text-xs text-slate-500">{{ now()->format('d/m/Y') }}</p>
+            </div>
+            <div class="mt-3 flex flex-wrap gap-2">
+                <a href="{{ route('tasks.index', ['mine' => 1]) }}" class="workspace-primary">{{ __('Mis actividades') }} →</a>
                 @can('create', \App\Models\Task::class)<a href="{{ route('tasks.index', ['create' => 1]) }}" class="workspace-button">+ {{ __('Nueva actividad') }}</a>@endcan
-                <a href="{{ route('rag-query.index') }}" class="workspace-button">{{ __('Consultar al asistente') }}</a>
+                <a href="{{ route('rag-query.index') }}" class="workspace-button">{{ __('Asistente') }}</a>
             </div>
         </div>
-        <div class="workspace-attention shrink-0 rounded-2xl border border-emerald-200 bg-white/90 p-5 lg:max-w-[220px]"><p class="text-4xl font-extrabold tabular-nums text-emerald-800">{{ $focus[2] }}</p><p class="mt-1 text-sm font-medium text-slate-600">{{ trans_choice($focus[3], $focus[2]) }}</p><a href="{{ route('alerts.index') }}" class="mt-3 inline-flex min-h-[44px] items-center text-sm font-semibold text-emerald-800">{{ __('Revisar alertas') }} →</a></div>
+        <a href="{{ route('alerts.index') }}" class="workspace-attention workspace-attention-inline">
+            <span class="text-2xl font-medium tabular-nums">{{ $focus[2] }}</span>
+            <span class="text-sm">{{ trans_choice($focus[3], $focus[2]) }}</span>
+            <span aria-hidden="true">→</span>
+        </a>
     </div>
 </section>

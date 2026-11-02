@@ -90,7 +90,8 @@ class AssistantOperationsTest extends TestCase
         $other = $this->account('employee');
         $conversation = RagConversation::create(['usuario_id' => $other->id, 'titulo' => 'Privado']);
         $this->actingAs($user)->getJson(route('rag-query.conversations.show', $conversation))->assertForbidden();
-        $this->postJson(route('rag-query.store'), ['question' => 'Elimina los usuarios'])->assertOk()->assertSee('no cambiar registros');
+        $this->postJson(route('rag-query.store'), ['question' => 'Elimina los usuarios'])
+            ->assertOk()->assertJsonPath('action', null);
         $this->assertSame(2, User::count());
     }
 

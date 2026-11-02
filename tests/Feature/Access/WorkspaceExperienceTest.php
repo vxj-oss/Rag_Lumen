@@ -39,6 +39,16 @@ class WorkspaceExperienceTest extends TestCase
         $this->actingAs($this->user(RoleName::Employee))->getJson(route('workspace.search', ['q' => 'a']))->assertUnprocessable();
     }
 
+    public function test_assistant_workspace_and_appearance_controls_render_for_all_roles(): void
+    {
+        foreach ([RoleName::Administrator, RoleName::Manager, RoleName::ProjectLead, RoleName::Employee] as $role) {
+            $this->actingAs($this->user($role))->get(route('rag-query.index'))
+                ->assertOk()
+                ->assertSee('Ventana flotante')
+                ->assertSee('Tema de la interfaz');
+        }
+    }
+
     public function test_search_finds_records_for_admin_without_exposing_private_fields(): void
     {
         $admin = $this->user(RoleName::Administrator);
@@ -71,11 +81,7 @@ class WorkspaceExperienceTest extends TestCase
     public function test_leader_search_is_limited_to_their_projects_and_visible_people(): void
     {
         $leader = $this->user(RoleName::ProjectLead);
-        $leader->employee->update([
-            'nombres' => 'Lider',
-            'especialidad' => \App\Support\Enums\EmployeeSpecialty::Marketing,
-        ]);
-        $leader = $leader->refresh();
+        $leader->employee->update(['especialidad' => \App\Support\Enums\EmployeeSpecialty::Backend]);
         $own = Project::factory()->create(['nombre' => 'Aurora equipo', 'empleado_responsable_id' => $leader->employee->id]);
         $other = Project::factory()->create(['nombre' => 'Aurora privado', 'empleado_responsable_id' => Employee::factory()->create()->id]);
         $worker = Employee::factory()->create(['nombres' => 'Aurora', 'especialidad' => $leader->employee->especialidad]);

@@ -23,10 +23,12 @@ class AssistantService
     public function answer(string $question, User $user, RagConversation $conversation, ?Project $project, ?Task $task): array
     {
         $normalized = Str::lower(Str::ascii($question));
-        if (preg_match('/\b(crea|creame|crear|agrega|agregame|agregar|registra|registrar|nuevo)\b.*\bproyecto\b/', $normalized)) {
+        // Tolera errores de tipeo ("poryecto", "activdad"): solo prepara un borrador, nada se guarda sin confirmar.
+        $creacion = AssistantIntent::creation($question);
+        if ($creacion === 'project') {
             return app(ProjectDraft::class)->prepare($question, $user);
         }
-        if (preg_match('/\b(crea|creame|crear|agrega|agregar|registra|registrar|nueva)\b.*\b(actividad|actividades)\b/', $normalized)) {
+        if ($creacion === 'activity') {
             return app(ActivityDraft::class)->prepare($question, $user, $project);
         }
         if (preg_match('/\b(analiza|analizar|analisis|resumen|panorama|compara|comparar)\b/', $normalized) && preg_match('/\b(proyectos|portafolio)\b/', $normalized)) {
@@ -37,7 +39,7 @@ class AssistantService
             return app(ProjectPortfolio::class)->analyze($user);
         }
         if (preg_match('/\b(elimina|borra|desactiva|modifica|cambia|crea)\b/iu', $question)) {
-            return ['answer' => 'Puedo consultar información, pero no cambiar registros. Realiza esa acción desde la sección correspondiente con tus permisos.', 'sources' => []];
+            return ['answer' => 'Puedo consultar información y preparar borradores de proyectos y actividades (por ejemplo: "crea un proyecto llamado Techstore"). Para otros cambios, como editar o eliminar registros, usa la sección correspondiente con tus permisos.', 'sources' => []];
         }
         if ($administrative = app(AdministrativeQuery::class)->answer($question, $user)) {
             return $administrative;

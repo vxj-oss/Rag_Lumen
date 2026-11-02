@@ -9,3 +9,8 @@
 /.github export-ignore
 CHANGELOG.md export-ignore
 .styleci.yml export-ignore
+
+# Scripts de despliegue: siempre LF (si no, fallan en Linux)
+*.sh text eol=lf
+docker/* text eol=lf
+Dockerfile text eol=lf

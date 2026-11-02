@@ -9,6 +9,7 @@
     @empty
         <div class="workspace-empty"><h4 class="font-semibold text-slate-900">{{ __('No hay actividades visibles en este proyecto') }}</h4><p class="mt-2 text-sm text-slate-600">{{ __('Abre el tablero para consultar o crear actividades según tus permisos.') }}</p></div>
     @endforelse
+    {{ $workspaceTasks->links() }}
 </section>
 
 <section id="project-panel-documents" role="tabpanel" aria-labelledby="project-tab-documents" x-show="tab === 'documents' && !switching" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" x-cloak class="space-y-4">
@@ -18,6 +19,7 @@
     @empty
         <div class="workspace-empty"><h4 class="font-semibold text-slate-900">{{ __('No hay documentos disponibles para tu acceso') }}</h4><p class="mt-2 text-sm text-slate-600">{{ __('Los documentos que se carguen y estén dentro de tu alcance aparecerán aquí.') }}</p></div>
     @endforelse
+    {{ $workspaceDocuments->links() }}
 </section>
 
 <section id="project-panel-history" role="tabpanel" aria-labelledby="project-tab-history" x-show="tab === 'history' && !switching" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" x-cloak>
@@ -29,5 +31,6 @@
                 <li><p class="text-sm text-slate-600">{{ __('Todavía no hay movimientos registrados sobre este proyecto.') }}</p></li>
             @endforelse
         </ol>
+        {{ $workspaceHistory->links() }}
     </x-ui.card>
 </section>

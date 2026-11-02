@@ -20,9 +20,7 @@
 
             <x-ui.card padding="p-0">
                 <div class="workspace-list-heading">
-                    <div>
-                        <p class="workspace-eyebrow">{{ __('Fuentes del asistente') }}</p>
-                        <h3 class="workspace-section-title">{{ __('Biblioteca documental') }}</h3>
+                    <div><h3 class="workspace-section-title">{{ __('Documentos') }}</h3>
                     </div>
                     <p class="text-xs text-slate-500 tabular-nums">{{ $documents->total() }} {{ __('documentos') }}</p>
                 </div>

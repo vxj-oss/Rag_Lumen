@@ -51,7 +51,7 @@ class ProjectController extends Controller
             ->when($request->filled('priority'), fn ($query) => $query->where('prioridad', $request->string('priority')))
             ->when($request->filled('client_id'), fn ($query) => $query->where('cliente_id', $request->integer('client_id')))
             ->when($request->filled('area_id'), fn ($query) => $query->whereHas('areas', fn ($q) => $q->where('areas.id', $request->integer('area_id'))))
-            ->orderByDesc('created_at')
+            ->orderByDesc('created_at')->orderByDesc('id')
             ->paginate(\App\Support\ListPagination::size())
             ->withQueryString();
 
@@ -111,12 +111,12 @@ class ProjectController extends Controller
 
         return view('projects.show', [
             'project' => $project,
-            'workspaceTasks' => $project->tasks->whereNull('tarea_padre_id')->filter(fn ($task) => auth()->user()->can('view', $task)),
+            'workspaceTasks' => \App\Support\ListPagination::collection($project->tasks->whereNull('tarea_padre_id')->filter(fn ($task) => auth()->user()->can('view', $task)), 'tasks_page')->appends('tab', 'tasks'),
             'workspaceHistory' => \App\Models\ActivityLog::query()
                 ->where('sujeto_tipo', $project->getMorphClass())->where('sujeto_id', $project->id)
-                ->with('user')->latest('created_at')->limit(30)->get(),
-            'workspaceDocuments' => in_array($project->id, \App\Support\RagAccessScope::accessibleProjectIds(auth()->user()) ?? [$project->id])
-                ? $project->ragDocuments()->latest()->get() : collect(),
+                ->with('user')->latest('created_at')->paginate(\App\Support\ListPagination::size(), ['*'], 'history_page')->withQueryString()->appends('tab', 'history'),
+            'workspaceDocuments' => \App\Support\ListPagination::collection(in_array($project->id, \App\Support\RagAccessScope::accessibleProjectIds(auth()->user()) ?? [$project->id])
+                ? $project->ragDocuments()->latest()->get() : collect(), 'documents_page')->appends('tab', 'documents'),
             'availableEmployees' => $availableEmployees,
             'areaProgress' => $this->areaProgress($project),
             'metrics' => $metricsService->forProject($project),

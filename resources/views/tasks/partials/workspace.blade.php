@@ -1,22 +1,3 @@
-<div x-show="viewMode === 'list' && !loading && visibleCards().length" x-cloak class="overflow-x-auto rounded-2xl border border-slate-200 bg-white">
-    <table class="min-w-full text-left text-sm">
-        <caption class="sr-only">{{ __('Actividades de la vista seleccionada') }}</caption>
-        <thead class="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-600"><tr><th class="px-5 py-4">{{ __('Actividad') }}</th><th class="px-5 py-4">{{ __('Responsable') }}</th><th class="px-5 py-4">{{ __('Estado') }}</th><th class="px-5 py-4">{{ __('Vencimiento') }}</th><th class="px-5 py-4">{{ __('Avance') }}</th><th class="px-5 py-4"><span class="sr-only">{{ __('Acciones') }}</span></th></tr></thead>
-        <tbody class="divide-y divide-slate-100">
-            <template x-for="card in pageCards()" :key="card.id">
-                <tr class="hover:bg-emerald-50/40">
-                    <td class="min-w-[240px] max-w-sm px-5 py-4"><button type="button" @click="openDetail(card)" class="text-left font-semibold text-slate-900 hover:text-emerald-800" x-text="card.title"></button><p class="mt-1 text-xs text-slate-600" x-text="card.code + ' · ' + card.project_name"></p></td>
-                    <td class="px-5 py-4" x-text="card.assignee_name || 'Sin asignar'"></td>
-                    <td class="px-5 py-4"><span class="inline-flex items-center gap-2 whitespace-nowrap rounded-lg bg-slate-100 px-2 py-1 text-xs font-semibold"><span class="h-2 w-2 rounded-full" :class="dotClass(columns.find(c => c.slug === card.status_slug)?.color)"></span><span x-text="card.status_label"></span></span></td>
-                    <td class="whitespace-nowrap px-5 py-4" :class="card.overdue && 'font-semibold text-rose-700'" x-text="card.due?.label || 'Sin fecha'"></td>
-                    <td class="px-5 py-4"><span class="font-semibold tabular-nums" x-text="card.progress + '%'"></span></td>
-                    <td class="px-5 py-4"><button type="button" class="workspace-button" @click="openDetail(card)">{{ __('Revisar') }}</button></td>
-                </tr>
-            </template>
-        </tbody>
-    </table>
-</div>
-
 <x-ui.modal name="task-preview" position="right" max-width="xl" :label="__('Vista rápida de actividad')" focusable>
     <template x-if="selectedCard">
         <div class="flex min-h-0 flex-1 flex-col">

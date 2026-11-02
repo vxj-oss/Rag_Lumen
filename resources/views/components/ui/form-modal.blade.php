@@ -8,7 +8,7 @@
         @endif
         {{ $hidden ?? '' }}
 
-        <div class="flex items-center justify-between px-6 py-3 border-b border-slate-100 shrink-0 bg-gradient-to-r from-emerald-50 via-white to-white rounded-t-2xl">
+        <div class="workspace-modal-header flex items-start justify-between gap-4 px-6 py-4 border-b border-slate-100 shrink-0">
             <div>
                 <h3 class="text-base font-semibold text-slate-900 tracking-tight">{{ $title }}</h3>
                 @if ($subtitle)
@@ -22,7 +22,7 @@
             </button>
         </div>
 
-        <div class="modal-compact-form px-6 py-3 overflow-y-auto min-h-0 space-y-3">
+        <div class="modal-compact-form flex-1 px-6 py-4 overflow-y-auto overscroll-contain min-h-0 space-y-4">
             @if ($errors->any())
                 <div role="alert" class="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">
                     <p class="font-semibold">{{ __('Revisa los campos antes de guardar.') }}</p>
@@ -32,7 +32,7 @@
             {{ $slot }}
         </div>
 
-        <div class="px-6 py-3 border-t border-slate-100 bg-slate-50 flex justify-end gap-3 shrink-0 rounded-b-2xl">
+        <div class="workspace-modal-footer px-6 py-3 border-t border-slate-100 flex flex-wrap justify-end gap-3 shrink-0">
             <x-ui.secondary-button type="button" @click="$dispatch('close')">{{ __('Cancelar') }}</x-ui.secondary-button>
             <x-ui.primary-button type="submit">{{ $submitLabel ?? __('Guardar') }}</x-ui.primary-button>
         </div>

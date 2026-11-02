@@ -2,7 +2,7 @@
     <x-slot name="header">
         <x-ui.page-header :title="__('Dashboard ejecutivo')" :subtitle="__('Panorama general de proyectos, actividades y equipo')">
             <x-slot name="actions">
-                <a href="{{ route('dashboard.export') }}" class="inline-flex items-center gap-2 px-3 py-2 min-h-[44px] rounded-xl text-sm font-medium text-slate-600 bg-white ring-1 ring-slate-300 hover:bg-slate-50 transition">
+                <a href="{{ route('dashboard.export') }}" aria-label="Exportar reporte PDF" title="Exportar reporte PDF" class="inline-flex items-center gap-2 px-3 py-2 min-h-[44px] rounded-xl text-sm font-medium text-slate-600 bg-white ring-1 ring-slate-300 hover:bg-slate-50 transition">
                     <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" /></svg>
                     <span class="hidden sm:inline">{{ __('Exportar PDF') }}</span>
                 </a>

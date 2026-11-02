@@ -100,8 +100,9 @@ class ProjectDecisionService
         $maxRecommended = config('risk.employee_max_recommended_tasks');
         $overloadRatio = config('decisions.employee_overload_ratio');
 
-        return $members->map(function ($employee) use ($maxRecommended) {
-            $activeTaskCount = Task::where('asignado_a', $employee->id)->workItems()->activeState()->count();
+        $counts = $this->metricsService->activeTaskCounts($members->pluck('id'));
+        return $members->map(function ($employee) use ($maxRecommended, $counts) {
+            $activeTaskCount = $counts[$employee->id];
 
             return [
                 'name' => $employee->fullName(),

@@ -16,7 +16,7 @@ class AreaController extends Controller
     {
         $this->authorize('viewAny', Area::class);
 
-        $areas = Area::withCount(['employees', 'projects'])->when(auth()->user()->isLeader(), fn ($q) => $q->whereHas('employees', fn ($e) => $e->whereIn('id', \App\Support\WorkspaceScope::employees(auth()->user())->select('id'))))->orderBy('nombre')->paginate(\App\Support\ListPagination::size())->withQueryString();
+        $areas = Area::withCount(['employees', 'projects'])->when(auth()->user()->isLeader(), fn ($q) => $q->whereHas('employees', fn ($e) => $e->whereIn('id', \App\Support\WorkspaceScope::employees(auth()->user())->select('id'))))->orderBy('nombre')->orderBy('id')->paginate(\App\Support\ListPagination::size())->withQueryString();
 
         return view('areas.index', ['areas' => $areas]);
     }

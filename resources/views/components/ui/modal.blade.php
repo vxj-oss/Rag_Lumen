@@ -73,7 +73,7 @@ $maxWidth = [
         role="dialog"
         aria-modal="true"
         @if ($label) aria-label="{{ $label }}" @endif
-        class="w-full {{ $maxWidth }} {{ $position === 'right' ? 'h-[100dvh] sm:rounded-l-2xl' : 'max-h-[calc(100dvh-2rem)] rounded-2xl' }} bg-white overflow-hidden shadow-2xl ring-1 ring-black/5 transform transition-all flex flex-col"
+        class="workspace-modal w-full {{ $maxWidth }} {{ $position === 'right' ? 'h-[100dvh] sm:rounded-l-2xl' : 'max-h-[calc(100dvh-2rem)] rounded-2xl' }} bg-white overflow-hidden shadow-2xl ring-1 ring-black/5 transform transition-all flex flex-col"
         x-transition:enter="ease-out duration-300"
         x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-2 sm:scale-95"
         x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"

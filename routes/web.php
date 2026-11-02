@@ -39,6 +39,7 @@ Route::get('/workspace/search', \App\Http\Controllers\Web\Search\SearchControlle
     ->middleware(['auth', 'throttle:60,1'])->name('workspace.search');
 
 Route::get('/assistant/conversations', [RagQueryController::class, 'conversations'])->middleware(['auth','throttle:web'])->name('assistant.conversations');
+Route::delete('/assistant/conversations', [RagQueryController::class, 'destroyAllConversations'])->middleware(['auth','throttle:web'])->name('assistant.conversations.clear');
 Route::post('/tasks/{task}/comments',\App\Http\Controllers\Web\Tasks\TaskCommentController::class)->middleware(['auth','throttle:15,1'])->name('tasks.comments');
 Route::put('/alerts/preferences', [AlertController::class,'preferences'])->middleware(['auth','throttle:web'])->name('alerts.preferences');
 Route::post('/assistant/transcribe', \App\Http\Controllers\Web\Rag\VoiceController::class)->middleware(['auth','throttle:5,1'])->name('assistant.transcribe');

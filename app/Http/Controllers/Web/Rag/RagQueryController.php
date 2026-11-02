@@ -69,6 +69,14 @@ class RagQueryController extends Controller
         return response()->json(['status' => 'ok']);
     }
 
+    /** Elimina todas las conversaciones del usuario autenticado (nunca las de otros). */
+    public function destroyAllConversations(): JsonResponse
+    {
+        $deleted = RagConversation::where('usuario_id', auth()->id())->get()->each->delete()->count();
+
+        return response()->json(['status' => 'ok', 'deleted' => $deleted]);
+    }
+
     public function store(StoreRagQueryRequest $request, AssistantService $assistant): JsonResponse
     {
         if (! app()->runningInConsole()) set_time_limit(75);

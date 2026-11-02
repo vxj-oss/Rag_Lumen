@@ -123,15 +123,7 @@
                                 </td>
                             </tr>
 
-                            @can('update', $employee)
-                            <x-ui.form-modal :name="'edit-employee-'.$employee->id" :title="__('Editar empleado')"
-                                :subtitle="$employee->fullName()" :action="route('employees.update', $employee)" method="PUT" multipart>
-                                <x-slot name="hidden">
-                                    <input type="hidden" name="_edit_id" value="{{ $employee->id }}">
-                                </x-slot>
-                                @include('employees.partials.form')
-                            </x-ui.form-modal>
-                            @endcan
+
                             @empty
                             <tr>
                                 <td colspan="5" class="px-6 py-16 text-center">
@@ -204,6 +196,18 @@
     </x-ui.form-modal>
     @endcan
 
+    @foreach ($employees as $employee)
+                            @can('update', $employee)
+                            <x-ui.form-modal :name="'edit-employee-'.$employee->id" :title="__('Editar empleado')"
+                                :subtitle="$employee->fullName()" :action="route('employees.update', $employee)" method="PUT" multipart>
+                                <x-slot name="hidden">
+                                    <input type="hidden" name="_edit_id" value="{{ $employee->id }}">
+                                </x-slot>
+                                @include('employees.partials.form')
+                            </x-ui.form-modal>
+                            @endcan
+    @endforeach
+
     @if ($errors->any())
     @php
     $modalToOpen = old('_edit_id') ? 'edit-employee-'.old('_edit_id') : (old('_form') === 'create' ? 'create-employee' : null);
@@ -212,4 +216,6 @@
     <div x-data x-init="$dispatch('open-modal', @js($modalToOpen))"></div>
     @endif
     @endif
+
+
 </x-app-layout>

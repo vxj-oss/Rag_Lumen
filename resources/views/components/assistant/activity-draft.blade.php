@@ -1,7 +1,7 @@
 <div x-show="message.action?.type === 'create_activity'" class="mt-3 border-t border-slate-200 pt-3">
     <template x-if="message.action?.type === 'create_activity' && !message.action.created">
         <form @submit.prevent="createActivity(message)" class="space-y-3" aria-label="Borrador de actividad">
-            <fieldset :disabled="message.action.submitting" class="space-y-3">
+            <fieldset :disabled="!!message.action.submitting" class="space-y-3">
                 <label class="block text-xs font-semibold">Proyecto<select x-model="message.action.draft.project_id" @change="message.action.draft.assignee_id = ''" required class="mt-1 w-full rounded-lg border-slate-300 text-sm"><option value="">Selecciona un proyecto</option><template x-for="p in message.action.projects" :key="p.id"><option :value="p.id" x-text="p.name"></option></template></select></label>
                 <label class="block text-xs font-semibold">Actividad<input x-model="message.action.draft.title" required maxlength="200" class="mt-1 w-full rounded-lg border-slate-300 text-sm"></label>
                 <label class="block text-xs font-semibold">Responsable<select x-model="message.action.draft.assignee_id" required class="mt-1 w-full rounded-lg border-slate-300 text-sm"><option value="">Selecciona un miembro activo</option><template x-for="e in draftProject(message.action)?.members || []" :key="e.id"><option :value="e.id" x-text="e.name"></option></template></select></label>

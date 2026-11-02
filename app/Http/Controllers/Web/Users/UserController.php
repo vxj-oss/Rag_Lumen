@@ -22,7 +22,7 @@ class UserController extends Controller
         $search = trim((string) $request->query('search', ''));
 
         return view('users.index', [
-            'users' => User::with(['roles', 'employee'])->when($search !== '', fn ($q) => $q->where(fn ($q) => $q->where('name', 'like', '%'.$search.'%')->orWhere('email', 'like', '%'.$search.'%')))->orderBy('name')->paginate(\App\Support\ListPagination::size())->withQueryString(),
+            'users' => User::with(['roles', 'employee'])->when($search !== '', fn ($q) => $q->where(fn ($q) => $q->where('name', 'like', '%'.$search.'%')->orWhere('email', 'like', '%'.$search.'%')))->orderBy('name')->orderBy('id')->paginate(\App\Support\ListPagination::size())->withQueryString(),
             'employees' => Employee::whereNull('usuario_id')->orderBy('nombres')->get(),
             'roles' => RoleName::cases(),
             'search' => $search,

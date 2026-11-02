@@ -1,0 +1,40 @@
+/* Mobile layout shared by every authenticated module. */
+body.workspace-theme .workspace-card { min-width:0; }
+@media (max-width:1023px) {
+ body.workspace-theme .app-content { width:100%; min-width:0; }
+ body.workspace-theme .app-main > div > :is(.max-w-7xl,.max-w-6xl,.max-w-5xl,.max-w-4xl) { padding-left:1rem; padding-right:1rem; }
+ body.workspace-theme .workspace-mobile-nav > a { min-width:0; overflow-wrap:anywhere; }
+ body.workspace-theme .workspace-toolbar { flex-wrap:wrap; }
+ body.workspace-theme .workspace-toolbar-actions { flex-wrap:wrap; max-width:100%; }
+ body.workspace-theme .workspace-toolbar-actions :is(a,button) { max-width:100%; white-space:normal; }
+ body.workspace-theme .workspace-record-card { overflow-wrap:anywhere; }
+ body.workspace-theme .workspace-card :is(p,dd,h2,h3,h4,a) { overflow-wrap:anywhere; }
+ body.workspace-theme .responsive-record-table { min-width:0!important; max-width:100%; }
+ body.workspace-theme .responsive-record-table colgroup { display:none; }
+ body.workspace-theme .responsive-record-table tbody { box-sizing:border-box; }
+ body.workspace-theme .responsive-record-table tbody>tr { background:var(--surface); border-color:var(--edge); }
+ body.workspace-theme .responsive-record-table tbody>tr>td { box-sizing:border-box; }
+ body.workspace-theme .responsive-record-table tbody>tr>td::before { color:var(--muted); }
+ body.workspace-theme .responsive-record-table :is(button,a) { min-height:44px; }
+ body.workspace-theme .responsive-record-table :is(.truncate,.whitespace-nowrap) { white-space:normal; overflow-wrap:anywhere; }
+ body.workspace-theme .responsive-record-table td>div { flex-wrap:wrap; }
+ body.workspace-theme .responsive-record-table td:only-child[colspan]::before { content:none; }
+ body.workspace-theme .workspace-list-pagination { width:100%; gap:.5rem; }
+ body.workspace-theme nav[aria-label="Paginación de registros"] { max-width:100%; }
+ body.workspace-theme nav[aria-label="Paginación de registros"] :is(a,[aria-current=page]) { min-width:44px; min-height:44px; display:inline-flex; align-items:center; justify-content:center; }
+ body.workspace-theme .workspace-modal { max-width:calc(100vw - 2rem); }
+ body.workspace-theme .workspace-modal :is(input,select,textarea) { max-width:100%; min-width:0; font-size:1rem; }
+ body.workspace-theme.auth-page :is(input:not([type=checkbox]),textarea,select) { font-size:1rem; }
+ body.workspace-theme .workspace-modal :is(.workspace-modal-header,.workspace-modal-footer,.modal-compact-form) { padding-left:1rem; padding-right:1rem; }
+ body.workspace-theme .workspace-modal-footer :is(button,a) { min-height:44px; }
+ body.workspace-theme [role=tablist] { flex-wrap:wrap; }
+}
+@media (max-width:479px) {
+ body.workspace-theme .workspace-toolbar { padding-left:1rem; padding-right:1rem; }
+ body.workspace-theme .workspace-toolbar-actions { gap:.4rem; }
+ body.workspace-theme .workspace-toolbar-actions :is(.workspace-primary,.workspace-button) { font-size:.75rem; padding:.5rem .75rem; }
+ body.workspace-theme .workspace-area-hero .relative.p-6 { padding:1rem; }
+ body.workspace-theme .workspace-area-hero h1 { font-size:1.75rem; overflow-wrap:anywhere; }
+ body.workspace-theme .workspace-card.p-6 { padding:1rem; }
+ body.workspace-theme .workspace-modal-footer .workspace-primary { flex:1; justify-content:center; }
+}

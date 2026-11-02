@@ -16,8 +16,7 @@ class ProjectRiskService
     {
         // Igual que en ProjectMetricsService: solo tareas hoja, para no contar
         // dos veces el mismo trabajo entre una tarea y sus subtareas.
-        $tasks = $project->tasks()->whereDoesntHave('subtareas')->get();
-        $tasks->loadMissing('state');
+        $tasks = $this->metricsService->leafTasks($project);
         $metrics = $this->metricsService->forProject($project);
 
         $delayScore = $this->delayScore($tasks);
@@ -136,13 +135,8 @@ class ProjectRiskService
         }
 
         $maxRecommended = config('risk.employee_max_recommended_tasks');
-        $activeStatuses = [TaskStatus::Pending->value, TaskStatus::InProgress->value, TaskStatus::Review->value, TaskStatus::Blocked->value];
-
-        $ratios = $members->map(function ($employee) use ($maxRecommended) {
-            $activeTaskCount = Task::where('asignado_a', $employee->id)->workItems()->activeState()->count();
-
-            return $activeTaskCount / $maxRecommended;
-        });
+        $counts = $this->metricsService->activeTaskCounts($members->pluck('id'));
+        $ratios = $members->map(fn ($employee) => $counts[$employee->id] / $maxRecommended);
 
         $avgRatio = $ratios->avg();
 

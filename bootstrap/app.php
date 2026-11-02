@@ -11,11 +11,16 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Non-sensitive display preference written by the responsive interface.
+        $middleware->encryptCookies(except: ['workspace_list_size']);
         $middleware->alias([
             'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
             'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
             'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
         ]);
+
+        // Detrás del proxy de Railway (HTTPS termina allí): confía en X-Forwarded-* para generar URLs https y cookies seguras.
+        $middleware->trustProxies(at: '*');
 
         $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
         $middleware->web(append: [\App\Http\Middleware\EnsureAccountAccess::class]);

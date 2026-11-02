@@ -1,9 +1,6 @@
 <x-app-layout>
     <x-slot name="header">
-        <div>
-            <h2 class="font-semibold text-xl text-slate-800 leading-tight">{{ __('Actividad') }}</h2>
-            <p class="text-sm text-slate-500 mt-0.5">{{ __('Registro de quién cambió qué y cuándo') }}</p>
-        </div>
+        <x-ui.page-header :title="__('Actividad')" />
     </x-slot>
 
     @php

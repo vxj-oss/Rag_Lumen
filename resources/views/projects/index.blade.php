@@ -79,9 +79,7 @@
 
             <x-ui.card padding="p-0">
                 <div class="workspace-list-heading">
-                    <div>
-                        <p class="workspace-eyebrow">{{ __('Portafolio') }}</p>
-                        <h3 class="workspace-section-title">{{ __('Proyectos y seguimiento') }}</h3>
+                    <div><h3 class="workspace-section-title">{{ __('Proyectos') }}</h3>
                     </div>
                     <p class="text-xs text-slate-500 tabular-nums">{{ $projects->firstItem() ?? 0 }}–{{ $projects->lastItem() ?? 0 }} {{ __('de') }} {{ $projects->total() }}</p>
                 </div>
@@ -141,15 +139,7 @@
                                     </td>
                                 </tr>
 
-                                @can('update', $project)
-                                    <x-ui.form-modal :name="'edit-project-'.$project->id" :title="__('Editar proyecto')"
-                                        :subtitle="$project->codigo" :action="route('projects.update', $project)" method="PUT" max-width="3xl">
-                                        <x-slot name="hidden">
-                                            <input type="hidden" name="_edit_id" value="{{ $project->id }}">
-                                        </x-slot>
-                                        @include('projects.partials.form')
-                                    </x-ui.form-modal>
-                                @endcan
+
                             @empty
                                 <tr>
                                     <td colspan="7" class="px-6 py-16 text-center">
@@ -228,6 +218,18 @@
         </x-ui.form-modal>
     @endcan
 
+    @foreach ($projects as $project)
+                                @can('update', $project)
+                                    <x-ui.form-modal :name="'edit-project-'.$project->id" :title="__('Editar proyecto')"
+                                        :subtitle="$project->codigo" :action="route('projects.update', $project)" method="PUT" max-width="3xl">
+                                        <x-slot name="hidden">
+                                            <input type="hidden" name="_edit_id" value="{{ $project->id }}">
+                                        </x-slot>
+                                        @include('projects.partials.form')
+                                    </x-ui.form-modal>
+                                @endcan
+    @endforeach
+
     @if ($errors->any())
         @php
             $modalToOpen = old('_edit_id') ? 'edit-project-'.old('_edit_id') : (old('_form') === 'create' ? 'create-project' : null);
@@ -236,4 +238,6 @@
             <div x-data x-init="$dispatch('open-modal', @js($modalToOpen))"></div>
         @endif
     @endif
+
+
 </x-app-layout>

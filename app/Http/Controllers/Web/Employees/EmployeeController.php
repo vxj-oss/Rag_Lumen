@@ -46,7 +46,7 @@ class EmployeeController extends Controller
             ->when($request->filled('status'), fn ($query) => $query->where('estado', $request->string('status')))
             ->when($request->filled('specialty'), fn ($query) => $query->where('especialidad', $request->string('specialty')))
             ->when($request->filled('area_id'), fn ($query) => $query->where('area_id', $request->integer('area_id')))
-            ->orderBy('nombres')
+            ->orderBy('nombres')->orderBy('id')
             ->paginate(\App\Support\ListPagination::size())
             ->withQueryString();
 

@@ -17,12 +17,9 @@ class ProjectDraft
         if (! $user->can('create', Project::class)) {
             return ['answer' => 'Solo el administrador o gerente puede crear proyectos.', 'sources' => []];
         }
-        $title = '';
-        if (preg_match('/\bproyecto\s+(?:llamado\s+|titulado\s+)?["«]?(.+?)["»]?(?:\s+(?:con fecha|con prioridad|para el cliente)|$)/iu', $question, $m)) {
-            $title = trim($m[1], ' "«».');
-        }
+        $title = AssistantIntent::name($question, 'project');
 
-        return ['answer' => 'Preparé el proyecto como borrador. Revisa los datos, las áreas y las fechas antes de pulsar Crear proyecto.', 'sources' => [],
+        return ['answer' => 'Preparé el proyecto como borrador. Pulsa Completar datos del proyecto para editar los campos, las áreas y las fechas. Después pulsa Crear proyecto para guardarlo.', 'sources' => [],
             'action' => ['type' => 'create_project', 'url' => route('projects.store'),
                 'clients' => Client::orderBy('nombre')->get(['id', 'nombre']),
                 'employees' => WorkspaceScope::employees($user)->orderBy('nombres')->get()->map(fn ($e) => ['id' => $e->id, 'name' => $e->fullName()])->values(),

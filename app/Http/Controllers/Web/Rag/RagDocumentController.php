@@ -25,7 +25,7 @@ class RagDocumentController extends Controller
 
         return view('rag.source', [
             'document' => $ragDocument,
-            'chunks' => $ragDocument->chunks()->orderBy('indice_fragmento')->paginate(\App\Support\ListPagination::size()),
+            'chunks' => $ragDocument->chunks()->orderBy('indice_fragmento')->paginate(\App\Support\ListPagination::size())->withQueryString(),
         ]);
     }
 
@@ -35,7 +35,7 @@ class RagDocumentController extends Controller
 
         $documents = $this->visibleDocumentsQuery()
             ->with(['project', 'uploader'])
-            ->orderByDesc('created_at')
+            ->orderByDesc('created_at')->orderByDesc('id')
             ->paginate(\App\Support\ListPagination::size())
             ->withQueryString();
 

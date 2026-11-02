@@ -30,6 +30,10 @@ class ActivityDraft
         } elseif (preg_match('/\bactividad\s+(?:llamada\s+|titulada\s+)?(.+?)(?:\s+(?:en el proyecto|para el proyecto|asignada a|para manana|para hoy|con prioridad)|[.;]|$)/iu', $question, $m)) {
             $draft['title'] = Str::limit(trim($m[1]), 200, '');
         }
+        if ($draft['title'] === '') {
+            // Respaldo tolerante a errores de tipeo ("activdad", "con el nombre de ...").
+            $draft['title'] = Str::limit(AssistantIntent::name($question, 'activity'), 200, '');
+        }
         if (preg_match('/\btareas:\s*(.+)$/iu', $question, $m)) {
             $titles = array_values(array_filter(array_map('trim', explode(';', $m[1]))));
             if ($titles) {

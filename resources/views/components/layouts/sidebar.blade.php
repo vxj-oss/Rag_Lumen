@@ -227,12 +227,16 @@
 
                     @php $alertasActivo = request()->routeIs('alerts.*'); @endphp
                     <a href="{{ route('alerts.index') }}" @if($alertasActivo) aria-current="page" @endif @mouseenter="mostrarTip($event, @js(__('Alertas')))" @mouseleave="tip.show = false"
-                       x-data="{ count: {{ $unreadAlerts }} }"
-                       x-init="setInterval(() => {
+                       x-data="{ count: {{ $unreadAlerts }}, refreshing: false, timer: null,
+                           destroy() { clearInterval(this.timer); } }"
+                       x-init="timer = setInterval(() => {
+                           if (document.hidden || refreshing) return;
+                           refreshing = true;
                            fetch(@js(route('alerts.unread-count')), { headers: { 'Accept': 'application/json' } })
                                .then(res => res.ok ? res.json() : null)
                                .then(data => { if (data) count = data.count; })
-                               .catch(() => {});
+                               .catch(() => {})
+                               .finally(() => { refreshing = false; });
                        }, 20000)"
                        class="group relative flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-semibold transition-all duration-200 {{ $claseItem($alertasActivo) }}"
                        :class="collapsed && 'lg:justify-center lg:px-0'">

@@ -101,3 +101,70 @@ test('project creation sends reviewed fields and keeps a single confirmed action
     assert.equal(calls, 1); assert.equal(message.action.created, true);
     assert.equal(message.action.createdUrl, 'http://localhost/projects/5');
 });
+
+test('project editor opens without saving and reopens the same editable draft', () => {
+    const c = client(), events = [];
+    c.$dispatch = (...event) => events.push(event);
+    const message = { action: { type: 'create_project', draft: { name: 'TechStore', code: 'PR-01', end: '' } } };
+    c.editProject(message);
+    assert.equal(c.projectDraftMessage, message);
+    c.projectDraftMessage.action.draft.end = '2026-12-01';
+    c.projectDraftMessage.action.draft.code = 'TECH-01';
+    c.editProject(message);
+    assert.equal(c.projectDraftMessage.action.draft.code, 'TECH-01');
+    assert.equal(c.projectDraftMessage.action.draft.end, '2026-12-01');
+    assert.deepEqual(events[0], ['open-modal', 'floating-project-draft']);
+    assert.equal(message.action.created, undefined);
+});
+
+test('copying a response writes the answer and marks only that response', async () => {
+    const original = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
+    const c = client(); let copied;
+    Object.defineProperty(globalThis, 'navigator', { configurable: true, value: { clipboard: { writeText: async text => { copied = text; } } } });
+    try {
+        await c.copyAnswer('Resumen de proyectos', 3);
+        assert.equal(copied, 'Resumen de proyectos');
+        assert.equal(c.copiedMessage, 3);
+    } finally {
+        if (original) Object.defineProperty(globalThis, 'navigator', original); else delete globalThis.navigator;
+    }
+});
+
+test('clipboard denial leaves the answer available and explains how to copy it', async () => {
+    const original = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
+    const c = client();
+    Object.defineProperty(globalThis, 'navigator', { configurable: true, value: { clipboard: { writeText: async () => { throw new Error('denied'); } } } });
+    try {
+        await c.copyAnswer('Respuesta conservada', 1);
+        assert.equal(c.copiedMessage, null);
+        assert.match(c.error, /seleccionar el texto/);
+    } finally {
+        if (original) Object.defineProperty(globalThis, 'navigator', original); else delete globalThis.navigator;
+    }
+});
+
+test('project validation preserves all fields and permits correction before successful creation', async () => {
+    globalThis.location = { origin: 'http://localhost' };
+    const c = client(), events = [];
+    c.headers = () => ({}); c.$dispatch = (...event) => events.push(event);
+    const message = { action: { type: 'create_project', url: '/projects', draft: { name: 'TechStore', code: 'TECH-01', type: 'other', start: '2026-10-19', end: '2026-10-18', area_ids: ['2'], responsible_id: 3, client_id: 4, budget: 0 } } };
+    c.editProject(message);
+    globalThis.fetch = async () => ({ ok: false, json: async () => ({ errors: { fecha_fin_estimada: ['La entrega debe ser posterior al inicio.'] } }) });
+    await c.createProject(message);
+    assert.match(message.action.error, /entrega/);
+    assert.equal(message.action.submitting, false);
+    assert.deepEqual(message.action.draft.area_ids, ['2']);
+    assert.equal(message.action.draft.responsible_id, 3);
+    assert.equal(events.length, 1);
+    message.action.draft.end = '2026-12-01';
+    globalThis.fetch = async (_,options) => {
+        const data = JSON.parse(options.body);
+        assert.equal(data.fecha_fin_estimada, '2026-12-01');
+        assert.equal(data.cliente_id, 4);
+        assert.equal(data.presupuesto, 0);
+        return { ok: true, json: async () => ({ project: { title: 'TechStore', url: '/projects/6' } }) };
+    };
+    await c.createProject(message);
+    assert.equal(message.action.created, true);
+    assert.deepEqual(events[1], ['close-modal', 'floating-project-draft']);
+});

@@ -1,3 +1,5 @@
+import { clampPosition, panelBounds } from './assistant-position.js';
+
 export function registerAssistant(Alpine) {
     Alpine.data('assistantClient', (config) => ({
         open: !!config.embedded, embedded: !!config.embedded, loading: false, historyOpen: false,
@@ -8,13 +10,34 @@ export function registerAssistant(Alpine) {
         requestController: null, requestNumber: 0, destroyed: false, settingsOpen: false,
         recognition: null, dictationBase: '', finalTranscript: '', dictationHint: '', cancelAudio: false,
         voiceController: null, startingVoice: false,
-        dockLeft: false,
+        dockLeft: false, projectDraftMessage: null, contextOpen: false, copiedMessage: null,
+        floatingPosition: null, drag: null, ignoreClickUntil: 0, resizeListener: null, detached: false,
+        get isFloating() { return !this.embedded || this.detached; },
+        get viewport() { return { width: window.visualViewport?.width || window.innerWidth || 1024, height: window.visualViewport?.height || window.innerHeight || 768 }; },
+        get positionKey() { return `assistant.position.${config.userId}`; },
+        get floatingStyle() {
+            if (this.embedded || !this.floatingPosition) return {};
+            return { left: `${this.floatingPosition.x}px`, top: `${this.floatingPosition.y}px`, right: 'auto', bottom: 'auto' };
+        },
+        get launcherStyle() {
+            if (!this.embedded || !this.detached || !this.floatingPosition) return {};
+            return { position: 'fixed', left: `${this.floatingPosition.x}px`, top: `${this.floatingPosition.y}px`, zIndex: '46' };
+        },
+        get floatingPanelStyle() {
+            if (!this.isFloating || !this.floatingPosition) return {};
+            const box = panelBounds(this.floatingPosition, this.viewport);
+            return { position: 'fixed', left: `${box.x}px`, top: `${box.y}px`, width: `${box.width}px`, height: `${box.height}px`, right: 'auto', bottom: 'auto', zIndex: '45' };
+        },
+        get projectEditorName() { return this.embedded ? 'main-project-draft' : 'floating-project-draft'; },
         get storageKey() { return `assistant.${config.userId}.${config.projectId || 'all'}.${config.taskId || 'all'}`; },
         get availableTasks() { return this.projects.find(p => String(p.id) === String(this.projectId))?.tasks || []; },
         get status() { return this.recording ? 'Escuchando…' : this.transcribing ? 'Transcribiendo…' : this.loading ? 'Consultando…' : this.speaking ? 'Hablando…' : 'Disponible'; },
         async init() {
             try { this.voiceEnabled = localStorage.getItem(`assistant.voice.${config.userId}`) === '1'; } catch (_) {}
             try { this.dockLeft = localStorage.getItem(`assistant.dock.${config.userId}`) === 'left'; } catch (_) {}
+            if (!this.embedded) this.initializeFloatingPosition();
+            // En la página completa el historial queda a la vista en pantallas amplias.
+            if (this.embedded && window.matchMedia('(min-width: 1024px)').matches) this.historyOpen = true;
             if (this.embedded) await this.initializeConversation();
         },
         async initializeConversation() {
@@ -24,20 +47,94 @@ export function registerAssistant(Alpine) {
             try { const id = localStorage.getItem(this.storageKey); if (id && !this.conversationId) await this.loadConversation(id); } catch (_) {}
         },
         async toggle() {
+            if (Date.now() < this.ignoreClickUntil) return;
             this.open = !this.open;
             if (this.open) { await this.initializeConversation(); this.$nextTick(() => this.$refs.question?.focus()); }
             else this.stopAll();
         },
-        moveDock() { this.dockLeft = !this.dockLeft; try { localStorage.setItem(`assistant.dock.${config.userId}`, this.dockLeft ? 'left' : 'right'); } catch (_) {} },
+        savePosition() { try { localStorage.setItem(this.positionKey, JSON.stringify(this.floatingPosition)); } catch (_) {} },
+        initializeFloatingPosition() {
+            let saved;
+            try { saved = JSON.parse(localStorage.getItem(this.positionKey)); } catch (_) {}
+            this.floatingPosition = clampPosition(saved || { x: this.dockLeft ? 12 : Infinity, y: Infinity }, this.viewport);
+            if (!this.resizeListener) {
+                this.resizeListener = () => { if (this.isFloating) this.floatingPosition = clampPosition(this.floatingPosition, this.viewport); };
+                window.addEventListener('resize', this.resizeListener);
+                window.visualViewport?.addEventListener('resize', this.resizeListener);
+            }
+        },
+        toggleFloating() {
+            if (!this.embedded) return;
+            if (!this.floatingPosition) this.initializeFloatingPosition();
+            this.floatingPosition = clampPosition(this.floatingPosition, this.viewport);
+            this.detached = !this.detached; this.open = true; this.settingsOpen = false;
+            this.historyOpen = !this.detached && window.matchMedia('(min-width: 1024px)').matches;
+        },
+        beginDrag(event) {
+            if (!this.isFloating || (event.button != null && event.button !== 0)) return;
+            this.drag = { id: event.pointerId, x: event.clientX, y: event.clientY, origin: { ...this.floatingPosition }, moved: false, target: event.currentTarget };
+            event.currentTarget.setPointerCapture?.(event.pointerId);
+        },
+        dragTo(event) {
+            if (!this.drag || this.drag.id !== event.pointerId) return;
+            const dx = event.clientX - this.drag.x, dy = event.clientY - this.drag.y;
+            if (!this.drag.moved && Math.hypot(dx, dy) < 5) return;
+            this.drag.moved = true;
+            this.floatingPosition = clampPosition({ x: this.drag.origin.x + dx, y: this.drag.origin.y + dy }, this.viewport);
+            event.preventDefault();
+        },
+        finishDrag(event) {
+            if (!this.drag || this.drag.id !== event.pointerId) return;
+            if (this.drag.moved && this.drag.target === this.$refs.launcher) this.ignoreClickUntil = Date.now() + 250;
+            if (this.drag.target.hasPointerCapture?.(event.pointerId)) this.drag.target.releasePointerCapture(event.pointerId);
+            this.drag = null; this.savePosition();
+        },
+        cancelDrag(event) {
+            if (!this.drag || this.drag.id !== event.pointerId) return;
+            this.floatingPosition = clampPosition(this.drag.origin, this.viewport);
+            if (this.drag.target.hasPointerCapture?.(event.pointerId)) this.drag.target.releasePointerCapture(event.pointerId);
+            this.drag = null;
+        },
+        nudgePosition(dx, dy) {
+            if (!this.isFloating) return;
+            this.floatingPosition = clampPosition({ x: this.floatingPosition.x + dx, y: this.floatingPosition.y + dy }, this.viewport); this.savePosition();
+        },
+        resetPosition() { this.floatingPosition = clampPosition(null, this.viewport); this.savePosition(); },
+        moveDock() {
+            this.dockLeft = (this.floatingPosition?.x || 0) > this.viewport.width / 2;
+            this.floatingPosition = clampPosition({ x: this.dockLeft ? 12 : Infinity, y: this.floatingPosition?.y ?? Infinity }, this.viewport); this.savePosition();
+        },
         async loadHistory() {
             try {
                 const response = await fetch(config.historyUrl, { headers: { Accept: 'application/json' } });
                 if (response.ok) this.conversations = (await response.json()).conversations;
             } catch (_) { this.error = 'No se pudo cargar el historial. Puedes iniciar una conversación.'; }
         },
+        async deleteConversation(conversation) {
+            if (this.loading || this.recording || this.transcribing) return;
+            if (!confirm('¿Eliminar esta conversación? No se puede deshacer.')) return;
+            this.error = '';
+            try {
+                const response = await fetch(config.conversationUrl.replace('__ID__', conversation.id), { method: 'DELETE', headers: this.headers(false) });
+                if (!response.ok) throw new Error('No se pudo eliminar la conversación.');
+                this.conversations = this.conversations.filter(c => c.id !== conversation.id);
+                if (this.conversationId === conversation.id) this.startNew();
+            } catch (error) { this.error = error.message; }
+        },
+        async clearHistory() {
+            if (this.loading || this.recording || this.transcribing || !this.conversations.length) return;
+            if (!confirm('¿Borrar todas tus conversaciones con el asistente? No se puede deshacer.')) return;
+            this.error = '';
+            try {
+                const response = await fetch(config.clearUrl, { method: 'DELETE', headers: this.headers(false) });
+                if (!response.ok) throw new Error('No se pudo borrar el historial.');
+                this.conversations = [];
+                this.startNew();
+            } catch (error) { this.error = error.message; }
+        },
         startNew() {
             if (this.loading || this.recording || this.transcribing) return;
-            this.stopSpeaking(); this.conversationId = null; this.messages = []; this.error = ''; this.question = ''; this.historyOpen = false;
+            this.stopSpeaking(); this.conversationId = null; this.messages = []; this.error = ''; this.question = ''; this.historyOpen = false; this.copiedMessage = null;
             if (this.embedded) { const url = new URL(location.href); url.searchParams.delete('conversation'); history.replaceState(null, '', url); }
             try { localStorage.removeItem(this.storageKey); } catch (_) {}
         },
@@ -53,7 +150,7 @@ export function registerAssistant(Alpine) {
                 if (sequence !== this.requestNumber || this.destroyed) return;
                 this.conversationId = data.conversation.id;
                 this.projectId = data.conversation.project_id || ''; this.taskId = data.conversation.task_id || '';
-                this.messages = data.messages; this.historyOpen = false;
+                this.messages = data.messages; this.historyOpen = false; this.copiedMessage = null;
                 try { localStorage.setItem(this.storageKey, this.conversationId); } catch (_) {}
                 this.scrollMessages();
             } catch (error) { this.error = error.message; }
@@ -86,7 +183,21 @@ export function registerAssistant(Alpine) {
             if (json) headers['Content-Type'] = 'application/json';
             return headers;
         },
+        async copyAnswer(text, index) {
+            try {
+                if (!navigator.clipboard?.writeText) throw new Error();
+                await navigator.clipboard.writeText(text);
+                this.copiedMessage = index;
+            } catch (_) {
+                this.error = 'No se pudo copiar. Puedes seleccionar el texto de la respuesta para copiarlo.';
+            }
+        },
         draftProject(action) { return action.projects?.find(p => String(p.id) === String(action.draft.project_id)); },
+        editProject(message) {
+            if (message.action?.type !== 'create_project' || message.action.created || message.action.submitting) return;
+            this.projectDraftMessage = message;
+            this.$dispatch('open-modal', this.projectEditorName);
+        },
         async createProject(message) {
             const action = message.action;
             if (!action || action.submitting || action.created) return;
@@ -96,13 +207,14 @@ export function registerAssistant(Alpine) {
                 const url = new URL(action.url, location.origin);
                 if (url.origin !== location.origin) throw new Error('Dirección de creación inválida.');
                 const response = await fetch(url, { method: 'POST', headers: this.headers(), body: JSON.stringify({ codigo: d.code, nombre: d.name, descripcion: d.description, tipo: d.type, cliente_id: d.client_id || null,
-                    empleado_responsable_id: d.responsible_id || null, empleado_gerente_id: d.manager_id || null, area_ids: d.area_ids, fecha_inicio: d.start, fecha_fin_estimada: d.end, estado: 'planning', prioridad: d.priority, presupuesto: d.budget || null }) });
+                    empleado_responsable_id: d.responsible_id || null, empleado_gerente_id: d.manager_id || null, area_ids: d.area_ids, fecha_inicio: d.start, fecha_fin_estimada: d.end, estado: 'planning', prioridad: d.priority, presupuesto: d.budget === '' ? null : (d.budget ?? null) }) });
                 const data = await response.json();
                 if (!response.ok) throw new Error(Object.values(data.errors || {}).flat().join(' ') || data.message || 'No se pudo crear el proyecto.');
                 const destination = new URL(data.project.url, location.origin);
                 if (destination.origin !== location.origin) throw new Error('Respuesta inválida.');
                 action.created = true; action.createdUrl = destination.href;
                 message.text = 'Proyecto creado: ' + data.project.title + '. Estado inicial: planificación.';
+                if (this.projectDraftMessage === message) this.$dispatch?.('close-modal', this.projectEditorName);
             } catch (error) { action.error = error.message; }
             finally { action.submitting = false; this.scrollMessages(); }
         },
@@ -236,6 +348,6 @@ export function registerAssistant(Alpine) {
         },
         scrollMessages() { this.$nextTick(() => { const pane = this.$refs.messages; if (pane) pane.scrollTop = pane.scrollHeight; }); },
         stopAll() { this.cancelAudio = true; this.stopSpeaking(); this.recognition?.abort(); this.finishRecording(); this.dictationHint = ''; },
-        destroy() { this.destroyed = true; this.requestController?.abort(); this.voiceController?.abort(); this.stopAll(); clearTimeout(this.recordingTimer); this.mediaStream?.getTracks().forEach(t => t.stop()); },
+        destroy() { this.destroyed = true; this.requestController?.abort(); this.voiceController?.abort(); this.stopAll(); clearTimeout(this.recordingTimer); this.mediaStream?.getTracks().forEach(t => t.stop()); if (this.resizeListener) { window.removeEventListener('resize', this.resizeListener); window.visualViewport?.removeEventListener('resize', this.resizeListener); } },
     }));
 }

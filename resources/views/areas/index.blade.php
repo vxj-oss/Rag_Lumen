@@ -54,13 +54,7 @@
                                     </td>
                                 </tr>
 
-                                @can('update', $area)
-                                    <x-ui.form-modal :name="'edit-area-'.$area->id" :title="__('Editar área')"
-                                        :subtitle="$area->nombre" :action="route('areas.update', $area)" method="PUT" max-width="2xl">
-                                        <x-slot name="hidden"><input type="hidden" name="_edit_id" value="{{ $area->id }}"></x-slot>
-                                        @include('areas.partials.form')
-                                    </x-ui.form-modal>
-                                @endcan
+
                             @empty
                                 <tr>
                                     <td colspan="6" class="px-6 py-16 text-center text-sm text-slate-500">{{ __('Todavía no hay áreas registradas.') }}</td>
@@ -82,6 +76,16 @@
         </x-ui.form-modal>
     @endcan
 
+    @foreach ($areas as $area)
+                                @can('update', $area)
+                                    <x-ui.form-modal :name="'edit-area-'.$area->id" :title="__('Editar área')"
+                                        :subtitle="$area->nombre" :action="route('areas.update', $area)" method="PUT" max-width="2xl">
+                                        <x-slot name="hidden"><input type="hidden" name="_edit_id" value="{{ $area->id }}"></x-slot>
+                                        @include('areas.partials.form')
+                                    </x-ui.form-modal>
+                                @endcan
+    @endforeach
+
     @if ($errors->any())
         @php $modalToOpen = old('_edit_id') ? 'edit-area-'.old('_edit_id') : (old('_form') === 'create' ? 'create-area' : null); @endphp
         @if ($modalToOpen)
@@ -89,4 +93,6 @@
         @endif
     @endif
 <div class="mx-auto max-w-7xl p-4">{{ $areas->links() }}</div>
+
+
 </x-app-layout>
