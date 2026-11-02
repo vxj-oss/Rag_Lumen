@@ -17,4 +17,8 @@ chown -R www-data:www-data storage bootstrap/cache "$PRIVADO"
 php artisan config:cache
 php artisan view:cache
 
+# Migraciones al arrancar (idempotente). Así la base queda al día aunque el pre-deploy no se haya ejecutado.
+# Se ejecuta como www-data para que los logs/cachés que genere no queden como root.
+su -s /bin/sh www-data -c "php artisan migrate --force" || echo "ADVERTENCIA: las migraciones fallaron; revisa la conexión a la base de datos."
+
 exec /usr/bin/supervisord -n -c /etc/supervisor/conf.d/laravel.conf

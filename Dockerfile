@@ -31,7 +31,8 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends libzip-dev libpng-dev libjpeg-dev libfreetype6-dev libicu-dev libonig-dev supervisor \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j"$(nproc)" pdo_mysql gd zip intl mbstring bcmath opcache pcntl \
-    && a2enmod rewrite headers \
+    && (a2dismod mpm_event mpm_worker || true) \
+    && a2enmod mpm_prefork rewrite headers \
     && rm -rf /var/lib/apt/lists/*
 
 # Apache sirve public/ y se admite .htaccess de Laravel
