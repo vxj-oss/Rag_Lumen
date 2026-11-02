@@ -21,4 +21,11 @@ php artisan view:cache
 # Se ejecuta como www-data para que los logs/cachés que genere no queden como root.
 su -s /bin/sh www-data -c "php artisan migrate --force" || echo "ADVERTENCIA: las migraciones fallaron; revisa la conexión a la base de datos."
 
+# Diagnóstico de Apache (visible en los logs del despliegue).
+echo "== Apache: MPM en mods-enabled =="; ls -la /etc/apache2/mods-enabled | grep -i mpm || true
+echo "== Apache: apache2ctl -t =="; apache2ctl -t 2>&1 | head -5 || true
+echo "== Apache: modulos MPM cargados =="; apache2ctl -M 2>&1 | grep -i mpm || true
+echo "== Variables relacionadas =="; env | grep -i -E "apache|mpm" || true
+echo "== ports.conf =="; cat /etc/apache2/ports.conf
+
 exec /usr/bin/supervisord -n -c /etc/supervisor/conf.d/laravel.conf
