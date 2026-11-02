@@ -31,7 +31,7 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends libzip-dev libpng-dev libjpeg-dev libfreetype6-dev libicu-dev libonig-dev supervisor \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j"$(nproc)" pdo_mysql gd zip intl mbstring bcmath opcache pcntl \
-    && (a2dismod mpm_event mpm_worker || true) \
+    && rm -f /etc/apache2/mods-enabled/mpm_*.load /etc/apache2/mods-enabled/mpm_*.conf \
     && a2enmod mpm_prefork rewrite headers \
     && rm -rf /var/lib/apt/lists/*
 
@@ -39,6 +39,9 @@ RUN apt-get update \
 RUN sed -ri 's#DocumentRoot /var/www/html#DocumentRoot /var/www/html/public#' /etc/apache2/sites-available/000-default.conf \
     && printf '<Directory /var/www/html/public>\n    AllowOverride All\n    Require all granted\n</Directory>\n' > /etc/apache2/conf-available/laravel.conf \
     && a2enconf laravel
+
+# Falla en la compilación (y no al arrancar) si la configuración de Apache es inválida; muestra el MPM activo.
+RUN apache2ctl -t && apache2ctl -M 2>/dev/null | grep -i mpm
 
 COPY docker/php.ini /usr/local/etc/php/conf.d/zz-app.ini
 COPY docker/supervisord.conf /etc/supervisor/conf.d/laravel.conf
